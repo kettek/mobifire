@@ -39,6 +39,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				next(nil)
 			})
 		} else {
+			s.conn.SetMessageHandler(nil)
 			next(login.NewState(&s.conn))
 		}
 	}()
