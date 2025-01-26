@@ -31,7 +31,14 @@ func NewState(conn *net.Connection) *State {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
-	s.Once(&messages.MessageVersion{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+	// Setup receive just sends to actual login.
+	s.Once(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		fmt.Println("got setup message!", m.(*messages.MessageSetup), failure)
+		// FIXME: Uh... do we have to handle for MessageSetup fail?
+		next(login.NewState(s.conn))
+	})
+
+	s.Once(&messages.MessageVersion{}, &messages.MessageVersion{}, func(m messages.Message, failure *messages.MessageFailure) {
 		msg, ok := m.(*messages.MessageVersion)
 		if !ok {
 			fmt.Println("not a version message...")
@@ -43,16 +50,41 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			next(nil)
 			return
 		}
-		s.conn.Send(&messages.MessageVersion{CLVersion: "1030", SVName: "mobilefire"})
-		fmt.Println("looks good!")
-		// TODO: Send setup!!!
-
-		// TODO: Handle Setup receive, as that's a confirm to our request in sending Version -- this is where we swap to actual login credentials (TODO: Move this state to handshake???)
-
-		next(login.NewState(s.conn))
+		fmt.Println("got version!", msg)
+		if err := s.conn.Send(&messages.MessageVersion{CLVersion: "1030", SVName: "mobilefire"}); err != nil {
+			fmt.Println("Failed to send version message:", err)
+			next(nil)
+			return
+		}
+		// FIXME: This isn't optimized, as I'm working relative to termfire.
+		if err := s.conn.Send(&messages.MessageSetup{
+			FaceCache: struct {
+				Use   bool
+				Value bool
+			}{Use: true, Value: false}, // Changed to false so I can get _all_ the delicious PNGs.
+			LoginMethod: struct {
+				Use   bool
+				Value string
+			}{Use: true, Value: "2"},
+			ExtendedStats: struct {
+				Use   bool
+				Value bool
+			}{Use: true, Value: true},
+			Sound2: struct {
+				Use   bool
+				Value uint8
+			}{Use: true, Value: 1},
+		}); err != nil {
+			fmt.Println("Failed to send setup message:", err)
+			next(nil)
+			return
+		}
+		fmt.Println("...ok?")
 	})
 
-	label := widget.NewLabel("TODO: Login")
+	// TODO: timeout? maybe from s.conn?
+
+	label := widget.NewLabel("handshaking...")
 
 	s.container = container.New(layout.NewCenterLayout(), label)
 
