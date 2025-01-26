@@ -13,15 +13,14 @@ type State struct {
 	container *fyne.Container
 }
 
-func (s *State) Enter(next func(states.State)) {
+func (s *State) Enter(next func(states.State)) (leave func()) {
 	button := widget.NewButton("nextie", func() {
 		next(&play.State{})
 	})
 
 	s.container = container.New(layout.NewCenterLayout(), button)
-}
 
-func (s *State) Leave() {
+	return nil
 }
 
 func (s *State) Container() *fyne.Container {

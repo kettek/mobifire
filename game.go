@@ -8,18 +8,19 @@ import (
 )
 
 type Game struct {
-	app    fyne.App
-	window fyne.Window
-	state  states.State
+	app     fyne.App
+	window  fyne.Window
+	state   states.State
+	leaveCb func()
 }
 
 func (g *Game) SetNext(state states.State) {
-	if g.state != nil {
-		g.state.Leave()
+	if g.leaveCb != nil {
+		g.leaveCb()
 	}
 	g.state = nil
 	if state != nil {
-		state.Enter(g.SetNext)
+		g.leaveCb = state.Enter(g.SetNext)
 		g.window.SetContent(state.Container())
 	}
 }

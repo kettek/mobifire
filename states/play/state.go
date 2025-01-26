@@ -12,14 +12,13 @@ type State struct {
 	mb        *multiBoard
 }
 
-func (s *State) Enter(next func(states.State)) {
+func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	s.mb = newMultiBoard(11, 11, 8)
 
 	s.container = container.New(layout.NewCenterLayout(), s.mb.container)
-}
 
-func (s *State) Leave() {
+	return nil
 }
 
 func (s *State) Container() *fyne.Container {
