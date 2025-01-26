@@ -71,8 +71,6 @@ func (c *Connection) readLoop() {
 		} else {
 			c.queuedMessages = append(c.queuedMessages, message)
 		}
-
-		return
 	}
 }
 
