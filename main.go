@@ -31,54 +31,94 @@ func main() {
 	w.SetContent(widget.NewLabel("Crossfire Mobile"))
 	w.Resize(fyne.NewSize(360, 800))
 
-	board := &Board{
-		Width:      11,
-		Height:     11,
-		CellWidth:  32,
-		CellHeight: 32,
-	}
-	for i := 0; i < 11; i++ {
-		row := make([]*Tile, 11)
-		for j := 0; j < 11; j++ {
-			row[j] = NewTile()
-		}
-		board.Tiles = append(board.Tiles, row)
-	}
+	mb := NewMultiBoard(11, 11, 8)
 
-	board2 := &Board{
-		Width:      11,
-		Height:     11,
-		CellWidth:  32,
-		CellHeight: 32,
-	}
-	for i := 0; i < 11; i++ {
-		row := make([]*Tile, 11)
-		for j := 0; j < 11; j++ {
-			row[j] = NewTile()
-			row[j].SetResource(resourceMarkPng)
-			if j == 4 {
-				row[j].Hide()
-			}
-		}
-		board2.Tiles = append(board2.Tiles, row)
-	}
-
-	grid := container.New(board, board.Flatten()...)
-	grid2 := container.New(board2, board2.Flatten()...)
-
-	center := container.New(layout.NewStackLayout(), grid, grid2)
+	center := container.New(layout.NewCenterLayout(), mb.container)
 
 	w.SetContent(center)
 
 	w.ShowAndRun()
 }
 
+type MultiBoard struct {
+	fyne.Layout
+	container *fyne.Container
+	boards    []*Board
+}
+
+func NewMultiBoard(w, h, count int) *MultiBoard {
+	b := &MultiBoard{}
+
+	b.Layout = layout.NewStackLayout()
+
+	var boardContainers []fyne.CanvasObject
+	for i := 0; i < count; i++ {
+		board := NewBoard(w, h)
+		boardContainers = append(boardContainers, board.Container)
+		b.boards = append(b.boards, board)
+
+		if i == 0 {
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					board.SetImage(x, y, resourceBlankPng)
+					board.SetHidden(x, y, false)
+				}
+			}
+		} else if i == 1 {
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					if x == 0 || y == 0 || x == w-1 || y == h-1 {
+						board.SetImage(x, y, resourceMarkPng)
+						board.SetHidden(x, y, false)
+					}
+				}
+			}
+		}
+	}
+
+	b.container = container.New(layout.NewStackLayout(), boardContainers...)
+
+	return b
+}
+
 type Board struct {
+	Container  *fyne.Container
 	Tiles      [][]*Tile
 	Width      int
 	Height     int
 	CellWidth  int
 	CellHeight int
+}
+
+func NewBoard(w, h int) *Board {
+	b := &Board{
+		Width:      w,
+		Height:     h,
+		CellWidth:  32,
+		CellHeight: 32,
+	}
+
+	for i := 0; i < h; i++ {
+		row := make([]*Tile, w)
+		for j := 0; j < w; j++ {
+			row[j] = NewTile()
+		}
+		b.Tiles = append(b.Tiles, row)
+	}
+
+	b.Container = container.New(b, b.Flatten()...)
+
+	return b
+}
+
+func (b *Board) SetImage(x, y int, img *fyne.StaticResource) {
+	b.Tiles[y][x].SetResource(img)
+	// Automatically unhide.
+	b.SetHidden(x, y, false)
+}
+
+func (b *Board) SetHidden(x, y int, hide bool) {
+	b.Tiles[y][x].Hidden = hide
 }
 
 func (b *Board) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -118,6 +158,6 @@ type Tile struct {
 func NewTile() *Tile {
 	t := &Tile{}
 	t.ExtendBaseWidget(t)
-	t.SetResource(resourceBlankPng)
+	t.Hide()
 	return t
 }
