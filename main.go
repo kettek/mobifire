@@ -17,6 +17,13 @@ var resourceBlankPng = &fyne.StaticResource{
 	StaticContent: sourceBlankPng,
 }
 
+//go:embed mark.base.111.png
+var sourceMarkPng []byte
+var resourceMarkPng = &fyne.StaticResource{
+	StaticName:    "mark",
+	StaticContent: sourceMarkPng,
+}
+
 func main() {
 	a := app.New()
 	w := a.NewWindow(("Crossfire Mobile"))
@@ -38,9 +45,28 @@ func main() {
 		board.Tiles = append(board.Tiles, row)
 	}
 
-	grid := container.New(board, board.Flatten()...)
+	board2 := &Board{
+		Width:      11,
+		Height:     11,
+		CellWidth:  32,
+		CellHeight: 32,
+	}
+	for i := 0; i < 11; i++ {
+		row := make([]*Tile, 11)
+		for j := 0; j < 11; j++ {
+			row[j] = NewTile()
+			row[j].SetResource(resourceMarkPng)
+			if j == 4 {
+				row[j].Hide()
+			}
+		}
+		board2.Tiles = append(board2.Tiles, row)
+	}
 
-	center := container.New(layout.NewCenterLayout(), grid)
+	grid := container.New(board, board.Flatten()...)
+	grid2 := container.New(board2, board2.Flatten()...)
+
+	center := container.New(layout.NewStackLayout(), grid, grid2)
 
 	w.SetContent(center)
 
