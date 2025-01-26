@@ -8,13 +8,17 @@ import (
 )
 
 type Game struct {
-	app     fyne.App
-	window  fyne.Window
-	state   states.State
-	leaveCb func()
+	app        fyne.App
+	window     fyne.Window
+	firstState states.State // Used to ensure Server state is returned to.
+	state      states.State
+	leaveCb    func()
 }
 
 func (g *Game) SetNext(state states.State) {
+	if g.firstState == nil {
+		g.firstState = state
+	}
 	if g.leaveCb != nil {
 		g.leaveCb()
 	}
@@ -22,6 +26,9 @@ func (g *Game) SetNext(state states.State) {
 	if state != nil {
 		g.leaveCb = state.Enter(g.SetNext)
 		g.window.SetContent(state.Container())
+	} else if g.firstState != nil { // Bump back to first state if we can! This should be guaranteed to be the metaserver.
+		g.leaveCb = g.firstState.Enter(g.SetNext)
+		g.window.SetContent(g.firstState.Container())
 	}
 }
 
