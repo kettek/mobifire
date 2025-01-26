@@ -3,7 +3,6 @@ package main
 import (
 	_ "embed"
 
-	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -61,17 +60,16 @@ func (b *Board) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (b *Board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
-	//pos := fyne.NewPos(0, containerSize.Height-b.MinSize(objects).Height)
 	pos := fyne.NewPos(0, 0)
 	for i, o := range objects {
-		o.Resize(fyne.NewSize(float32(b.Width), float32(b.Height)))
+		o.Resize(fyne.NewSize(float32(b.CellWidth), float32(b.CellHeight)))
 		o.Move(pos)
 
 		if i%b.Width == b.Width-1 {
 			_, h := pos.Components()
-			pos = fyne.NewPos(0, h).Add(fyne.NewPos(0, float32(b.Height)))
+			pos = fyne.NewPos(0, h).Add(fyne.NewPos(0, float32(b.CellHeight)))
 		} else {
-			pos = pos.Add(fyne.NewPos(float32(b.Width*2), 0))
+			pos = pos.Add(fyne.NewPos(float32(b.CellWidth), 0))
 		}
 	}
 }
@@ -88,7 +86,6 @@ func (b *Board) Flatten() []fyne.CanvasObject {
 
 type Tile struct {
 	widget.Icon
-	canvas.Image
 }
 
 // NewTile creates a new tile of the given type
