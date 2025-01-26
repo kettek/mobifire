@@ -1,11 +1,7 @@
-package join
+package login
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/kettek/mobifire/net"
-	"github.com/kettek/mobifire/states/login"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -23,25 +19,16 @@ type State struct {
 	conn      net.Connection
 }
 
-func (s *State) Enter(next func(states.State)) (leave func()) {
-	label := widget.NewLabel("Joining " + s.Hostname + ":" + fmt.Sprint(s.Port) + "...")
-
-	serverName := s.Hostname
-	if s.Port != 0 {
-		serverName += ":" + fmt.Sprint(s.Port)
+func NewState(conn net.Connection) *State {
+	return &State{
+		conn: conn,
 	}
-	s.container = container.New(layout.NewCenterLayout(), label)
+}
 
-	go func() {
-		if err := s.conn.Join(serverName); err != nil {
-			label.SetText("Failed to join " + serverName + ": " + err.Error())
-			time.AfterFunc(3*time.Second, func() {
-				next(nil)
-			})
-		} else {
-			next(login.NewState(s.conn))
-		}
-	}()
+func (s *State) Enter(next func(states.State)) (leave func()) {
+	label := widget.NewLabel("TODO: Login")
+
+	s.container = container.New(layout.NewCenterLayout(), label)
 
 	return nil
 }
