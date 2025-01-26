@@ -7,20 +7,20 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type MultiBoard struct {
+type multiBoard struct {
 	fyne.Layout
 	container *fyne.Container
-	boards    []*Board
+	boards    []*board
 }
 
-func NewMultiBoard(w, h, count int) *MultiBoard {
-	b := &MultiBoard{}
+func newMultiBoard(w, h, count int) *multiBoard {
+	b := &multiBoard{}
 
 	b.Layout = layout.NewStackLayout()
 
 	var boardContainers []fyne.CanvasObject
 	for i := 0; i < count; i++ {
-		board := NewBoard(w, h)
+		board := newBoard(w, h)
 		boardContainers = append(boardContainers, board.Container)
 		b.boards = append(b.boards, board)
 
@@ -48,17 +48,17 @@ func NewMultiBoard(w, h, count int) *MultiBoard {
 	return b
 }
 
-type Board struct {
+type board struct {
 	Container  *fyne.Container
-	Tiles      [][]*Tile
+	Tiles      [][]*tile
 	Width      int
 	Height     int
 	CellWidth  int
 	CellHeight int
 }
 
-func NewBoard(w, h int) *Board {
-	b := &Board{
+func newBoard(w, h int) *board {
+	b := &board{
 		Width:      w,
 		Height:     h,
 		CellWidth:  32,
@@ -66,9 +66,9 @@ func NewBoard(w, h int) *Board {
 	}
 
 	for i := 0; i < h; i++ {
-		row := make([]*Tile, w)
+		row := make([]*tile, w)
 		for j := 0; j < w; j++ {
-			row[j] = NewTile()
+			row[j] = newTile()
 		}
 		b.Tiles = append(b.Tiles, row)
 	}
@@ -78,21 +78,21 @@ func NewBoard(w, h int) *Board {
 	return b
 }
 
-func (b *Board) SetImage(x, y int, img *fyne.StaticResource) {
+func (b *board) SetImage(x, y int, img *fyne.StaticResource) {
 	b.Tiles[y][x].SetResource(img)
 	// Automatically unhide.
 	b.SetHidden(x, y, false)
 }
 
-func (b *Board) SetHidden(x, y int, hide bool) {
+func (b *board) SetHidden(x, y int, hide bool) {
 	b.Tiles[y][x].Hidden = hide
 }
 
-func (b *Board) MinSize(objects []fyne.CanvasObject) fyne.Size {
+func (b *board) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(float32(b.CellWidth*b.Width), float32(b.CellHeight*b.Height))
 }
 
-func (b *Board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
+func (b *board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
 	pos := fyne.NewPos(0, 0)
 	for i, o := range objects {
 		o.Resize(fyne.NewSize(float32(b.CellWidth), float32(b.CellHeight)))
@@ -107,7 +107,7 @@ func (b *Board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
 	}
 }
 
-func (b *Board) Flatten() []fyne.CanvasObject {
+func (b *board) Flatten() []fyne.CanvasObject {
 	var objects []fyne.CanvasObject
 	for _, row := range b.Tiles {
 		for _, tile := range row {
@@ -117,13 +117,13 @@ func (b *Board) Flatten() []fyne.CanvasObject {
 	return objects
 }
 
-type Tile struct {
+type tile struct {
 	widget.Icon
 }
 
 // NewTile creates a new tile of the given type
-func NewTile() *Tile {
-	t := &Tile{}
+func newTile() *tile {
+	t := &tile{}
 	t.ExtendBaseWidget(t)
 	t.Hide()
 	return t

@@ -9,13 +9,14 @@ import (
 
 type State struct {
 	container *fyne.Container
+	mb        *multiBoard
 }
 
 func (s *State) Enter(next func(states.State)) {
 
-	mb := NewMultiBoard(11, 11, 8)
+	s.mb = newMultiBoard(11, 11, 8)
 
-	s.container = container.New(layout.NewCenterLayout(), mb.container)
+	s.container = container.New(layout.NewCenterLayout(), s.mb.container)
 }
 
 func (s *State) Leave() {
