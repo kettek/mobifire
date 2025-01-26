@@ -2,6 +2,7 @@ package net
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 // Connection is a connection to a server.
 type Connection struct {
 	net.Conn
+	OnMessage      func(messages.Message)
+	queuedMessages []messages.Message
 }
 
 // Join attempts to join the given server.
@@ -41,9 +44,44 @@ func (c *Connection) Close() {
 
 func (c *Connection) readLoop() {
 	for {
-		println("TODO: readLoop")
+		var length [2]byte
+		n, err := c.Read(length[:])
+		if err != nil || n != 2 {
+			fmt.Println("Error reading message length:", err)
+			c.Close()
+			return
+		}
+		buf := make([]byte, (int(length[0])<<8)|int(length[1]))
+		n, err = c.Read(buf)
+		if err != nil || n != len(buf) {
+			fmt.Println("Error reading message:", err)
+			c.Close()
+			return
+		}
+		message, err := messages.UnmarshalMessage(buf)
+		if err != nil {
+			fmt.Println("Error unmarshalling message:", err)
+			c.Close()
+			return
+		}
+
+		fmt.Printf("msg %+v\n", message)
+		if c.OnMessage != nil {
+			c.OnMessage(message)
+		} else {
+			c.queuedMessages = append(c.queuedMessages, message)
+		}
+
 		return
 	}
+}
+
+func (c *Connection) SetMessageHandler(handler func(messages.Message)) {
+	c.OnMessage = handler
+	for _, message := range c.queuedMessages {
+		handler(message)
+	}
+	c.queuedMessages = nil
 }
 
 // Send send a message.

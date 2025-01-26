@@ -39,7 +39,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				next(nil)
 			})
 		} else {
-			next(login.NewState(s.conn))
+			next(login.NewState(&s.conn))
 		}
 	}()
 
