@@ -23,23 +23,29 @@ func (g *Game) SetNext(state states.State) {
 	if g.leaveCb != nil {
 		g.leaveCb()
 	}
-	g.state = nil
+	var priorState states.State
+	priorState = g.state
+	g.state = state
 	if state != nil {
 		// Prior state a lil hacky, but oh well~~~
-		if _, ok := state.(*states.StatePrior); ok {
+		if state == states.Prior {
 			if g.priorState != nil {
+				g.state = g.priorState
 				state = g.priorState
+				priorState = g.priorState
 			} else {
+				g.state = g.firstState
 				state = g.firstState
+				priorState = g.firstState
 			}
 		}
-		g.priorState = g.state
 
 		// Set window if interface conforms.
 		if s, ok := state.(states.StateWithWindow); ok {
 			s.SetWindow(g.window)
 		}
 
+		g.priorState = priorState
 		g.leaveCb = state.Enter(g.SetNext)
 		g.window.SetContent(state.Container())
 	} else if g.firstState != nil { // Bump back to first state if we can! This should be guaranteed to be the metaserver.
@@ -53,7 +59,8 @@ func NewGame() *Game {
 		app: app.New(),
 	}
 	g.window = g.app.NewWindow("Crossfire Mobile")
-	g.window.Resize(fyne.NewSize(360, 800))
+	g.window.Resize(fyne.NewSize(800, 360))
+	g.window.SetFixedSize(true)
 
 	// Set our initial state...
 	g.SetNext(&metaserver.State{})

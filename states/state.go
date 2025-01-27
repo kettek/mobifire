@@ -7,19 +7,22 @@ type State interface {
 	Container() *fyne.Container // Adopted after Enter()
 }
 
-// StatePrior is some terrible B.S....
-type StatePrior struct {
+// See Prior
+type statePrior struct {
 }
 
 // Enter means nothing
-func (s *StatePrior) Enter(next func(State)) (leave func()) {
+func (s *statePrior) Enter(next func(State)) (leave func()) {
 	return nil
 }
 
 // Container means nothing
-func (s *StatePrior) Container() *fyne.Container {
+func (s *statePrior) Container() *fyne.Container {
 	return nil
 }
+
+// Prior is used to return back to the previous state.
+var Prior = &statePrior{}
 
 // StateWithWindow is an extension of State that allows setting the fyne window (needed for dialog.Show* funcs)
 type StateWithWindow interface {
