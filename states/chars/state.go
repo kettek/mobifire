@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kettek/mobifire/net"
+	"github.com/kettek/mobifire/states/play"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -33,11 +34,21 @@ func NewState(conn *net.Connection, characters []messages.Character, faces []mes
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
-	fmt.Println("we got", s.characters)
+	characterList := container.New(layout.NewVBoxLayout())
 
-	label := widget.NewLabel("Select a character:")
+	for _, character := range s.characters {
+		if character.Name == "" {
+			// Skip the weird bogus empty char.
+			continue
+		}
+		content := container.New(layout.NewHBoxLayout(), widget.NewLabel(character.Map), widget.NewButton("Play", func() {
+			next(play.NewState(s.conn, character.Name))
+		}))
+		card := widget.NewCard(character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class), content)
+		characterList.Add(card)
+	}
 
-	s.container = container.New(layout.NewVBoxLayout(), label)
+	s.container = container.New(layout.NewVBoxLayout(), characterList)
 
 	return nil
 }
