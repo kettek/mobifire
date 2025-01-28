@@ -26,12 +26,14 @@ require (
 	github.com/jeandeaual/go-locale v0.0.0-20240223122105-ce5225dcaa49 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/kettek/go-multipath/v2 v2.0.0-alpha.11 // indirect
+	github.com/kettek/gobl v0.4.0 // indirect
 	github.com/kettek/termfire v0.0.0-20250126003125-1910273f5881 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/qdm12/reprint v0.0.0-20200326205758-722754a53494 // indirect
+	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/rivo/tview v0.0.0-20241103174730-c76f7879f592 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rymdport/portal v0.3.0 // indirect
