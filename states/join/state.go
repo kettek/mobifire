@@ -15,6 +15,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// State provides an initial joining to a server.
 type State struct {
 	messages.MessageHandler
 	container *fyne.Container
@@ -23,6 +24,7 @@ type State struct {
 	conn      *net.Connection
 }
 
+// Enter attempts a connection to the server and either continues to handshake state or shows an error and returns to the metaserver.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	label := widget.NewLabel("Joining " + s.Hostname + ":" + fmt.Sprint(s.Port) + "...")
 
@@ -49,6 +51,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }

@@ -23,12 +23,14 @@ var metaservers = []string{
 	"http://metaserver.us.cross-fire.org/meta_client.php",
 }
 
+// State provides a list of servers the user can join.
 type State struct {
 	next       func(states.State)
 	container  *fyne.Container
 	serverList *fyne.Container
 }
 
+// Enter sets up the base UI containers and loads the server list.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.next = next
 
@@ -47,6 +49,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// refreshMetaservers iterates thru metaservers and generates non-duplicate servers.
 func (s *State) refreshMetaservers() {
 	s.serverList.RemoveAll()
 	var serverEntries messages.ServerEntries
@@ -90,10 +93,12 @@ func (s *State) refreshMetaservers() {
 	s.serverList.Add(accordion)
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }
 
+// requestServers requests the servers from the given metaserver with a 5 second timeout.
 func (s *State) requestServers(metaserver string) (messages.ServerEntries, error) {
 	resp, err := http.Get(metaserver)
 	http.DefaultClient.Timeout = 5 * time.Second

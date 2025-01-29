@@ -13,6 +13,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// State provides the actual play state of the game.
 type State struct {
 	messages.MessageHandler
 	window    fyne.Window
@@ -23,6 +24,7 @@ type State struct {
 	messages  []messages.MessageDrawExtInfo
 }
 
+// NewState creates a new State from a connection and a desired character to play as.
 func NewState(conn *net.Connection, character string) *State {
 	return &State{
 		conn:      conn,
@@ -30,6 +32,7 @@ func NewState(conn *net.Connection, character string) *State {
 	}
 }
 
+// Enter sets up all the necessary UI and network handling.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 	s.conn.Send(&messages.MessageAccountPlay{Character: s.character})
@@ -88,10 +91,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }
 
+// SetWindow sets the window for dialog usage.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
 }

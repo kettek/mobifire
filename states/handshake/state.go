@@ -14,6 +14,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// State provides a handshake step to connecting to a server.
 type State struct {
 	messages.MessageHandler
 	container *fyne.Container
@@ -22,12 +23,14 @@ type State struct {
 	conn      *net.Connection
 }
 
+// NewState creates a new state from a given connection.
 func NewState(conn *net.Connection) *State {
 	return &State{
 		conn: conn,
 	}
 }
 
+// Enter handles the version & setup messages from/to the server. Failure boots back to metaserver.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
@@ -91,6 +94,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }

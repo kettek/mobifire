@@ -2,6 +2,7 @@ package states
 
 import "fyne.io/fyne/v2"
 
+// State is our interface for any distinct part of the program that should be considered the main process.
 type State interface {
 	Enter(next func(State)) (leave func())
 	Container() *fyne.Container // Adopted after Enter()

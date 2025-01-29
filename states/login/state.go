@@ -17,6 +17,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
 	window    fyne.Window
@@ -25,12 +26,14 @@ type State struct {
 	faces     []messages.MessageFace2
 }
 
+// NewState returns a State from the given connection.
 func NewState(conn *net.Connection) *State {
 	return &State{
 		conn: conn,
 	}
 }
 
+// Enter sets up all the necessary logic for logging in.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
@@ -78,10 +81,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// SetWindow sets the window -- used for showing errors.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }

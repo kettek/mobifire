@@ -14,6 +14,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// State provides the character selection and creation screen.
 type State struct {
 	window fyne.Window
 	messages.MessageHandler
@@ -23,6 +24,7 @@ type State struct {
 	faces      []messages.MessageFace2
 }
 
+// NewState provides a new State from a connection, Character, and Face messages.
 func NewState(conn *net.Connection, characters []messages.Character, faces []messages.MessageFace2) *State {
 	return &State{
 		conn:       conn,
@@ -31,6 +33,7 @@ func NewState(conn *net.Connection, characters []messages.Character, faces []mes
 	}
 }
 
+// Enter sets up the necessary state.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
@@ -53,10 +56,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+// SetWindow sets the window for dialog functions.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
 }
 
+// Container returns the container.
 func (s *State) Container() *fyne.Container {
 	return s.container
 }
