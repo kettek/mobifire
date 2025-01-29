@@ -6,7 +6,6 @@ import (
 
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/chars"
-	"github.com/kettek/mobifire/states/play"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -20,6 +19,7 @@ import (
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
+	app       fyne.App
 	window    fyne.Window
 	container *fyne.Container
 	conn      *net.Connection
@@ -37,13 +37,26 @@ func NewState(conn *net.Connection) *State {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
+	// Variables used for storing username and password.
+	host := s.app.Preferences().String("lastServer")
+	port := s.app.Preferences().Int("lastPort")
+	key := fmt.Sprintf("%s-%d", host, port)
+
+	usernameEntry := widget.NewEntry()
+	usernameEntry.SetText(s.app.Preferences().StringWithFallback(key+"-account", ""))
+	passwordEntry := widget.NewPasswordEntry()
+	passwordEntry.SetText(s.app.Preferences().StringWithFallback(key+"-password", ""))
+	rememberCheck := widget.NewCheck("", func(remember bool) {
+		s.app.Preferences().SetBool(key+"-remember", remember)
+	})
+	rememberCheck.SetChecked(s.app.Preferences().Bool(key + "-remember"))
+
 	s.On(&messages.MessageAccountLogin{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		if mf != nil {
 			fmt.Println("Failed to login: ", mf.Reason)
 			dialog.ShowError(errors.New(mf.Reason), s.window)
 			return
 		}
-		next(&play.State{})
 	})
 
 	s.On(&messages.MessageAccountPlayers{}, &messages.MessageAccountLogin{}, func(msg messages.Message, failure *messages.MessageFailure) {
@@ -51,6 +64,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			dialog.ShowError(errors.New(failure.Reason), s.window)
 			return
 		}
+
+		if s.app.Preferences().Bool(key + "-remember") {
+			s.app.Preferences().SetString(key+"-account", usernameEntry.Text)
+			s.app.Preferences().SetString(key+"-password", passwordEntry.Text)
+		} else {
+			// Clear it out.
+			s.app.Preferences().SetString(key+"-account", "")
+			s.app.Preferences().SetString(key+"-password", "")
+		}
+
 		m := msg.(*messages.MessageAccountPlayers)
 		next(chars.NewState(s.conn, m.Characters, s.faces))
 	})
@@ -63,13 +86,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		s.faces = append(s.faces, *m)
 	})
 
-	usernameEntry := widget.NewEntry()
-	passwordEntry := widget.NewPasswordEntry()
-
 	form := &widget.Form{
 		Items: []*widget.FormItem{
 			{Text: "Username", Widget: usernameEntry},
 			{Text: "Password", Widget: passwordEntry},
+			{Text: "Remember", Widget: rememberCheck},
 		},
 		OnSubmit: func() {
 			s.conn.Send(&messages.MessageAccountLogin{Account: usernameEntry.Text, Password: passwordEntry.Text})
@@ -84,6 +105,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 // SetWindow sets the window -- used for showing errors.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
+}
+
+// SetApp sets the app.
+func (s *State) SetApp(app fyne.App) {
+	s.app = app
 }
 
 // Container returns the container.
