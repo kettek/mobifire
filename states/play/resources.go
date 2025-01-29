@@ -20,3 +20,10 @@ var resourceMarkPng = &fyne.StaticResource{
 	StaticName:    "mark",
 	StaticContent: sourceMarkPng,
 }
+
+//go:embed icon_inventory.png
+var sourceInventoryPng []byte
+var resourceInventoryPng = &fyne.StaticResource{
+	StaticName:    "inventory",
+	StaticContent: sourceInventoryPng,
+}

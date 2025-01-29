@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states"
@@ -74,17 +75,32 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.mb = newMultiBoard(11, 11, 8)
 
 	// TODO: Make our own custom hotkey sort of thing.
-	toolbar := widget.NewToolbar(
-		widget.NewToolbarAction(resourceMarkPng, func() {
+	toolbar := NewToolbar(
+		widget.NewToolbarAction(resourceInventoryPng, func() {
 			fmt.Println("Toolbar action 1")
 		}),
-		widget.NewToolbarAction(resourceMarkPng, func() {
+		widget.NewToolbarAction(resourceInventoryPng, func() {
 			fmt.Println("Toolbar action 2")
+		}),
+		widget.NewToolbarAction(resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 3")
+		}),
+		widget.NewToolbarAction(resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 4")
+		}),
+		widget.NewToolbarAction(resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 5")
 		}),
 	)
 
-	borderContainer := container.NewBorder(nil, nil, messagesList, toolbar, s.mb.container)
-	s.container = borderContainer
+	toolbarSized := container.NewThemeOverride(toolbar, myTheme{})
+	toolbars := container.NewHBox(layout.NewSpacer(), toolbarSized)
+
+	thumbPad := &thumbpadWidget{}
+	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
+
+	//borderContainer := container.NewBorder(nil, nil, thumbPadContainer, toolbarSized, container.New(layout.NewCenterLayout(), s.mb.container))
+	s.container = container.New(&gameLayout{window: s.window}, thumbPadContainer, s.mb.container, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 
