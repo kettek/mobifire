@@ -12,7 +12,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/join"
-	"github.com/kettek/mobifire/states/play"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/messages"
 )
@@ -28,6 +27,7 @@ type State struct {
 	next       func(states.State)
 	container  *fyne.Container
 	serverList *fyne.Container
+	app        fyne.App
 }
 
 // Enter sets up the base UI containers and loads the server list.
@@ -35,9 +35,17 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.next = next
 
 	// TODO: Make button rejoin last joined.
-	button := widget.NewButton("nextie", func() {
-		next(&play.State{})
+	button := widget.NewButton("rejoin "+s.app.Preferences().StringWithFallback("lastServer", ""), func() {
+		host := s.app.Preferences().StringWithFallback("lastServer", "")
+		port := s.app.Preferences().IntWithFallback("lastPort", 13327)
+		s.next(&join.State{
+			Hostname: host,
+			Port:     port,
+		})
 	})
+	if s.app.Preferences().StringWithFallback("lastServer", "") == "" {
+		button.Disable()
+	}
 
 	s.serverList = container.New(layout.NewVBoxLayout())
 
@@ -80,6 +88,8 @@ func (s *State) refreshMetaservers() {
 		infoLabels := container.New(layout.NewVBoxLayout(), infoText, infoServer)
 
 		joinButton := widget.NewButton("Join", func() {
+			s.app.Preferences().SetString("lastServer", e.Hostname)
+			s.app.Preferences().SetInt("lastPort", e.Port)
 			s.next(&join.State{
 				Hostname: e.Hostname,
 				Port:     e.Port,
@@ -120,4 +130,8 @@ func (s *State) requestServers(metaserver string) (messages.ServerEntries, error
 	}
 
 	return serverEntries, nil
+}
+
+func (s *State) SetApp(app fyne.App) {
+	s.app = app
 }

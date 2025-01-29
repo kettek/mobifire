@@ -30,3 +30,9 @@ type StateWithWindow interface {
 	State
 	SetWindow(window fyne.Window)
 }
+
+// StateWithApp is an extension of State that allows setting the fyne app (needed for Preferences)
+type StateWithApp interface {
+	State
+	SetApp(app fyne.App)
+}

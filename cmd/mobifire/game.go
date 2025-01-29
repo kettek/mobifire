@@ -45,6 +45,11 @@ func (g *Game) SetNext(state states.State) {
 			s.SetWindow(g.window)
 		}
 
+		// Set app if interface conforms.
+		if a, ok := state.(states.StateWithApp); ok {
+			a.SetApp(g.app)
+		}
+
 		g.priorState = priorState
 		g.leaveCb = state.Enter(g.SetNext)
 		g.window.SetContent(state.Container())
@@ -56,7 +61,7 @@ func (g *Game) SetNext(state states.State) {
 
 func NewGame() *Game {
 	g := &Game{
-		app: app.New(),
+		app: app.NewWithID("net.kettek.mobifire"),
 	}
 	g.window = g.app.NewWindow("Crossfire Mobile")
 	g.window.Resize(fyne.NewSize(800, 360))
