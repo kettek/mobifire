@@ -64,7 +64,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			FaceCache: struct {
 				Use   bool
 				Value bool
-			}{Use: true, Value: false}, // Changed to false so I can get _all_ the delicious PNGs.
+			}{Use: true, Value: true}, // Changed to false so I can get _all_ the delicious PNGs.
 			LoginMethod: struct {
 				Use   bool
 				Value string

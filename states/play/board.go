@@ -7,6 +7,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+type boardPendingImage struct {
+	X   int
+	Y   int
+	Z   int
+	Num uint16
+}
+
 type multiBoard struct {
 	fyne.Layout
 	container *fyne.Container
@@ -24,21 +31,9 @@ func newMultiBoard(w, h, count int) *multiBoard {
 		boardContainers = append(boardContainers, board.Container)
 		b.boards = append(b.boards, board)
 
-		if i == 0 {
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					board.SetImage(x, y, resourceBlankPng)
-					board.SetHidden(x, y, false)
-				}
-			}
-		} else if i == 1 {
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					if x == 0 || y == 0 || x == w-1 || y == h-1 {
-						board.SetImage(x, y, resourceMarkPng)
-						board.SetHidden(x, y, false)
-					}
-				}
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				board.SetImage(x, y, nil)
 			}
 		}
 	}
@@ -46,6 +41,24 @@ func newMultiBoard(w, h, count int) *multiBoard {
 	b.container = container.New(layout.NewStackLayout(), boardContainers...)
 
 	return b
+}
+
+func (b *multiBoard) SetCell(x, y, z int, img fyne.Resource) {
+	b.boards[z].SetImage(x, y, img)
+}
+
+func (b *multiBoard) SetCells(x, y int, img fyne.Resource) {
+	for _, board := range b.boards {
+		board.SetImage(x, y, img)
+	}
+}
+
+func (b *multiBoard) ClearBoard(z int) {
+	for y := 0; y < b.boards[z].Height; y++ {
+		for x := 0; x < b.boards[z].Width; x++ {
+			b.SetCell(x, y, z, nil)
+		}
+	}
 }
 
 type board struct {
@@ -78,7 +91,11 @@ func newBoard(w, h int) *board {
 	return b
 }
 
-func (b *board) SetImage(x, y int, img *fyne.StaticResource) {
+func (b *board) SetImage(x, y int, img fyne.Resource) {
+	if img == nil {
+		b.SetHidden(x, y, true)
+		return
+	}
 	b.Tiles[y][x].SetResource(img)
 	// Automatically unhide.
 	b.SetHidden(x, y, false)

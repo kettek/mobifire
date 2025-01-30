@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/play/layouts"
@@ -18,12 +19,13 @@ import (
 // State provides the actual play state of the game.
 type State struct {
 	messages.MessageHandler
-	window    fyne.Window
-	container *fyne.Container
-	mb        *multiBoard
-	character string
-	conn      *net.Connection
-	messages  []messages.MessageDrawExtInfo
+	window        fyne.Window
+	container     *fyne.Container
+	mb            *multiBoard
+	character     string
+	conn          *net.Connection
+	messages      []messages.MessageDrawExtInfo
+	pendingImages []boardPendingImage
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -50,7 +52,51 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	// Image and animation message processing.
 	s.On(&messages.MessageFace2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageFace2)
-		fmt.Println("got face", msg)
+		if _, ok := data.GetFace(int(msg.Num)); !ok {
+			s.conn.Send(&messages.MessageAskFace{Face: uint32(msg.Num)})
+		}
+	})
+
+	s.On(&messages.MessageImage2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageImage2)
+		data.AddFaceImage(*msg)
+		for i := len(s.pendingImages) - 1; i >= 0; i-- {
+			if s.pendingImages[i].Num == uint16(msg.Face) {
+				faceImage, _ := data.GetFace(int(msg.Face))
+				s.mb.SetCell(s.pendingImages[i].X, s.pendingImages[i].Y, s.pendingImages[i].Z, &faceImage)
+				s.pendingImages = append(s.pendingImages[:i], s.pendingImages[i+1:]...)
+			}
+		}
+	})
+
+	s.On(&messages.MessageMap2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageMap2)
+
+		for _, m := range msg.Coords {
+			if len(m.Data) == 0 {
+				// TODO ???
+				continue
+			}
+			for _, c := range m.Data {
+				switch d := c.(type) {
+				case *messages.MessageMap2CoordDataClear:
+					s.mb.SetCells(m.X, m.Y, nil)
+				case *messages.MessageMap2CoordDataClearLayer:
+					s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
+				case *messages.MessageMap2CoordDataImage:
+					if d.FaceNum == 0 {
+						s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
+						continue
+					}
+					faceImage, ok := data.GetFace(int(d.FaceNum))
+					if !ok {
+						s.pendingImages = append(s.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: d.FaceNum})
+						continue
+					}
+					s.mb.SetCell(m.X, m.Y, int(d.Layer), &faceImage)
+				}
+			}
+		}
 	})
 
 	// Text processing.

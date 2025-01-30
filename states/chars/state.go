@@ -3,6 +3,7 @@ package chars
 import (
 	"fmt"
 
+	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/play"
 
@@ -36,6 +37,16 @@ func NewState(conn *net.Connection, characters []messages.Character, faces []mes
 // Enter sets up the necessary state.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
+
+	// Request faces sent during login.
+	for _, face := range s.faces {
+		s.conn.Send(&messages.MessageAskFace{Face: uint32(face.Num)})
+	}
+
+	s.On(&messages.MessageImage2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageImage2)
+		data.AddFaceImage(*msg)
+	})
 
 	// Selection
 	characterList := container.New(layout.NewVBoxLayout())
