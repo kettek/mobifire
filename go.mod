@@ -27,7 +27,7 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/kettek/go-multipath/v2 v2.0.0-alpha.11 // indirect
 	github.com/kettek/gobl v0.4.0 // indirect
-	github.com/kettek/termfire v0.0.0-20250126003125-1910273f5881 // indirect
+	github.com/kettek/termfire v0.0.0-20250130062346-a656e6cd846a // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
