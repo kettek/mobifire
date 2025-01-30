@@ -17,7 +17,10 @@ type thumbpadWidget struct {
 func (r *thumbpadWidget) CreateRenderer() fyne.WidgetRenderer {
 	r.ExtendBaseWidget(r)
 	return &thumbpadWidgetRenderer{
-		rect: canvas.NewRectangle(theme.PrimaryColor()),
+		rect: &canvas.Rectangle{
+			StrokeColor: theme.Color(theme.ColorNameForeground),
+			StrokeWidth: 1,
+		},
 	}
 }
 
