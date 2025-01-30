@@ -1,18 +1,17 @@
-package play
+package layouts
 
 import (
 	"fyne.io/fyne/v2"
 )
 
-type gameLayout struct {
-	window fyne.Window
+type Game struct {
 }
 
-func (l *gameLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+func (l *Game) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(0, 0)
 }
 
-func (l *gameLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+func (l *Game) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	if len(objects) != 3 {
 		return
 	}

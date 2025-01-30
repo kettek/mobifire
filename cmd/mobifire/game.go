@@ -65,7 +65,7 @@ func NewGame() *Game {
 	}
 	g.window = g.app.NewWindow("Crossfire Mobile")
 	g.window.Resize(fyne.NewSize(800, 360))
-	g.window.SetFixedSize(true)
+	//g.window.SetFixedSize(true)
 
 	// Set our initial state...
 	g.SetNext(&metaserver.State{})

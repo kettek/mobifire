@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states"
+	"github.com/kettek/mobifire/states/play/layouts"
 	"github.com/kettek/termfire/messages"
 )
 
@@ -93,14 +94,40 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}),
 	)
 
-	toolbarSized := container.NewThemeOverride(toolbar, myTheme{})
+	sizedTheme := myTheme{}
+
+	toolbarSized := container.NewThemeOverride(toolbar, sizedTheme)
 	toolbars := container.NewHBox(layout.NewSpacer(), toolbarSized)
 
 	thumbPad := &thumbpadWidget{}
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 
-	//borderContainer := container.NewBorder(nil, nil, thumbPadContainer, toolbarSized, container.New(layout.NewCenterLayout(), s.mb.container))
-	s.container = container.New(&gameLayout{window: s.window}, thumbPadContainer, s.mb.container, toolbars)
+	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 1")
+		}),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 1")
+		}),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 1")
+		}),
+	), sizedTheme)
+	leftAreaToolbarBot := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 1")
+		}),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 2")
+		}),
+		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+			fmt.Println("Toolbar action 3")
+		}),
+	), sizedTheme)
+
+	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
+
+	s.container = container.New(&layouts.Game{}, leftArea, s.mb.container, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 

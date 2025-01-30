@@ -23,7 +23,7 @@ func (m myTheme) Font(style fyne.TextStyle) fyne.Resource {
 
 func (m myTheme) Size(name fyne.ThemeSizeName) float32 {
 	if name == theme.SizeNameInlineIcon {
-		return theme.DefaultTheme().Size(name) * 3 // I guess
+		return theme.DefaultTheme().Size(name) * 2 // I guess
 	}
 	return theme.DefaultTheme().Size(name)
 }
