@@ -1,6 +1,8 @@
 package play
 
 import (
+	"math"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -20,14 +22,14 @@ type multiBoard struct {
 	boards    []*board
 }
 
-func newMultiBoard(w, h, count int) *multiBoard {
+func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 	b := &multiBoard{}
 
 	b.Layout = layout.NewStackLayout()
 
 	var boardContainers []fyne.CanvasObject
 	for i := 0; i < count; i++ {
-		board := newBoard(w, h)
+		board := newBoard(w, h, cellWidth, cellHeight)
 		boardContainers = append(boardContainers, board.Container)
 		b.boards = append(b.boards, board)
 
@@ -61,6 +63,13 @@ func (b *multiBoard) ClearBoard(z int) {
 	}
 }
 
+func (b *multiBoard) CalculateCells(size fyne.Size) (int, int) {
+	// ... I don't know if size is scaled or not.
+	rows := size.Width / float32(b.boards[0].CellWidth)
+	cols := size.Height / float32(b.boards[0].CellHeight)
+	return int(math.Round(float64(rows))), int(math.Round(float64(cols)))
+}
+
 type board struct {
 	Container  *fyne.Container
 	Tiles      [][]*tile
@@ -70,12 +79,12 @@ type board struct {
 	CellHeight int
 }
 
-func newBoard(w, h int) *board {
+func newBoard(w, h, cellWidth, cellHeight int) *board {
 	b := &board{
 		Width:      w,
 		Height:     h,
-		CellWidth:  32,
-		CellHeight: 32,
+		CellWidth:  cellWidth,
+		CellHeight: cellHeight,
 	}
 
 	for i := 0; i < h; i++ {

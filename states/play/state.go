@@ -119,7 +119,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	)
 	messagesList.HideSeparators = true
 
-	s.mb = newMultiBoard(11, 11, 8)
+	s.mb = newMultiBoard(11, 11, 8, 32, 32)
 
 	// TODO: Make our own custom hotkey sort of thing.
 	toolbar := NewToolbar(
