@@ -6,6 +6,8 @@ import (
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/play"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -64,7 +66,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	}
 
 	// Creation
-	creationContainer := container.New(layout.NewVBoxLayout(), widget.NewLabel("Create a new character!"))
+	creationContainer := s.setupCreation()
 
 	// Tabs
 	tabs := container.NewAppTabs(
@@ -80,6 +82,95 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	//s.container = container.New(layout.NewVBoxLayout(), characterList)
 
 	return nil
+}
+
+func (s *State) setupCreation() fyne.CanvasObject {
+	// Race
+	var races []messages.MessageReplyInfoDataRaceInfo
+
+	var racesCombo *widget.Select
+	var raceDescription *widget.Label
+
+	racesCombo = widget.NewSelect([]string{}, func(r string) {
+		// Update the race info!
+		raceDescription.SetText(races[racesCombo.SelectedIndex()].Description)
+	})
+
+	raceDescription = widget.NewLabel("")
+	raceDescription.Wrapping = fyne.TextWrapWord
+
+	raceContainer := container.NewBorder(racesCombo, nil, nil, nil, container.NewVScroll(raceDescription))
+
+	// Class
+	//var classes []messages.MessageReplyInfoDataClassInfo
+
+	var classCombo *widget.Select
+	var classDescription *widget.Label
+
+	classCombo = widget.NewSelect([]string{}, func(r string) {
+		// TODO
+	})
+
+	classDescription = widget.NewLabel("")
+	classDescription.Wrapping = fyne.TextWrapWord
+
+	classContainer := container.NewBorder(classCombo, nil, nil, nil, container.NewVScroll(classDescription))
+
+	// Name + Stats
+	var nameEntry *widget.Entry
+	var statsLabel *widget.Label
+	// TODO: Some sort of list of stats... we need to also get this from request_info.
+
+	nameEntry = widget.NewEntry()
+	nameEntry.PlaceHolder = "Name"
+
+	statsLabel = widget.NewLabel("Stats go here")
+
+	statsContainer := container.NewVScroll(container.New(layout.NewVBoxLayout(), nameEntry, statsLabel))
+
+	// Tabs
+
+	creationTabs := container.NewAppTabs()
+	creationTabs.Append(container.NewTabItem("Race", raceContainer))
+	creationTabs.Append(container.NewTabItem("Class", classContainer))
+	creationTabs.Append(container.NewTabItem("Stats & Name", statsContainer))
+
+	// Handle stuff
+
+	s.On(&messages.MessageReplyInfo{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageReplyInfo)
+		switch d := msg.Data.(type) {
+		case messages.MessageReplyInfoDataRaceList:
+			races = nil
+			racesCombo.Options = []string(d)
+			racesCombo.Refresh()
+			// It feels excessive, but we do want to have the race info, so I guess we just spam for each. (We'll replace the given options with their matching one)
+			for _, r := range d {
+				s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRaceInfo(r)})
+				// We also queue up races to be filled here -- might as well also re-use the message structure.
+				races = append(races, messages.MessageReplyInfoDataRaceInfo{
+					Arch: r,
+				})
+			}
+		case messages.MessageReplyInfoDataRaceInfo:
+			for i, r := range races {
+				if r.Arch == d.Arch {
+					caser := cases.Title(language.English)
+					// Eh... let's capitalize each starting letter in Name.
+					racesCombo.Options[i] = caser.String(d.Name)
+					races[i] = d // Store the full race as well.
+					break
+				}
+			}
+			racesCombo.Refresh()
+		}
+	})
+
+	// Send our requesties.
+	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRaceList{}})
+
+	return creationTabs
+	//return container.NewVScroll(container.New(layout.NewVBoxLayout(), racesCombo, raceDescription))
 }
 
 // SetWindow sets the window for dialog functions.
