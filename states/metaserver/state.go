@@ -49,7 +49,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	s.serverList = container.New(layout.NewVBoxLayout())
 
-	s.container = container.New(layout.NewVBoxLayout(), s.serverList, button)
+	s.container = container.NewBorder(nil, button, nil, nil, container.NewVScroll(s.serverList))
 
 	// Load servers on load, obv.
 	s.refreshMetaservers()

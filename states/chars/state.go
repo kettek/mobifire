@@ -69,13 +69,13 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	// Tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Create", creationContainer),
-		container.NewTabItem("Select", characterList),
+		container.NewTabItem("Select", container.NewVScroll(characterList)),
 	)
 	if len(s.characters) > 1 {
 		tabs.SelectIndex(1)
 	}
 
-	s.container = container.New(layout.NewVBoxLayout(), tabs)
+	s.container = container.NewBorder(nil, nil, nil, nil, tabs)
 
 	//s.container = container.New(layout.NewVBoxLayout(), characterList)
 
