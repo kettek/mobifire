@@ -4,6 +4,51 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+type FaceSet struct {
+	Set    int
+	Width  int
+	Height int
+	Faces  map[int]FaceImage
+}
+
+var faceSets = make(map[int]FaceSet)
+
+func AddFaceSet(set int, width, height int) {
+	faceSets[set] = FaceSet{
+		Set:    set,
+		Width:  width,
+		Height: height,
+		Faces:  make(map[int]FaceImage),
+	}
+}
+
+func GetFaceSet(set int, num int) (FaceImage, bool) {
+	faceSet, ok := faceSets[set]
+	if !ok {
+		return FaceImage{}, false
+	}
+	if num < 0 || num >= len(faceSet.Faces) {
+		return FaceImage{}, false
+	}
+	return faceSet.Faces[num], true
+}
+
+var faces = make(map[int]FaceImage)
+
+var currentFaceSet int
+
+func SetCurrentFaceSet(set int) {
+	if _, ok := faceSets[set]; !ok {
+		return
+	}
+	faces = faceSets[set].Faces
+	currentFaceSet = set
+}
+
+func CurrentFaceSet() FaceSet {
+	return faceSets[currentFaceSet]
+}
+
 // FaceImage is a merger of face and image, cuz why not.
 type FaceImage struct {
 	Num      uint16
@@ -25,8 +70,6 @@ func (f *FaceImage) Name() string {
 func (f *FaceImage) Content() []byte {
 	return f.Data
 }
-
-var faces = make(map[int]FaceImage)
 
 // GetFace returns a face from the face map.
 func GetFace(num int) (FaceImage, bool) {
