@@ -102,13 +102,13 @@ func (s *State) setupCreation() fyne.CanvasObject {
 	raceContainer := container.NewBorder(racesCombo, nil, nil, nil, container.NewVScroll(raceDescription))
 
 	// Class
-	//var classes []messages.MessageReplyInfoDataClassInfo
+	var classes []messages.MessageReplyInfoDataClassInfo
 
 	var classCombo *widget.Select
 	var classDescription *widget.Label
 
 	classCombo = widget.NewSelect([]string{}, func(r string) {
-		// TODO
+		classDescription.SetText(classes[classCombo.SelectedIndex()].Description)
 	})
 
 	classDescription = widget.NewLabel("")
@@ -163,11 +163,33 @@ func (s *State) setupCreation() fyne.CanvasObject {
 				}
 			}
 			racesCombo.Refresh()
+		case messages.MessageReplyInfoDataClassList:
+			classes = nil
+			classCombo.Options = []string(d)
+			classCombo.Refresh()
+			// Do the same as for races.
+			for _, c := range d {
+				s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoClassInfo(c)})
+				classes = append(classes, messages.MessageReplyInfoDataClassInfo{
+					Arch: c,
+				})
+			}
+		case messages.MessageReplyInfoDataClassInfo:
+			for i, c := range classes {
+				if c.Arch == d.Arch {
+					caser := cases.Title(language.English)
+					classCombo.Options[i] = caser.String(d.Name)
+					classes[i] = d
+					break
+				}
+			}
+			classCombo.Refresh()
 		}
 	})
 
 	// Send our requesties.
 	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRaceList{}})
+	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoClassList{}})
 
 	return creationTabs
 	//return container.NewVScroll(container.New(layout.NewVBoxLayout(), racesCombo, raceDescription))
