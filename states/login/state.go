@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
@@ -51,6 +52,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		s.app.Preferences().SetBool(key+"-remember", remember)
 	})
 	rememberCheck.SetChecked(s.app.Preferences().Bool(key + "-remember"))
+
+	rulesElement := widget.NewRichText()
 
 	var currentImageSet int
 	var imageSets []messages.MessageReplyInfoDataImageInfoSet
@@ -131,10 +134,36 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				imageSetCombo.Options = append(imageSetCombo.Options, set.Name)
 			}
 			imageSetCombo.SetSelected(imageSets[0].Name)
+		case messages.MessageReplyInfoDataRules:
+			var segments []widget.RichTextSegment
+			segments = append(segments, &widget.TextSegment{Text: "Rules", Style: widget.RichTextStyleHeading})
+
+			for _, rule := range strings.Split(string(data), "\n") {
+				// Really hacky support for [i] and [b]...
+				if strings.HasPrefix(rule, "[i]") {
+					txt := rule[3:]
+					if strings.HasSuffix(txt, "[/i]") {
+						txt = txt[:len(txt)-4]
+					}
+					segments = append(segments, &widget.TextSegment{Text: txt + "\n", Style: widget.RichTextStyleEmphasis})
+				} else if strings.HasPrefix(rule, "[b]") {
+					txt := rule[3:]
+					if strings.HasSuffix(txt, "[/b]") {
+						txt = txt[:len(txt)-4]
+					}
+					segments = append(segments, &widget.TextSegment{Text: txt + "\n", Style: widget.RichTextStyleStrong})
+				} else {
+					segments = append(segments, &widget.TextSegment{Text: rule})
+				}
+			}
+			rulesElement.Segments = segments
+			rulesElement.Refresh()
 		}
 	})
 	// Request the server's image info -- this is used for properly setting face images.
 	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoDataImageInfo{}})
+	// Request rules... seems reasonable enough.
+	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRules{}})
 
 	s.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m, ok := msg.(*messages.MessageFace2)
@@ -156,7 +185,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		},
 	}
 
-	s.container = container.NewBorder(nil, nil, nil, nil, form)
+	s.container = container.NewBorder(nil, nil, nil, rulesElement, form)
 
 	return nil
 }
