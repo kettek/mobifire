@@ -35,6 +35,10 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.container = container.New(layout.NewCenterLayout(), label)
 
 	s.conn = &net.Connection{}
+	// Set an OnLoss handler to boot back to the top state on failure... probably should show an error...
+	s.conn.OnLoss = func(err error) {
+		next(nil)
+	}
 
 	go func() {
 		if err := s.conn.Join(serverName); err != nil {

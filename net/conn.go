@@ -13,6 +13,7 @@ import (
 // Connection is a connection to a server.
 type Connection struct {
 	net.Conn
+	OnLoss         func(error)
 	OnMessage      func(messages.Message)
 	queuedMessages []messages.Message
 }
@@ -47,21 +48,36 @@ func (c *Connection) readLoop() {
 		var length [2]byte
 		n, err := c.Read(length[:])
 		if err != nil || n != 2 {
-			fmt.Println("Error reading message length:", err)
 			c.Close()
+			err = errors.Join(err, errors.New("failed to read message length"))
+			if c.OnLoss != nil {
+				c.OnLoss(err)
+			} else {
+				fmt.Println(err)
+			}
 			return
 		}
 		buf := make([]byte, (int(length[0])<<8)|int(length[1]))
 		n, err = c.Read(buf)
 		if err != nil || n != len(buf) {
-			fmt.Println("Error reading message:", err)
 			c.Close()
+			err = errors.Join(err, errors.New("failed to read message"))
+			if c.OnLoss != nil {
+				c.OnLoss(err)
+			} else {
+				fmt.Println(err)
+			}
 			return
 		}
 		message, err := messages.UnmarshalMessage(buf)
 		if err != nil {
-			fmt.Println("Error unmarshalling message:", err)
 			c.Close()
+			err = errors.Join(err, errors.New("failed to unmarshal message"))
+			if c.OnLoss != nil {
+				c.OnLoss(err)
+			} else {
+				fmt.Println(err)
+			}
 			return
 		}
 
