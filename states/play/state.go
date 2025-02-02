@@ -121,7 +121,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	// Use our current face set for the board... could we make setting the faceset dynamic...??
 	faceset := data.CurrentFaceSet()
-	s.mb = newMultiBoard(11, 11, 8, faceset.Width, faceset.Height)
+	s.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
 
 	// TODO: Make our own custom hotkey sort of thing.
 	toolbar := NewToolbar(
