@@ -47,12 +47,14 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 
 func (b *multiBoard) SetCell(x, y, z int, img fyne.Resource) {
 	b.boards[z].SetImage(x, y, img)
+	b.container.Refresh()
 }
 
 func (b *multiBoard) SetCells(x, y int, img fyne.Resource) {
 	for _, board := range b.boards {
 		board.SetImage(x, y, img)
 	}
+	b.container.Refresh()
 }
 
 func (b *multiBoard) ClearBoard(z int) {
@@ -61,6 +63,7 @@ func (b *multiBoard) ClearBoard(z int) {
 			b.SetCell(x, y, z, nil)
 		}
 	}
+	b.container.Refresh()
 }
 
 func (b *multiBoard) CalculateCells(size fyne.Size) (int, int) {
