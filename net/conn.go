@@ -50,22 +50,21 @@ func (c *Connection) readLoop() {
 		if err != nil || n != 2 {
 			c.Close()
 			err = errors.Join(err, errors.New("failed to read message length"))
+			fmt.Println(err)
 			if c.OnLoss != nil {
 				c.OnLoss(err)
-			} else {
-				fmt.Println(err)
 			}
 			return
 		}
-		buf := make([]byte, (int(length[0])<<8)|int(length[1]))
-		n, err = c.Read(buf)
-		if err != nil || n != len(buf) {
+		size := (int(length[0]) << 8) | int(length[1])
+		buf := make([]byte, size)
+		err = c.ReadBytes(buf, size)
+		if err != nil {
 			c.Close()
 			err = errors.Join(err, errors.New("failed to read message"))
+			fmt.Println(err)
 			if c.OnLoss != nil {
 				c.OnLoss(err)
-			} else {
-				fmt.Println(err)
 			}
 			return
 		}
@@ -73,10 +72,9 @@ func (c *Connection) readLoop() {
 		if err != nil {
 			c.Close()
 			err = errors.Join(err, errors.New("failed to unmarshal message"))
+			fmt.Println(err)
 			if c.OnLoss != nil {
 				c.OnLoss(err)
-			} else {
-				fmt.Println(err)
 			}
 			return
 		}
@@ -96,6 +94,20 @@ func (c *Connection) SetMessageHandler(handler func(messages.Message)) {
 		handler(message)
 	}
 	c.queuedMessages = nil
+}
+
+func (c *Connection) ReadBytes(buf []byte, size int) error {
+	pos := 0
+	for {
+		n, err := c.Read(buf[pos:])
+		if err != nil {
+			return err
+		}
+		pos += n
+		if pos == size {
+			return nil
+		}
+	}
 }
 
 // Send send a message.
