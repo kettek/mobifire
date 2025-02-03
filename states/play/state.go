@@ -3,6 +3,8 @@ package play
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -47,6 +49,28 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			next(states.Prior)
 		})
 		err.Show()
+	})
+
+	// Setup message handling.
+	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageSetup)
+		if msg.MapSize.Use {
+			parts := strings.Split(msg.MapSize.Value, "x")
+			if len(parts) != 2 {
+				fmt.Println("Invalid map size:", msg.MapSize.Value)
+				return
+			}
+			rows, err := strconv.Atoi(parts[0])
+			if err != nil {
+				fmt.Println("Invalid map size:", msg.MapSize.Value)
+				return
+			}
+			cols, err := strconv.Atoi(parts[1])
+			if err != nil {
+				fmt.Println("Invalid map size:", msg.MapSize.Value)
+			}
+			s.mb.SetBoardSize(rows, cols)
+		}
 	})
 
 	// Image and animation message processing.
@@ -123,6 +147,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	faceset := data.CurrentFaceSet()
 	s.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
 
+	// Setup hooks for requesting map resizes.
+	s.mb.onSizeChanged = func(rows, cols int) {
+		s.conn.Send(&messages.MessageSetup{
+			MapSize: struct {
+				Use   bool
+				Value string
+			}{Use: true, Value: fmt.Sprintf("%dx%d", rows, cols)},
+		})
+	}
+
 	// TODO: Make our own custom hotkey sort of thing.
 	toolbar := NewToolbar(
 		widget.NewToolbarAction(resourceInventoryPng, func() {
@@ -175,7 +209,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
-	s.container = container.New(&layouts.Game{}, leftArea, s.mb.container, toolbars)
+	s.container = container.New(&layouts.Game{}, s.mb.container, leftArea, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 

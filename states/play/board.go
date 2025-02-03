@@ -16,16 +16,25 @@ type boardPendingImage struct {
 	Num uint16
 }
 
+type fyneLayout = fyne.Layout
+
 type multiBoard struct {
-	fyne.Layout
-	container *fyne.Container
-	boards    []*board
+	fyneLayout
+	container             *fyne.Container
+	boards                []*board
+	lastWidth, lastHeight float32
+	cellWidth, cellHeight int
+	lastRows, lastCols    int
+	onSizeChanged         func(rows, cols int)
 }
 
 func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
-	b := &multiBoard{}
+	b := &multiBoard{
+		cellWidth:  cellWidth,
+		cellHeight: cellHeight,
+	}
 
-	b.Layout = layout.NewStackLayout()
+	b.fyneLayout = layout.NewStackLayout()
 
 	var boardContainers []fyne.CanvasObject
 	for i := 0; i < count; i++ {
@@ -40,9 +49,25 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 		}
 	}
 
-	b.container = container.New(layout.NewStackLayout(), boardContainers...)
+	b.container = container.New(b, boardContainers...)
 
 	return b
+}
+
+func (b *multiBoard) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if b.container.Size().Width != b.lastWidth || b.container.Size().Height != b.lastHeight {
+		b.lastWidth = b.container.Size().Width
+		b.lastHeight = b.container.Size().Height
+		rows, cols := b.CalculateCells(b.container.Size())
+		if rows != b.lastRows || cols != b.lastCols {
+			b.lastRows = rows
+			b.lastCols = cols
+			if b.onSizeChanged != nil {
+				b.onSizeChanged(rows, cols)
+			}
+		}
+	}
+	return b.fyneLayout.MinSize(objects)
 }
 
 func (b *multiBoard) SetCell(x, y, z int, img fyne.Resource) {
@@ -71,6 +96,16 @@ func (b *multiBoard) CalculateCells(size fyne.Size) (int, int) {
 	rows := size.Width / float32(b.boards[0].CellWidth)
 	cols := size.Height / float32(b.boards[0].CellHeight)
 	return int(math.Round(float64(rows))), int(math.Round(float64(cols)))
+}
+
+func (b *multiBoard) SetBoardSize(rows, cols int) {
+	// We can just fully re-create our boards since a new map is sent when map size changes.
+	b.container.RemoveAll()
+	for i := 0; i < len(b.boards); i++ {
+		b.boards[i] = newBoard(rows, cols, b.cellWidth, b.cellHeight)
+		b.container.Add(b.boards[i].Container)
+	}
+	b.container.Refresh()
 }
 
 type board struct {
