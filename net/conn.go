@@ -13,6 +13,7 @@ import (
 // Connection is a connection to a server.
 type Connection struct {
 	net.Conn
+	packetId       uint16
 	OnLoss         func(error)
 	OnMessage      func(messages.Message)
 	queuedMessages []messages.Message
@@ -119,4 +120,10 @@ func (c *Connection) Send(msg messages.Message) error {
 		return nil
 	}
 	return errors.New("empty message")
+}
+
+func (c *Connection) SendCommand(command string, repeat uint32) error {
+	msg := messages.MessageCommand{Command: command, Repeat: repeat, Packet: c.packetId}
+	c.packetId++
+	return c.Send(&msg)
 }
