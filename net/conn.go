@@ -79,7 +79,7 @@ func (c *Connection) readLoop() {
 			return
 		}
 
-		fmt.Printf("msg %+v\n", message)
+		//fmt.Printf("msg %+v\n", message)
 		if c.OnMessage != nil {
 			c.OnMessage(message)
 		} else {

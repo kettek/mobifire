@@ -77,7 +77,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageFace2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageFace2)
 		if _, ok := data.GetFace(int(msg.Num)); !ok {
-			s.conn.Send(&messages.MessageAskFace{Face: uint32(msg.Num)})
+			s.conn.Send(&messages.MessageAskFace{Face: int32(msg.Num)})
 		}
 	})
 
@@ -85,7 +85,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		msg := m.(*messages.MessageImage2)
 		data.AddFaceImage(*msg)
 		for i := len(s.pendingImages) - 1; i >= 0; i-- {
-			if s.pendingImages[i].Num == uint16(msg.Face) {
+			if s.pendingImages[i].Num == int16(msg.Face) {
 				faceImage, _ := data.GetFace(int(msg.Face))
 				s.mb.SetCell(s.pendingImages[i].X, s.pendingImages[i].Y, s.pendingImages[i].Z, &faceImage)
 				s.pendingImages = append(s.pendingImages[:i], s.pendingImages[i+1:]...)
@@ -103,24 +103,32 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			}
 			for _, c := range m.Data {
 				switch d := c.(type) {
-				case *messages.MessageMap2CoordDataClear:
+				case messages.MessageMap2CoordDataDarkness:
+					// TODO
+				case messages.MessageMap2CoordDataAnim:
+					// TODO
+				case messages.MessageMap2CoordDataClear:
 					s.mb.SetCells(m.X, m.Y, nil)
-				case *messages.MessageMap2CoordDataClearLayer:
+				case messages.MessageMap2CoordDataClearLayer:
 					s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
-				case *messages.MessageMap2CoordDataImage:
+				case messages.MessageMap2CoordDataImage:
 					if d.FaceNum == 0 {
 						s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
 						continue
 					}
 					faceImage, ok := data.GetFace(int(d.FaceNum))
 					if !ok {
-						s.pendingImages = append(s.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: d.FaceNum})
+						s.pendingImages = append(s.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: int16(d.FaceNum)})
 						continue
 					}
 					s.mb.SetCell(m.X, m.Y, int(d.Layer), &faceImage)
 				}
 			}
 		}
+	})
+
+	s.On(&messages.MessageNewMap{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		s.mb.Clear()
 	})
 
 	// Text processing.

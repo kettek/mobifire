@@ -52,7 +52,7 @@ func CurrentFaceSet() FaceSet {
 // FaceImage is a merger of face and image, cuz why not.
 type FaceImage struct {
 	Num      uint16
-	Set      uint8
+	Set      int8
 	Width    int
 	Height   int
 	Data     []byte
@@ -85,7 +85,7 @@ func AddFace(face messages.MessageFace2) bool {
 	}
 	faces[int(face.Num)] = FaceImage{
 		Num:      uint16(face.Num),
-		Set:      uint8(face.SetNum),
+		Set:      int8(face.SetNum),
 		name:     face.Name,
 		Checksum: face.Checksum,
 		pending:  true,

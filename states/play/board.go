@@ -13,7 +13,7 @@ type boardPendingImage struct {
 	X   int
 	Y   int
 	Z   int
-	Num uint16
+	Num int16
 }
 
 type fyneLayout = fyne.Layout
@@ -82,12 +82,15 @@ func (b *multiBoard) SetCells(x, y int, img fyne.Resource) {
 	b.container.Refresh()
 }
 
-func (b *multiBoard) ClearBoard(z int) {
-	for y := 0; y < b.boards[z].Height; y++ {
-		for x := 0; x < b.boards[z].Width; x++ {
-			b.SetCell(x, y, z, nil)
-		}
+func (b *multiBoard) Clear() {
+	for _, board := range b.boards {
+		board.Clear()
 	}
+	b.container.Refresh()
+}
+
+func (b *multiBoard) ClearBoard(z int) {
+	b.boards[z].Clear()
 	b.container.Refresh()
 }
 
@@ -179,6 +182,14 @@ func (b *board) Flatten() []fyne.CanvasObject {
 		}
 	}
 	return objects
+}
+
+func (b *board) Clear() {
+	for y := 0; y < b.Height; y++ {
+		for x := 0; x < b.Width; x++ {
+			b.SetImage(x, y, nil)
+		}
+	}
 }
 
 type tile struct {

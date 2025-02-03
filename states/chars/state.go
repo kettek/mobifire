@@ -42,7 +42,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	// Request faces sent during login.
 	for _, face := range s.faces {
-		s.conn.Send(&messages.MessageAskFace{Face: uint32(face.Num)})
+		s.conn.Send(&messages.MessageAskFace{Face: int32(face.Num)})
 	}
 
 	s.On(&messages.MessageImage2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
