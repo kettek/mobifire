@@ -190,6 +190,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	toolbars := container.NewHBox(layout.NewSpacer(), toolbarSized)
 
 	thumbPad := &thumbpadWidget{}
+	thumbPad.onCommand = func(cmd string) {
+		s.conn.SendCommand(cmd, 0)
+	}
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 
 	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(3),

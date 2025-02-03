@@ -141,6 +141,10 @@ func newBoard(w, h, cellWidth, cellHeight int) *board {
 	return b
 }
 
+func (b *board) Shift(dx, dy int) {
+	// TOOD: ... something... I think we need to make board a completely custom widget that handles all image drawing...
+}
+
 func (b *board) SetImage(x, y int, img fyne.Resource) {
 	if img == nil {
 		b.SetHidden(x, y, true)

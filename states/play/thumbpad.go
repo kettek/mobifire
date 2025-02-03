@@ -12,6 +12,10 @@ import (
 
 type thumbpadWidget struct {
 	widget.BaseWidget
+	dragging  bool
+	startPos  fyne.Position
+	deltaPos  fyne.Position
+	onCommand func(cmd string)
 }
 
 func (r *thumbpadWidget) CreateRenderer() fyne.WidgetRenderer {
@@ -37,12 +41,54 @@ func (r *thumbpadWidget) TappedSecondary(event *fyne.PointEvent) {
 	log.Println("TappedSecondary", event)
 }
 
+func (r *thumbpadWidget) command(cmd string) {
+	if r.onCommand != nil {
+		r.onCommand(cmd)
+	}
+}
+
 func (r *thumbpadWidget) Dragged(event *fyne.DragEvent) {
-	log.Println("Dragged", event)
+	if !r.dragging {
+		r.startPos = event.Position
+		r.dragging = true
+	} else {
+		r.deltaPos = fyne.NewPos(event.Position.X-r.startPos.X, event.Position.Y-r.startPos.Y)
+		dirX := 0
+		dirY := 0
+		if r.deltaPos.X < -20 {
+			dirX = -1
+		} else if r.deltaPos.X > 20 {
+			dirX = 1
+		}
+		if r.deltaPos.Y < -20 {
+			dirY = -1
+		} else if r.deltaPos.Y > 20 {
+			dirY = 1
+		}
+		// TODO: commands need to have some sort of throttling, as we probably don't want to spam the server per drag event.
+		if dirX == -1 && dirY == -1 {
+			r.command("northwest")
+		} else if dirX == 0 && dirY == -1 {
+			r.command("north")
+		} else if dirX == 1 && dirY == -1 {
+			r.command("northeast")
+		} else if dirX == -1 && dirY == 0 {
+			r.command("west")
+		} else if dirX == 1 && dirY == 0 {
+			r.command("east")
+		} else if dirX == -1 && dirY == 1 {
+			r.command("southwest")
+		} else if dirX == 0 && dirY == 1 {
+			r.command("south")
+		} else if dirX == 1 && dirY == 1 {
+			r.command("southeast")
+		}
+		//r.Refresh() ???
+	}
 }
 
 func (r *thumbpadWidget) DragEnd() {
-	log.Println("DragEnd")
+	r.dragging = false
 }
 
 var _ fyne.WidgetRenderer = (*thumbpadWidgetRenderer)(nil)
