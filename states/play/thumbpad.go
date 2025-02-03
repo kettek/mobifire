@@ -15,6 +15,8 @@ type thumbpadWidget struct {
 	dragging  bool
 	startPos  fyne.Position
 	deltaPos  fyne.Position
+	lastDirX  int
+	lastDirY  int
 	onCommand func(cmd string)
 }
 
@@ -34,7 +36,43 @@ func (r *thumbpadWidget) MinSize() fyne.Size {
 }
 
 func (r *thumbpadWidget) Tapped(event *fyne.PointEvent) {
-	log.Println("Tapped", event)
+	dirX := 0
+	dirY := 0
+	w := r.Size().Width
+	h := r.Size().Height
+	buttonWidth := w / 3
+	buttonHeight := h / 3
+
+	if event.Position.Y < buttonHeight {
+		dirY = -1
+	}
+	if event.Position.Y > h-buttonHeight {
+		dirY = 1
+	}
+	if event.Position.X < buttonWidth {
+		dirX = -1
+	}
+	if event.Position.X > w-buttonWidth {
+		dirX = 1
+	}
+
+	if dirX == -1 && dirY == -1 {
+		r.command("northwest")
+	} else if dirX == 0 && dirY == -1 {
+		r.command("north")
+	} else if dirX == 1 && dirY == -1 {
+		r.command("northeast")
+	} else if dirX == -1 && dirY == 0 {
+		r.command("west")
+	} else if dirX == 1 && dirY == 0 {
+		r.command("east")
+	} else if dirX == -1 && dirY == 1 {
+		r.command("southwest")
+	} else if dirX == 0 && dirY == 1 {
+		r.command("south")
+	} else if dirX == 1 && dirY == 1 {
+		r.command("southeast")
+	}
 }
 
 func (r *thumbpadWidget) TappedSecondary(event *fyne.PointEvent) {
@@ -51,6 +89,7 @@ func (r *thumbpadWidget) Dragged(event *fyne.DragEvent) {
 	if !r.dragging {
 		r.startPos = event.Position
 		r.dragging = true
+		r.command("run")
 	} else {
 		r.deltaPos = fyne.NewPos(event.Position.X-r.startPos.X, event.Position.Y-r.startPos.Y)
 		dirX := 0
@@ -66,29 +105,38 @@ func (r *thumbpadWidget) Dragged(event *fyne.DragEvent) {
 			dirY = 1
 		}
 		// TODO: commands need to have some sort of throttling, as we probably don't want to spam the server per drag event.
-		if dirX == -1 && dirY == -1 {
-			r.command("northwest")
-		} else if dirX == 0 && dirY == -1 {
-			r.command("north")
-		} else if dirX == 1 && dirY == -1 {
-			r.command("northeast")
-		} else if dirX == -1 && dirY == 0 {
-			r.command("west")
-		} else if dirX == 1 && dirY == 0 {
-			r.command("east")
-		} else if dirX == -1 && dirY == 1 {
-			r.command("southwest")
-		} else if dirX == 0 && dirY == 1 {
-			r.command("south")
-		} else if dirX == 1 && dirY == 1 {
-			r.command("southeast")
+		if dirX != r.lastDirX || dirY != r.lastDirY {
+			if dirX == -1 && dirY == -1 {
+				r.command("northwest")
+			} else if dirX == 0 && dirY == -1 {
+				r.command("north")
+			} else if dirX == 1 && dirY == -1 {
+				r.command("northeast")
+			} else if dirX == -1 && dirY == 0 {
+				r.command("west")
+			} else if dirX == 1 && dirY == 0 {
+				r.command("east")
+			} else if dirX == -1 && dirY == 1 {
+				r.command("southwest")
+			} else if dirX == 0 && dirY == 1 {
+				r.command("south")
+			} else if dirX == 1 && dirY == 1 {
+				r.command("southeast")
+			}
+			r.lastDirX = dirX
+			r.lastDirY = dirY
 		}
 		//r.Refresh() ???
 	}
 }
 
 func (r *thumbpadWidget) DragEnd() {
-	r.dragging = false
+	if r.dragging {
+		r.command("run_stop")
+		r.dragging = false
+		r.lastDirX = 0
+		r.lastDirY = 0
+	}
 }
 
 var _ fyne.WidgetRenderer = (*thumbpadWidgetRenderer)(nil)
