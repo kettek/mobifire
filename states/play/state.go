@@ -344,7 +344,14 @@ type dialogContainer struct {
 
 func (d *dialogContainer) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	size := d.window.Canvas().Size()
-	return fyne.NewSize(size.Width/2, size.Height/2)
+	// Not sure if we have a flag somewhere for landscape vs. portrait, but...
+	padding := float32(0)
+	if size.Width > size.Height {
+		padding = size.Height / 2
+	} else {
+		padding = size.Width / 2
+	}
+	return fyne.NewSize(size.Width-padding, size.Height-padding)
 }
 
 func (d *dialogContainer) Layout(objects []fyne.CanvasObject, size fyne.Size) {
