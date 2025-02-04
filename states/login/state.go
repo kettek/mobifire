@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
@@ -123,12 +122,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	s.On(&messages.MessageReplyInfo{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageReplyInfo)
-		switch data := m.Data.(type) {
+		switch d := m.Data.(type) {
 		case messages.MessageReplyInfoDataImageInfo:
-			slices.SortStableFunc(data.Sets, func(a, b messages.MessageReplyInfoDataImageInfoSet) int {
+			slices.SortStableFunc(d.Sets, func(a, b messages.MessageReplyInfoDataImageInfoSet) int {
 				return a.Index - b.Index
 			})
-			imageSets = data.Sets
+			imageSets = d.Sets
 			imageSetCombo.Options = []string{}
 			for _, set := range imageSets {
 				imageSetCombo.Options = append(imageSetCombo.Options, set.Name)
@@ -138,24 +137,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			var segments []widget.RichTextSegment
 			segments = append(segments, &widget.TextSegment{Text: "Rules", Style: widget.RichTextStyleHeading})
 
-			for _, rule := range strings.Split(string(data), "\n") {
-				// Really hacky support for [i] and [b]...
-				if strings.HasPrefix(rule, "[i]") {
-					txt := rule[3:]
-					if strings.HasSuffix(txt, "[/i]") {
-						txt = txt[:len(txt)-4]
-					}
-					segments = append(segments, &widget.TextSegment{Text: txt + "\n", Style: widget.RichTextStyleEmphasis})
-				} else if strings.HasPrefix(rule, "[b]") {
-					txt := rule[3:]
-					if strings.HasSuffix(txt, "[/b]") {
-						txt = txt[:len(txt)-4]
-					}
-					segments = append(segments, &widget.TextSegment{Text: txt + "\n", Style: widget.RichTextStyleStrong})
-				} else {
-					segments = append(segments, &widget.TextSegment{Text: rule})
-				}
-			}
+			segments = append(segments, data.TextToRichTextSegments(string(d))...)
 			rulesElement.Segments = segments
 			rulesElement.Refresh()
 		}

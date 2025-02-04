@@ -355,17 +355,7 @@ func (d *dialogContainer) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 // ShowTextDialog shows a near fullscreen dialog, wow.
 func (s *State) ShowTextDialog(title string, content string) {
-	var segments []widget.RichTextSegment
-	for _, line := range strings.Split(content, "\n") {
-		var style widget.RichTextStyle
-		if strings.HasPrefix(line, "[fixed]") {
-			line = line[7:]
-			style = widget.RichTextStyleCodeBlock
-		} else {
-			style = widget.RichTextStyleParagraph
-		}
-		segments = append(segments, &widget.TextSegment{Text: line, Style: style})
-	}
+	segments := data.TextToRichTextSegments(content)
 
 	text := widget.NewRichText(segments...)
 	text.Wrapping = fyne.TextWrapWord
