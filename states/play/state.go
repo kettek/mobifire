@@ -54,8 +54,20 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
-		{Name: "who", OnActivate: func() { s.conn.SendCommand("who", 0) }},
-		{Name: "statistics", OnActivate: func() { s.conn.SendCommand("statistics", 0) }},
+		{Name: "who", OnActivate: func() { s.conn.SendCommand("who", 0) }, OnMessage: func(msg *messages.MessageDrawExtInfo) bool {
+			if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandWho {
+				dialog.ShowInformation("Who", msg.Message, s.window)
+				return true
+			}
+			return false
+		}},
+		{Name: "statistics", OnActivate: func() { s.conn.SendCommand("statistics", 0) }, OnMessage: func(msg *messages.MessageDrawExtInfo) bool {
+			if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandStatistics {
+				dialog.ShowInformation("Statistics", msg.Message, s.window)
+				return true
+			}
+			return false
+		}},
 	}
 
 	// Setup message handling.
@@ -155,6 +167,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	lastVOffset := float32(0)
 	s.On(&messages.MessageDrawExtInfo{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageDrawExtInfo)
+
+		// Check if a command should handle this.
+		if msg.Type == messages.MessageTypeCommand {
+			for _, c := range s.commandsManager.commands {
+				if c.OnMessage != nil && c.OnMessage(msg) {
+					return
+				}
+			}
+		}
+
 		if lastVOffset == 0 {
 			lastVOffset = messagesList.GetScrollOffset()
 		}

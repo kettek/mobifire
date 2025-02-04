@@ -1,10 +1,14 @@
 package play
 
-import "fyne.io/fyne/v2"
+import (
+	"fyne.io/fyne/v2"
+	"github.com/kettek/termfire/messages"
+)
 
 type command struct {
 	Name       string
 	OnActivate func()
+	OnMessage  func(msg *messages.MessageDrawExtInfo) bool
 }
 
 type commandsManager struct {
