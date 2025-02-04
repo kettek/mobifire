@@ -131,13 +131,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		s.mb.Clear()
 	})
 
-	// Text processing.
-	s.On(&messages.MessageDrawExtInfo{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageDrawExtInfo)
-		s.messages = append(s.messages, *msg)
-		fmt.Println("got draw ext info", msg)
-	})
-
 	messagesList := widget.NewList(
 		func() int {
 			return len(s.messages)
@@ -150,6 +143,24 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		},
 	)
 	messagesList.HideSeparators = true
+
+	// Messages.
+	lastVOffset := float32(0)
+	s.On(&messages.MessageDrawExtInfo{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageDrawExtInfo)
+		if lastVOffset == 0 {
+			lastVOffset = messagesList.GetScrollOffset()
+		}
+		// Automatically scroll to end if user has not scrolled up.
+		if messagesList.GetScrollOffset() == lastVOffset {
+			s.messages = append(s.messages, *msg)
+			messagesList.Refresh()
+			messagesList.ScrollToBottom()
+			lastVOffset = messagesList.GetScrollOffset()
+		} else {
+			messagesList.Refresh()
+		}
+	})
 
 	// Use our current face set for the board... could we make setting the faceset dynamic...??
 	faceset := data.CurrentFaceSet()
@@ -220,7 +231,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
-	s.container = container.New(&layouts.Game{}, s.mb.container, leftArea, toolbars)
+	s.container = container.New(&layouts.Game{
+		Board:    s.mb.container,
+		Messages: messagesList,
+		Left:     leftArea,
+		Right:    toolbars,
+	}, s.mb.container, container.NewThemeOverride(messagesList, sizedTheme), leftArea, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 

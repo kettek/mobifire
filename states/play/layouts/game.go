@@ -5,6 +5,10 @@ import (
 )
 
 type Game struct {
+	Board    fyne.CanvasObject
+	Left     fyne.CanvasObject
+	Right    fyne.CanvasObject
+	Messages fyne.CanvasObject
 }
 
 func (l *Game) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -12,19 +16,18 @@ func (l *Game) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (l *Game) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	if len(objects) != 3 {
-		return
-	}
-	centerSize := objects[0].MinSize()
+	centerSize := l.Board.MinSize()
 	//remainingWidth := size.Width - centerSize.Width
 	remainingWidth := size.Width / 2
 	leftWidth := remainingWidth / 2
 	rightWidth := remainingWidth - leftWidth
 
-	objects[1].Resize(fyne.NewSize(leftWidth, size.Height))
-	objects[1].Move(fyne.NewPos(0, 0))
-	objects[0].Resize(fyne.NewSize(size.Width, size.Height))
-	objects[0].Move(fyne.NewPos((size.Width-centerSize.Width)/2, (size.Height-centerSize.Height)/2))
-	objects[2].Resize(fyne.NewSize(rightWidth, size.Height))
-	objects[2].Move(fyne.NewPos(size.Width-rightWidth, 0))
+	l.Left.Resize(fyne.NewSize(leftWidth, size.Height))
+	l.Left.Move(fyne.NewPos(0, 0))
+	l.Board.Resize(fyne.NewSize(size.Width, size.Height))
+	l.Board.Move(fyne.NewPos((size.Width-centerSize.Width)/2, (size.Height-centerSize.Height)/2))
+	l.Right.Resize(fyne.NewSize(rightWidth, size.Height))
+	l.Right.Move(fyne.NewPos(size.Width-rightWidth, 0))
+	l.Messages.Resize(fyne.NewSize(remainingWidth-8, size.Height/6))
+	l.Messages.Move(fyne.NewPos((size.Width-remainingWidth)/2+4, size.Height-size.Height/6))
 }
