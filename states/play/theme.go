@@ -27,7 +27,7 @@ func (m myTheme) Font(style fyne.TextStyle) fyne.Resource {
 func (m myTheme) Size(name fyne.ThemeSizeName) float32 {
 	if name == theme.SizeNameInlineIcon {
 		return theme.DefaultTheme().Size(name) * 2 // I guess
-	} else if name == theme.SizeNameInnerPadding || name == theme.SizeNameLineSpacing {
+	} else if name == theme.SizeNameInnerPadding {
 		return 0
 	} else if name == theme.SizeNameSeparatorThickness {
 		return 0

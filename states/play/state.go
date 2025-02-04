@@ -21,13 +21,14 @@ import (
 // State provides the actual play state of the game.
 type State struct {
 	messages.MessageHandler
-	window        fyne.Window
-	container     *fyne.Container
-	mb            *multiBoard
-	character     string
-	conn          *net.Connection
-	messages      []messages.MessageDrawExtInfo
-	pendingImages []boardPendingImage
+	window          fyne.Window
+	container       *fyne.Container
+	mb              *multiBoard
+	commandsManager commandsManager
+	character       string
+	conn            *net.Connection
+	messages        []messages.MessageDrawExtInfo
+	pendingImages   []boardPendingImage
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -50,6 +51,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		})
 		err.Show()
 	})
+
+	// Setup commands to show in the commands list.
+	s.commandsManager.commands = []command{
+		{Name: "who", OnActivate: func() { s.conn.SendCommand("who", 0) }},
+		{Name: "statistics", OnActivate: func() { s.conn.SendCommand("statistics", 0) }},
+	}
 
 	// Setup message handling.
 	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
@@ -176,24 +183,31 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		})
 	}
 
-	// TODO: Make our own custom hotkey sort of thing.
-	toolbar := NewToolbar(
-		widget.NewToolbarAction(resourceInventoryPng, func() {
-			fmt.Println("Toolbar action 1")
-		}),
-		widget.NewToolbarAction(resourceInventoryPng, func() {
-			fmt.Println("Toolbar action 2")
-		}),
-		widget.NewToolbarAction(resourceInventoryPng, func() {
-			fmt.Println("Toolbar action 3")
-		}),
-		widget.NewToolbarAction(resourceInventoryPng, func() {
-			fmt.Println("Toolbar action 4")
-		}),
-		widget.NewToolbarAction(resourceInventoryPng, func() {
-			fmt.Println("Toolbar action 5")
-		}),
-	)
+	// Right-hand toolbar stuff
+	var toolbar *Toolbar
+	{
+		commandsPopup := widget.NewPopUpMenu(fyne.NewMenu("Commands", s.commandsManager.toMenuItems()...), s.window.Canvas())
+		// TODO: Make our own custom hotkey sort of thing.
+		var toolbarCmdAction *widget.ToolbarAction
+		toolbarCmdAction = widget.NewToolbarAction(resourceCommandsPng, func() {
+			commandsPopup.ShowAtRelativePosition(fyne.NewPos(-toolbarCmdAction.ToolbarObject().Size().Width, 0), toolbarCmdAction.ToolbarObject())
+		})
+		toolbar = NewToolbar(
+			toolbarCmdAction,
+			widget.NewToolbarAction(resourceInventoryPng, func() {
+				fmt.Println("Toolbar action 2")
+			}),
+			widget.NewToolbarAction(resourceInventoryPng, func() {
+				fmt.Println("Toolbar action 3")
+			}),
+			widget.NewToolbarAction(resourceInventoryPng, func() {
+				fmt.Println("Toolbar action 4")
+			}),
+			widget.NewToolbarAction(resourceInventoryPng, func() {
+				fmt.Println("Toolbar action 5")
+			}),
+		)
+	}
 
 	sizedTheme := myTheme{}
 
