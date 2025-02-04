@@ -36,6 +36,9 @@ func NewState(conn *net.Connection, character string) *State {
 	return &State{
 		conn:      conn,
 		character: character,
+		commandsManager: commandsManager{
+			conn: conn,
+		},
 	}
 }
 
@@ -54,21 +57,72 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
-		{Name: "who", OnActivate: func() { s.conn.SendCommand("who", 0) }, OnMessage: func(msg *messages.MessageDrawExtInfo) bool {
-			if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandWho {
-				dialog.ShowInformation("Who", msg.Message, s.window)
-				return true
-			}
-			return false
-		}},
-		{Name: "statistics", OnActivate: func() { s.conn.SendCommand("statistics", 0) }, OnMessage: func(msg *messages.MessageDrawExtInfo) bool {
-			if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandStatistics {
-				dialog.ShowInformation("Statistics", msg.Message, s.window)
-				return true
-			}
-			return false
-		}},
+		{
+			Name: "who",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("who", messages.MessageTypeCommand, messages.SubMessageTypeCommandWho)
+			},
+		},
+		{
+			Name: "statistics",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("statistics", messages.MessageTypeCommand, messages.SubMessageTypeCommandStatistics)
+			},
+		},
+		{
+			Name: "body",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("body", messages.MessageTypeCommand, messages.SubMessageTypeCommandBody)
+			},
+		},
+		{
+			Name: "inventory",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("inventory", messages.MessageTypeCommand, messages.SubMessageTypeCommandInventory)
+			},
+		},
+		{
+			Name: "maps",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("maps", messages.MessageTypeCommand, messages.SubMessageTypeCommandMaps)
+			},
+		},
+		{
+			Name: "hiscore",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("hiscore", messages.MessageTypeAdmin, messages.SubMessageTypeAdminHiscore)
+			},
+		},
+		{
+			Name: "news",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("news", messages.MessageTypeAdmin, messages.SubMessageTypeAdminNews)
+			},
+		},
+		{
+			Name: "rules",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("rules", messages.MessageTypeAdmin, messages.SubMessageTypeAdminRules)
+			},
+		},
+		{
+			Name: "motd",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("motd", messages.MessageTypeMOTD, 0)
+			},
+		},
 	}
+	s.commandsManager.OnCommandComplete = func(command string, text string) {
+		s.ShowTextDialog(command, text)
+	}
+
+	// Command response packet handling.
+	s.On(&messages.MessageCommandCompleted{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageCommandCompleted)
+		if s.commandsManager.checkCommandCompleted(msg) {
+			return
+		}
+	})
 
 	// Setup message handling.
 	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
@@ -168,13 +222,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageDrawExtInfo{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageDrawExtInfo)
 
-		// Check if a command should handle this.
-		if msg.Type == messages.MessageTypeCommand {
-			for _, c := range s.commandsManager.commands {
-				if c.OnMessage != nil && c.OnMessage(msg) {
-					return
-				}
-			}
+		if s.commandsManager.checkDrawExtInfo(msg) {
+			return
 		}
 
 		if lastVOffset == 0 {
@@ -287,4 +336,41 @@ func (s *State) Container() *fyne.Container {
 // SetWindow sets the window for dialog usage.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
+}
+
+type dialogContainer struct {
+	window fyne.Window
+}
+
+func (d *dialogContainer) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	size := d.window.Canvas().Size()
+	return fyne.NewSize(size.Width/2, size.Height/2)
+}
+
+func (d *dialogContainer) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Resize(size)
+	}
+}
+
+// ShowTextDialog shows a near fullscreen dialog, wow.
+func (s *State) ShowTextDialog(title string, content string) {
+	var segments []widget.RichTextSegment
+	for _, line := range strings.Split(content, "\n") {
+		var style widget.RichTextStyle
+		if strings.HasPrefix(line, "[fixed]") {
+			line = line[7:]
+			style = widget.RichTextStyleCodeBlock
+		} else {
+			style = widget.RichTextStyleParagraph
+		}
+		segments = append(segments, &widget.TextSegment{Text: line, Style: style})
+	}
+
+	text := widget.NewRichText(segments...)
+	text.Wrapping = fyne.TextWrapWord
+	cnt := &dialogContainer{
+		window: s.window,
+	}
+	dialog.ShowCustom(title, "Close", container.New(cnt, container.NewVScroll(text)), s.window)
 }
