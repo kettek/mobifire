@@ -82,6 +82,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			},
 		},
 		{
+			Name: "skills",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("skills", messages.MessageTypeSkill, messages.SubMessageTypeSkillList)
+			},
+		},
+		{
 			Name: "maps",
 			OnActivate: func() {
 				s.commandsManager.QuerySimpleCommand("maps", messages.MessageTypeCommand, messages.SubMessageTypeCommandMaps)
@@ -114,14 +120,31 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		{
 			Name: "help",
 			OnActivate: func() {
-				s.commandsManager.QuerySimpleCommandWithInput("help", messages.MessageTypeCommand, messages.SubMessageTypeCommandInfo)
+				s.commandsManager.QuerySimpleCommandWithInput("help", messages.MessageTypeCommand, messages.SubMessageTypeCommandInfo).Repeat = true
+			},
+		},
+		{
+			Name: "title",
+			OnActivate: func() {
+				q := s.commandsManager.QuerySimpleCommandWithInput("title", messages.MessageTypeCommand, messages.SubMessageTypeCommandConfig)
+				q.SubmitText = "Set Title"
 			},
 		},
 	}
-	s.commandsManager.OnCommandComplete = func(c queryCommand) {
+	s.commandsManager.OnCommandComplete = func(c *queryCommand) {
+		if c.Text == "" {
+			// Skip if no text was every received for this query.
+			return
+		}
 		if c.HasInput {
-			s.ShowTextDialogWithInput(c.Command, c.Text, func(cmd string) {
-				s.commandsManager.QueryComplexCommandWithInput(c.OriginalCommand+" "+cmd, c.OriginalCommand, c.MT, c.ST)
+			s.ShowTextDialogWithInput(c.Command, c.Text, c.SubmitText, func(cmd string) {
+				if c.Repeat {
+					query := *c
+					query.Command = c.OriginalCommand + " " + cmd
+					s.commandsManager.QueryCommand(query)
+				} else {
+					s.commandsManager.QueryComplexCommand(c.OriginalCommand+" "+cmd, c.OriginalCommand, c.MT, c.ST)
+				}
 			})
 		} else {
 			s.ShowTextDialog(c.OriginalCommand, c.Text)
@@ -385,7 +408,7 @@ func (s *State) ShowTextDialog(title string, content string) {
 }
 
 // ShowTextDialogWithInput is like ShowTextDialog, but with an input entry.
-func (s *State) ShowTextDialogWithInput(title string, content string, cb func(string)) {
+func (s *State) ShowTextDialogWithInput(title string, content string, submit string, cb func(string)) {
 	segments := data.TextToRichTextSegments(content)
 
 	text := widget.NewRichText(segments...)
@@ -394,7 +417,10 @@ func (s *State) ShowTextDialogWithInput(title string, content string, cb func(st
 		window: s.window,
 	}
 	entry := widget.NewEntry()
-	dialog.ShowCustomConfirm(title, "Submit", "Cancel", container.New(cnt, container.NewBorder(nil, entry, nil, nil, container.NewVScroll(text))), func(b bool) {
+	if submit == "" {
+		submit = "Submit"
+	}
+	dialog.ShowCustomConfirm(title, submit, "Cancel", container.New(cnt, container.NewBorder(nil, entry, nil, nil, container.NewVScroll(text))), func(b bool) {
 		if b {
 			cb(entry.Text)
 		}

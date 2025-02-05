@@ -15,8 +15,8 @@ type command struct {
 type commandsManager struct {
 	conn              *net.Connection
 	commands          []command
-	pendingQueries    []queryCommand
-	OnCommandComplete func(queryCommand)
+	pendingQueries    []*queryCommand
+	OnCommandComplete func(*queryCommand)
 }
 
 func (cm *commandsManager) toMenuItems() []*fyne.MenuItem {
@@ -56,9 +56,7 @@ func (cm *commandsManager) checkCommandCompleted(msg *messages.MessageCommandCom
 				// Trim trailing newline.
 				q.Text = q.Text[:len(q.Text)-1]
 			}
-			if q.Callback != nil {
-				q.Callback(q)
-			} else if cm.OnCommandComplete != nil {
+			if cm.OnCommandComplete != nil {
 				cm.OnCommandComplete(q)
 			}
 			cm.pendingQueries = append(cm.pendingQueries[:i], cm.pendingQueries[i+1:]...)
@@ -70,7 +68,7 @@ func (cm *commandsManager) checkCommandCompleted(msg *messages.MessageCommandCom
 
 func (cm *commandsManager) QuerySimpleCommand(cmd string, mt messages.MessageType, st messages.SubMessageType) {
 	id, _ := cm.conn.SendCommand(cmd, 0)
-	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+	cm.pendingQueries = append(cm.pendingQueries, &queryCommand{
 		PacketID:        id,
 		Command:         cmd,
 		OriginalCommand: cmd,
@@ -79,9 +77,9 @@ func (cm *commandsManager) QuerySimpleCommand(cmd string, mt messages.MessageTyp
 	})
 }
 
-func (cm *commandsManager) QuerySimpleCommandWithInput(cmd string, mt messages.MessageType, st messages.SubMessageType) {
+func (cm *commandsManager) QuerySimpleCommandWithInput(cmd string, mt messages.MessageType, st messages.SubMessageType) *queryCommand {
 	id, _ := cm.conn.SendCommand(cmd, 0)
-	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+	cm.pendingQueries = append(cm.pendingQueries, &queryCommand{
 		PacketID:        id,
 		Command:         cmd,
 		OriginalCommand: cmd,
@@ -89,24 +87,25 @@ func (cm *commandsManager) QuerySimpleCommandWithInput(cmd string, mt messages.M
 		MT:              mt,
 		ST:              st,
 	})
+	return cm.pendingQueries[len(cm.pendingQueries)-1]
 }
 
-func (cm *commandsManager) QueryComplexCommand(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType, callback func(cmd queryCommand)) {
+func (cm *commandsManager) QueryComplexCommand(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType) *queryCommand {
 	id, _ := cm.conn.SendCommand(cmd, 0)
-	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+	cm.pendingQueries = append(cm.pendingQueries, &queryCommand{
 		PacketID:        id,
 		Command:         cmd,
 		OriginalCommand: origCmd,
 		Text:            "",
 		MT:              mt,
 		ST:              st,
-		Callback:        callback,
 	})
+	return cm.pendingQueries[len(cm.pendingQueries)-1]
 }
 
-func (cm *commandsManager) QueryComplexCommandWithInput(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType) {
+func (cm *commandsManager) QueryComplexCommandWithInput(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType) *queryCommand {
 	id, _ := cm.conn.SendCommand(cmd, 0)
-	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+	cm.pendingQueries = append(cm.pendingQueries, &queryCommand{
 		PacketID:        id,
 		Command:         cmd,
 		OriginalCommand: origCmd,
@@ -115,6 +114,15 @@ func (cm *commandsManager) QueryComplexCommandWithInput(cmd, origCmd string, mt 
 		MT:              mt,
 		ST:              st,
 	})
+	return cm.pendingQueries[len(cm.pendingQueries)-1]
+}
+
+func (cm *commandsManager) QueryCommand(cmd queryCommand) *queryCommand {
+	id, _ := cm.conn.SendCommand(cmd.Command, 0)
+	cmd.PacketID = id
+	cmd.Text = ""
+	cm.pendingQueries = append(cm.pendingQueries, &cmd)
+	return cm.pendingQueries[len(cm.pendingQueries)-1]
 }
 
 type queryCommand struct {
@@ -122,8 +130,9 @@ type queryCommand struct {
 	Command         string
 	OriginalCommand string
 	Text            string
+	SubmitText      string
+	Repeat          bool // Can keep requesting input.
 	HasInput        bool
 	MT              messages.MessageType
 	ST              messages.SubMessageType
-	Callback        func(cmd queryCommand)
 }
