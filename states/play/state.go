@@ -58,6 +58,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
 		{
+			Name: "apply",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommand("apply", messages.MessageTypeCommand, messages.SubMessageTypeCommandSuccess)
+			},
+		},
+		{
 			Name: "who",
 			OnActivate: func() {
 				s.commandsManager.QuerySimpleCommand("who", messages.MessageTypeCommand, messages.SubMessageTypeCommandWho)
