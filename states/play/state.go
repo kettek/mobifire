@@ -177,7 +177,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			if err != nil {
 				fmt.Println("Invalid map size:", msg.MapSize.Value)
 			}
-			s.mb.SetBoardSize(rows, cols)
+			s.mb.SetBoardSize(rows+1, cols+1)
 		}
 	})
 

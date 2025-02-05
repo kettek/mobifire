@@ -98,7 +98,8 @@ func (b *multiBoard) CalculateCells(size fyne.Size) (int, int) {
 	// ... I don't know if size is scaled or not.
 	rows := size.Width / float32(b.boards[0].CellWidth)
 	cols := size.Height / float32(b.boards[0].CellHeight)
-	return int(math.Round(float64(rows))), int(math.Round(float64(cols)))
+	// Use Ceil +1 so we don't have any blank space.
+	return int(math.Ceil(float64(rows))) + 1, int(math.Ceil(float64(cols))) + 1
 }
 
 func (b *multiBoard) SetBoardSize(rows, cols int) {
