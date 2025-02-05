@@ -3,10 +3,12 @@ package play
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -252,10 +254,13 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			return len(s.messages)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			txt := canvas.NewText("", color.Black)
+			return txt
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(s.messages[i].Message)
+			o.(*canvas.Text).Text = s.messages[i].Message
+			o.(*canvas.Text).Color = data.Color(s.messages[i].Color)
+			o.Refresh() // ???
 		},
 	)
 	messagesList.HideSeparators = true
@@ -269,16 +274,35 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			return
 		}
 
+		// This isn't right to do, but for now, split all messages if their columns exceed 50.
+		var msgs []messages.MessageDrawExtInfo
+		for i := 0; i < len(msg.Message); i += 50 {
+			end := i + 50
+			if end > len(msg.Message) {
+				end = len(msg.Message)
+				if msg.Message[end-1] == '\n' {
+					end--
+				}
+			}
+			msgs = append(msgs, messages.MessageDrawExtInfo{
+				Color:   msg.Color,
+				Type:    msg.Type,
+				Subtype: msg.Subtype,
+				Message: msg.Message[i:end],
+			})
+		}
+
 		if lastVOffset == 0 {
 			lastVOffset = messagesList.GetScrollOffset()
 		}
 		// Automatically scroll to end if user has not scrolled up.
 		if messagesList.GetScrollOffset() == lastVOffset {
-			s.messages = append(s.messages, *msg)
+			s.messages = append(s.messages, msgs...)
 			messagesList.Refresh()
 			messagesList.ScrollToBottom()
 			lastVOffset = messagesList.GetScrollOffset()
 		} else {
+			s.messages = append(s.messages, msgs...)
 			messagesList.Refresh()
 		}
 	})
@@ -433,6 +457,20 @@ func (s *State) ShowTextDialogWithInput(title string, content string, submit str
 		submit = "Submit"
 	}
 	dialog.ShowCustomConfirm(title, submit, "Cancel", container.New(cnt, container.NewBorder(nil, entry, nil, nil, container.NewVScroll(text))), func(b bool) {
+		if b {
+			cb(entry.Text)
+		}
+	}, s.window)
+}
+
+func (s *State) ShowInput(title string, submit string, cb func(string)) {
+	entry := widget.NewEntry()
+	if submit == "" {
+		submit = "Submit"
+	}
+	dialog.ShowForm(title, submit, "Cancel", []*widget.FormItem{
+		{Text: "", Widget: entry},
+	}, func(b bool) {
 		if b {
 			cb(entry.Text)
 		}
