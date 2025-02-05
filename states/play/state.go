@@ -62,7 +62,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		{
 			Name: "say",
 			OnActivate: func() {
-				s.ShowInput("Say", "Say", func(cmd string) {
+				s.ShowInputs("Say", "Say", []string{"hi", "yes", "no"}, func(cmd string) {
 					s.conn.SendCommand("say "+cmd, 0)
 				})
 			},
@@ -465,6 +465,20 @@ func (s *State) ShowTextDialogWithInput(title string, content string, submit str
 
 func (s *State) ShowInput(title string, submit string, cb func(string)) {
 	entry := widget.NewEntry()
+	if submit == "" {
+		submit = "Submit"
+	}
+	dialog.ShowForm(title, submit, "Cancel", []*widget.FormItem{
+		{Text: "", Widget: entry},
+	}, func(b bool) {
+		if b {
+			cb(entry.Text)
+		}
+	}, s.window)
+}
+
+func (s *State) ShowInputs(title string, submit string, opts []string, cb func(string)) {
+	entry := widget.NewSelectEntry(opts)
 	if submit == "" {
 		submit = "Submit"
 	}
