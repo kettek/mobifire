@@ -62,7 +62,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		{
 			Name: "say",
 			OnActivate: func() {
-				s.ShowInputs("Say", "Say", []string{"hi", "yes", "no"}, func(cmd string) {
+				s.ShowInputWithOptions("Say", "Say", &s.sayOptions, func(cmd string) {
 					s.conn.SendCommand("say "+cmd, 0)
 				})
 			},
@@ -477,13 +477,64 @@ func (s *State) ShowInput(title string, submit string, cb func(string)) {
 	}, s.window)
 }
 
-func (s *State) ShowInputs(title string, submit string, opts []string, cb func(string)) {
-	entry := widget.NewSelectEntry(opts)
+func (s *State) ShowInputWithOptions(title string, submit string, opts *[]string, cb func(string)) {
+	var entry *widget.SelectEntry
+	var addEntry *widget.Button
+	var removeEntry *widget.Button
+	entry = widget.NewSelectEntry(*opts)
+	entry.Resize(fyne.NewSize(200, 30))
 	if submit == "" {
 		submit = "Submit"
 	}
+	adjustButtons := func() {
+		if entry.Text == "" {
+			addEntry.Disable()
+			removeEntry.Disable()
+			return
+		}
+		found := false
+		for _, o := range *opts {
+			if o == entry.Text {
+				found = true
+				break
+			}
+		}
+		if found {
+			addEntry.Disable()
+			removeEntry.Enable()
+		} else {
+			addEntry.Enable()
+			removeEntry.Disable()
+		}
+	}
+	entry.OnChanged = func(s string) {
+		adjustButtons()
+	}
+	addEntry = widget.NewButton("+", func() {
+		*opts = append(*opts, entry.Text)
+		entry.SetOptions(*opts)
+		adjustButtons()
+		entry.Refresh()
+	})
+	addEntry.Disable()
+	addEntry.Importance = widget.SuccessImportance
+	removeEntry = widget.NewButton("-", func() {
+		for i, o := range *opts {
+			if o == entry.Text {
+				*opts = append((*opts)[:i], (*opts)[i+1:]...)
+				entry.SetOptions(*opts)
+				adjustButtons()
+				entry.Refresh()
+				return
+			}
+		}
+	})
+	removeEntry.Disable()
+	removeEntry.Importance = widget.DangerImportance
+	entries := container.NewHBox(addEntry, removeEntry)
 	dialog.ShowForm(title, submit, "Cancel", []*widget.FormItem{
 		{Text: "", Widget: entry},
+		{Text: "", Widget: entries},
 	}, func(b bool) {
 		if b {
 			cb(entry.Text)
