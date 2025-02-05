@@ -34,3 +34,17 @@ var resourceCommandsPng = &fyne.StaticResource{
 	StaticName:    "commands",
 	StaticContent: sourceCommandsPng,
 }
+
+//go:embed icon_apply.png
+var sourceApplyPng []byte
+var resourceApplyPng = &fyne.StaticResource{
+	StaticName:    "apply",
+	StaticContent: sourceApplyPng,
+}
+
+//go:embed icon_get.png
+var sourceGetPng []byte
+var resourceGetPng = &fyne.StaticResource{
+	StaticName:    "get",
+	StaticContent: sourceGetPng,
+}

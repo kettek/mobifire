@@ -58,9 +58,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
 		{
-			Name: "apply",
+			Name: "say",
 			OnActivate: func() {
-				s.commandsManager.QuerySimpleCommand("apply", messages.MessageTypeCommand, messages.SubMessageTypeCommandSuccess)
+				s.ShowInput("Say", "Say", func(cmd string) {
+					s.conn.SendCommand("say "+cmd, 0)
+				})
 			},
 		},
 		{
@@ -301,17 +303,21 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		commandsPopup := widget.NewPopUpMenu(fyne.NewMenu("Commands", s.commandsManager.toMenuItems()...), s.window.Canvas())
 		// TODO: Make our own custom hotkey sort of thing.
 		var toolbarCmdAction *widget.ToolbarAction
+		var toolbarApplyAction *widget.ToolbarAction
+		var toolbarGetAction *widget.ToolbarAction
 		toolbarCmdAction = widget.NewToolbarAction(resourceCommandsPng, func() {
 			commandsPopup.ShowAtRelativePosition(fyne.NewPos(-toolbarCmdAction.ToolbarObject().Size().Width, 0), toolbarCmdAction.ToolbarObject())
 		})
+		toolbarApplyAction = widget.NewToolbarAction(resourceApplyPng, func() {
+			s.conn.SendCommand("apply", 0)
+		})
+		toolbarGetAction = widget.NewToolbarAction(resourceGetPng, func() {
+			s.conn.SendCommand("get", 0)
+		})
 		toolbar = NewToolbar(
 			toolbarCmdAction,
-			widget.NewToolbarAction(resourceInventoryPng, func() {
-				fmt.Println("Toolbar action 2")
-			}),
-			widget.NewToolbarAction(resourceInventoryPng, func() {
-				fmt.Println("Toolbar action 3")
-			}),
+			toolbarApplyAction,
+			toolbarGetAction,
 			widget.NewToolbarAction(resourceInventoryPng, func() {
 				fmt.Println("Toolbar action 4")
 			}),
