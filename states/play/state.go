@@ -111,9 +111,21 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				s.commandsManager.QuerySimpleCommand("motd", messages.MessageTypeMOTD, 0)
 			},
 		},
+		{
+			Name: "help",
+			OnActivate: func() {
+				s.commandsManager.QuerySimpleCommandWithInput("help", messages.MessageTypeCommand, messages.SubMessageTypeCommandInfo)
+			},
+		},
 	}
-	s.commandsManager.OnCommandComplete = func(command string, text string) {
-		s.ShowTextDialog(command, text)
+	s.commandsManager.OnCommandComplete = func(c queryCommand) {
+		if c.HasInput {
+			s.ShowTextDialogWithInput(c.Command, c.Text, func(cmd string) {
+				s.commandsManager.QueryComplexCommandWithInput(c.OriginalCommand+" "+cmd, c.OriginalCommand, c.MT, c.ST)
+			})
+		} else {
+			s.ShowTextDialog(c.OriginalCommand, c.Text)
+		}
 	}
 
 	// Command response packet handling.
@@ -370,4 +382,21 @@ func (s *State) ShowTextDialog(title string, content string) {
 		window: s.window,
 	}
 	dialog.ShowCustom(title, "Close", container.New(cnt, container.NewVScroll(text)), s.window)
+}
+
+// ShowTextDialogWithInput is like ShowTextDialog, but with an input entry.
+func (s *State) ShowTextDialogWithInput(title string, content string, cb func(string)) {
+	segments := data.TextToRichTextSegments(content)
+
+	text := widget.NewRichText(segments...)
+	text.Wrapping = fyne.TextWrapWord
+	cnt := &dialogContainer{
+		window: s.window,
+	}
+	entry := widget.NewEntry()
+	dialog.ShowCustomConfirm(title, "Submit", "Cancel", container.New(cnt, container.NewBorder(nil, entry, nil, nil, container.NewVScroll(text))), func(b bool) {
+		if b {
+			cb(entry.Text)
+		}
+	}, s.window)
 }

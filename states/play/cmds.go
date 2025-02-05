@@ -9,13 +9,14 @@ import (
 type command struct {
 	Name       string
 	OnActivate func()
+	OnSubmit   func(cmd string)
 }
 
 type commandsManager struct {
 	conn              *net.Connection
 	commands          []command
 	pendingQueries    []queryCommand
-	OnCommandComplete func(command string, text string)
+	OnCommandComplete func(queryCommand)
 }
 
 func (cm *commandsManager) toMenuItems() []*fyne.MenuItem {
@@ -58,7 +59,7 @@ func (cm *commandsManager) checkCommandCompleted(msg *messages.MessageCommandCom
 			if q.Callback != nil {
 				q.Callback(q)
 			} else if cm.OnCommandComplete != nil {
-				cm.OnCommandComplete(q.Command, q.Text)
+				cm.OnCommandComplete(q)
 			}
 			cm.pendingQueries = append(cm.pendingQueries[:i], cm.pendingQueries[i+1:]...)
 			return true
@@ -70,19 +71,59 @@ func (cm *commandsManager) checkCommandCompleted(msg *messages.MessageCommandCom
 func (cm *commandsManager) QuerySimpleCommand(cmd string, mt messages.MessageType, st messages.SubMessageType) {
 	id, _ := cm.conn.SendCommand(cmd, 0)
 	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
-		PacketID: id,
-		Command:  cmd,
-		Text:     "",
-		MT:       mt,
-		ST:       st,
+		PacketID:        id,
+		Command:         cmd,
+		OriginalCommand: cmd,
+		MT:              mt,
+		ST:              st,
+	})
+}
+
+func (cm *commandsManager) QuerySimpleCommandWithInput(cmd string, mt messages.MessageType, st messages.SubMessageType) {
+	id, _ := cm.conn.SendCommand(cmd, 0)
+	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+		PacketID:        id,
+		Command:         cmd,
+		OriginalCommand: cmd,
+		HasInput:        true,
+		MT:              mt,
+		ST:              st,
+	})
+}
+
+func (cm *commandsManager) QueryComplexCommand(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType, callback func(cmd queryCommand)) {
+	id, _ := cm.conn.SendCommand(cmd, 0)
+	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+		PacketID:        id,
+		Command:         cmd,
+		OriginalCommand: origCmd,
+		Text:            "",
+		MT:              mt,
+		ST:              st,
+		Callback:        callback,
+	})
+}
+
+func (cm *commandsManager) QueryComplexCommandWithInput(cmd, origCmd string, mt messages.MessageType, st messages.SubMessageType) {
+	id, _ := cm.conn.SendCommand(cmd, 0)
+	cm.pendingQueries = append(cm.pendingQueries, queryCommand{
+		PacketID:        id,
+		Command:         cmd,
+		OriginalCommand: origCmd,
+		HasInput:        true,
+		Text:            "",
+		MT:              mt,
+		ST:              st,
 	})
 }
 
 type queryCommand struct {
-	PacketID uint16
-	Command  string
-	Text     string
-	MT       messages.MessageType
-	ST       messages.SubMessageType
-	Callback func(cmd queryCommand)
+	PacketID        uint16
+	Command         string
+	OriginalCommand string
+	Text            string
+	HasInput        bool
+	MT              messages.MessageType
+	ST              messages.SubMessageType
+	Callback        func(cmd queryCommand)
 }
