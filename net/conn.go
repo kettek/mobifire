@@ -30,6 +30,7 @@ func (c *Connection) Join(server string) error {
 		return err
 	}
 	c.Conn = conn
+	c.packetId = 1 // Skip 0 for default value sanity
 
 	go c.readLoop()
 
@@ -122,8 +123,8 @@ func (c *Connection) Send(msg messages.Message) error {
 	return errors.New("empty message")
 }
 
-func (c *Connection) SendCommand(command string, repeat uint32) error {
+func (c *Connection) SendCommand(command string, repeat uint32) (uint16, error) {
 	msg := messages.MessageCommand{Command: command, Repeat: repeat, Packet: c.packetId}
 	c.packetId++
-	return c.Send(&msg)
+	return c.packetId - 1, c.Send(&msg)
 }
