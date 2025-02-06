@@ -21,10 +21,11 @@ import (
 type State struct {
 	window fyne.Window
 	messages.MessageHandler
-	container  *fyne.Container
-	conn       *net.Connection
-	characters []messages.Character
-	faces      []messages.MessageFace2
+	container     *fyne.Container
+	conn          *net.Connection
+	characterList *fyne.Container
+	characters    []messages.Character
+	faces         []messages.MessageFace2
 }
 
 // NewState provides a new State from a connection, Character, and Face messages.
@@ -50,20 +51,25 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		data.AddFaceImage(*msg)
 	})
 
-	// Selection
-	characterList := container.New(layout.NewVBoxLayout())
+	// We also handle/override characters here, as when the player leaves the game, it resends the characters again.
+	s.On(&messages.MessageAccountPlayers{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageAccountPlayers)
+		s.refreshCharacters(msg.Characters, next)
+		// It's kind of dumb, but reset our view to 11,11
+		s.conn.Send(&messages.MessageSetup{
+			MapSize: struct {
+				Use   bool
+				Value string
+			}{
+				Use:   true,
+				Value: "11x11",
+			},
+		})
+	})
 
-	for _, character := range s.characters {
-		if character.Name == "" {
-			// Skip the weird bogus empty char.
-			continue
-		}
-		content := container.New(layout.NewHBoxLayout(), widget.NewLabel(character.Map), widget.NewButton("Play", func() {
-			next(play.NewState(s.conn, character.Name))
-		}))
-		card := widget.NewCard(character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class), content)
-		characterList.Add(card)
-	}
+	// Selection
+	s.characterList = container.New(layout.NewVBoxLayout())
+	s.refreshCharacters(s.characters, next)
 
 	// Creation
 	creationContainer := s.setupCreation()
@@ -71,7 +77,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	// Tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Create", creationContainer),
-		container.NewTabItem("Select", container.NewVScroll(characterList)),
+		container.NewTabItem("Select", container.NewVScroll(s.characterList)),
 	)
 	if len(s.characters) > 1 {
 		tabs.SelectIndex(1)
@@ -82,6 +88,23 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	//s.container = container.New(layout.NewVBoxLayout(), characterList)
 
 	return nil
+}
+
+func (s *State) refreshCharacters(characters []messages.Character, next func(states.State)) {
+	s.characterList.RemoveAll()
+
+	for _, character := range characters {
+		if character.Name == "" {
+			// Skip the weird bogus empty char.
+			continue
+		}
+		content := container.New(layout.NewHBoxLayout(), widget.NewLabel(character.Map), widget.NewButton("Play", func() {
+			next(play.NewState(s.conn, character.Name))
+		}))
+		card := widget.NewCard(character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class), content)
+		s.characterList.Add(card)
+	}
+
 }
 
 func (s *State) setupCreation() fyne.CanvasObject {

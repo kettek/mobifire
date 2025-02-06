@@ -180,6 +180,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 	})
 
+	// Leave game handling.
+	s.On(&messages.MessagePlayer{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessagePlayer)
+		// I believe all blank means the player used a bed to reality.
+		if msg.Name == "" {
+			s.conn.SetMessageHandler(nil)
+			next(states.Prior)
+		}
+	})
+
 	// Setup message handling.
 	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageSetup)
