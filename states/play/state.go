@@ -35,6 +35,8 @@ type State struct {
 	sayOptions []string
 	//
 	playerTag int32
+	//
+	pendingExamineTag int32
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -189,30 +191,85 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		if msg.Name == "" {
 			s.conn.SetMessageHandler(nil)
 			next(states.Prior)
+		} else {
+			s.playerTag = msg.Tag
+			// TODO: Store weight, face, and name?
 		}
 	})
 
 	// Item/Inventory handling.
 	s.On(&messages.MessageItem2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageItem2)
-		inventory := acquireInventory(msg.Location)
-		// Iterate them objects.
+
+		// Iterate thru global objects.
 		for _, o := range msg.Objects {
-			if item := findInventoryItem(o.Tag); item != nil {
-				if item.container != inventory {
-					item.container.removeItem(item)
-					inventory.addItem(item)
+			// Replace or add object.
+			var obj *Object
+			obj = GetObject(o.Tag)
+			if obj == nil {
+				obj = AddObject(o)
+			}
+			obj.ItemObject = o // Fully replace, I s'pose.
+		}
+
+		inventory, exists := acquireInventory(msg.Location)
+		if !exists {
+			inventory.OnRequest = func(m messages.Message) {
+				switch m := m.(type) {
+				case *messages.MessageExamine:
+					// Clear out old examine info.
+					if obj := GetObject(m.Tag); obj != nil {
+						obj.examineInfo = ""
+					}
+					s.pendingExamineTag = m.Tag
+					s.conn.Send(m)
+				default: // Send all others straight thru
+					s.conn.Send(m)
 				}
-				// I guess replace the item data with o???
-				item.ItemObject = o
-			} else {
-				inventory.addNewItem(o)
 			}
 		}
+		if inventory.name == "" {
+			if msg.Location == 0 { // Ground
+				inventory.name = "Ground"
+			} else if msg.Location == s.playerTag {
+				inventory.name = fmt.Sprintf("%s's Inventory", s.character)
+			} else {
+				inventoryItem := GetObject(msg.Location)
+				if inventoryItem != nil {
+					inventory.name = inventoryItem.Name
+				}
+			}
+		}
+		// Iterate them objects.
+		for _, o := range msg.Objects {
+			if item := GetObject(o.Tag); item != nil { // It's impossible that item is nil here, but whatever.
+				// Remove from old inventory.
+				if oldInventory, ok := acquireInventory(item.containerTag); ok {
+					oldInventory.removeItem(o.Tag)
+				}
+				// Add to new
+				inventory.addItem(o.Tag)
+				item.containerTag = msg.Location
+			}
+		}
+		inventory.RefreshList()
 	})
 	s.On(&messages.MessageDeleteInventory{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageDeleteInventory)
-		acquireInventory(msg.Tag).clear()
+		inv, _ := acquireInventory(msg.Tag)
+		inv.clear()
+	})
+	s.On(&messages.MessageDeleteItem{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageDeleteItem)
+		for _, tag := range msg.Tags {
+			if item := GetObject(tag); item != nil {
+				if inv, ok := acquireInventory(item.containerTag); ok {
+					inv.removeItem(tag)
+					inv.RefreshList()
+				}
+				RemoveObject(tag)
+			}
+		}
 	})
 
 	// Setup message handling.
@@ -310,6 +367,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		},
 	)
 	messagesList.HideSeparators = true
+	//messagesListBackground := canvas.NewVerticalGradient(color.RGBA{0, 0, 0, 255}, color.RGBA{0, 0, 0, 0})
+	messagesListBackground := canvas.NewRectangle(color.NRGBA{255, 0, 0, 255})
 
 	// Messages.
 	lastVOffset := float32(0)
@@ -318,6 +377,26 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 		if s.commandsManager.checkDrawExtInfo(msg) {
 			return
+		}
+
+		// Catch examine messages so we can add them to their target item/object...
+		if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandExamine {
+			if obj := GetObject(s.pendingExamineTag); obj != nil {
+				// It's a little hacky, but when we encounter "Examine again", we immediately send an examine request again.
+				if strings.HasPrefix(msg.Message, "Examine again") {
+					s.conn.Send(&messages.MessageExamine{
+						Tag: s.pendingExamineTag,
+					})
+					return
+				} else if strings.HasPrefix(msg.Message, "You examine the") {
+					// Ignore strings that start with "You examine the", as this is probably a second examine request. This _could_ cause issues if the extra examine information actually contains that string, but until that becomes an issue, so it shall remain as it is.
+					return
+				}
+				obj.examineInfo += msg.Message + "\n"
+				inv, _ := acquireInventory(obj.containerTag)
+				inv.RefreshInfo()
+				return
+			}
 		}
 
 		// This isn't right to do, but for now, split all messages if their columns exceed 50.
@@ -389,7 +468,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			toolbarApplyAction,
 			toolbarGetAction,
 			widget.NewToolbarAction(resourceInventoryPng, func() {
-				fmt.Println("Toolbar action 4")
+				inv, _ := acquireInventory(s.playerTag)
+				inv.showDialog(s.window)
 			}),
 			widget.NewToolbarAction(resourceInventoryPng, func() {
 				fmt.Println("Toolbar action 5")
@@ -438,7 +518,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		Messages: messagesList,
 		Left:     leftArea,
 		Right:    toolbars,
-	}, s.mb.container, container.NewThemeOverride(messagesList, sizedTheme), leftArea, toolbars)
+	}, s.mb.container, container.NewStack(messagesListBackground, container.NewThemeOverride(messagesList, sizedTheme)), leftArea, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 
