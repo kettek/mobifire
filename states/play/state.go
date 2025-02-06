@@ -455,37 +455,13 @@ func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
 }
 
-type dialogContainer struct {
-	window fyne.Window
-}
-
-func (d *dialogContainer) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	size := d.window.Canvas().Size()
-	// Not sure if we have a flag somewhere for landscape vs. portrait, but...
-	padding := float32(0)
-	if size.Width > size.Height {
-		padding = size.Height / 2
-	} else {
-		padding = size.Width / 2
-	}
-	return fyne.NewSize(size.Width-padding, size.Height-padding)
-}
-
-func (d *dialogContainer) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	for _, o := range objects {
-		o.Resize(size)
-	}
-}
-
 // ShowTextDialog shows a near fullscreen dialog, wow.
 func (s *State) ShowTextDialog(title string, content string) {
 	segments := data.TextToRichTextSegments(content)
 
 	text := widget.NewRichText(segments...)
 	text.Wrapping = fyne.TextWrapWord
-	cnt := &dialogContainer{
-		window: s.window,
-	}
+	cnt := layouts.NewDialog(s.window)
 	dialog.ShowCustom(title, "Close", container.New(cnt, container.NewVScroll(text)), s.window)
 }
 
@@ -495,9 +471,7 @@ func (s *State) ShowTextDialogWithInput(title string, content string, submit str
 
 	text := widget.NewRichText(segments...)
 	text.Wrapping = fyne.TextWrapWord
-	cnt := &dialogContainer{
-		window: s.window,
-	}
+	cnt := layouts.NewDialog(s.window)
 	entry := widget.NewEntry()
 	if submit == "" {
 		submit = "Submit"
