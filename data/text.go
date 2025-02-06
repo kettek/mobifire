@@ -14,6 +14,14 @@ var textTags = map[string]textTag{
 			style.TextStyle.Bold = true
 		},
 	},
+	"color": {
+		adjust: func(style *widget.RichTextStyle) {
+		},
+	},
+	"/color": {
+		adjust: func(style *widget.RichTextStyle) {
+		},
+	},
 	"/b": {
 		adjust: func(style *widget.RichTextStyle) {
 			style.TextStyle.Bold = false
