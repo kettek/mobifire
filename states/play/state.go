@@ -31,6 +31,8 @@ type State struct {
 	conn            *net.Connection
 	messages        []messages.MessageDrawExtInfo
 	pendingImages   []boardPendingImage
+	// To be moved to a character-specific location.
+	sayOptions []string
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -41,6 +43,7 @@ func NewState(conn *net.Connection, character string) *State {
 		commandsManager: commandsManager{
 			conn: conn,
 		},
+		sayOptions: []string{"hi", "yes", "no"},
 	}
 }
 
