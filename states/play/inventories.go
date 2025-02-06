@@ -196,6 +196,13 @@ func (inv *inventory) hasItem(tag int32) bool {
 
 var inventories = map[int32]*inventory{}
 
+func getInventory(id int32) *inventory {
+	if inv, ok := inventories[id]; ok {
+		return inv
+	}
+	return nil
+}
+
 func acquireInventory(id int32) (*inventory, bool) {
 	if inv, ok := inventories[id]; ok {
 		return inv, true
