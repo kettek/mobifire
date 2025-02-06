@@ -33,6 +33,8 @@ type State struct {
 	pendingImages   []boardPendingImage
 	// To be moved to a character-specific location.
 	sayOptions []string
+	//
+	playerTag int32
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -188,6 +190,29 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			s.conn.SetMessageHandler(nil)
 			next(states.Prior)
 		}
+	})
+
+	// Item/Inventory handling.
+	s.On(&messages.MessageItem2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageItem2)
+		inventory := acquireInventory(msg.Location)
+		// Iterate them objects.
+		for _, o := range msg.Objects {
+			if item := findInventoryItem(o.Tag); item != nil {
+				if item.container != inventory {
+					item.container.removeItem(item)
+					inventory.addItem(item)
+				}
+				// I guess replace the item data with o???
+				item.ItemObject = o
+			} else {
+				inventory.addNewItem(o)
+			}
+		}
+	})
+	s.On(&messages.MessageDeleteInventory{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageDeleteInventory)
+		acquireInventory(msg.Tag).clear()
 	})
 
 	// Setup message handling.
