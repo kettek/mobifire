@@ -454,24 +454,24 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		var toolbarCmdAction *widget.ToolbarAction
 		var toolbarApplyAction *widget.ToolbarAction
 		var toolbarGetAction *widget.ToolbarAction
-		toolbarCmdAction = widget.NewToolbarAction(resourceCommandsPng, func() {
+		toolbarCmdAction = widget.NewToolbarAction(data.GetResource("icon_commands.png"), func() {
 			commandsPopup.ShowAtRelativePosition(fyne.NewPos(-toolbarCmdAction.ToolbarObject().Size().Width, 0), toolbarCmdAction.ToolbarObject())
 		})
-		toolbarApplyAction = widget.NewToolbarAction(resourceApplyPng, func() {
+		toolbarApplyAction = widget.NewToolbarAction(data.GetResource("icon_apply.png"), func() {
 			s.conn.SendCommand("apply", 0)
 		})
-		toolbarGetAction = widget.NewToolbarAction(resourceGetPng, func() {
+		toolbarGetAction = widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			s.conn.SendCommand("get", 0)
 		})
 		toolbar = NewToolbar(
 			toolbarCmdAction,
 			toolbarApplyAction,
 			toolbarGetAction,
-			widget.NewToolbarAction(resourceInventoryPng, func() {
+			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
 				inv, _ := acquireInventory(s.playerTag)
 				inv.showDialog(s.window)
 			}),
-			widget.NewToolbarAction(resourceInventoryPng, func() {
+			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
 				fmt.Println("Toolbar action 5")
 			}),
 		)
@@ -489,24 +489,24 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 
 	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 1")
 		}),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 1")
 		}),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 1")
 		}),
 	), sizedTheme)
 	leftAreaToolbarBot := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 1")
 		}),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 2")
 		}),
-		widget.NewButtonWithIcon("", resourceInventoryPng, func() {
+		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
 			fmt.Println("Toolbar action 3")
 		}),
 	), sizedTheme)

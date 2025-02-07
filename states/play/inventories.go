@@ -31,7 +31,7 @@ func (inv *inventory) showDialog(window fyne.Window) {
 			return len(inv.sortItems())
 		},
 		func() fyne.CanvasObject {
-			img := canvas.NewImageFromResource(resourceBlankPng)
+			img := canvas.NewImageFromResource(data.GetResource("blank.png"))
 			img.FillMode = canvas.ImageFillContain
 			img.ScaleMode = canvas.ImageScalePixels
 			/*img2 := canvas.NewImageFromResource(resourceBlankPng)
@@ -78,14 +78,14 @@ func (inv *inventory) showDialog(window fyne.Window) {
 			otherContainer := container.Objects[2].(*fyne.Container)
 			otherContainer.RemoveAll()
 			if invItem.Flags.Unpaid() {
-				img := canvas.NewImageFromResource(resourceUnpaidPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_unpaid.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.WarningImportance
 			}
 			if invItem.Flags.Unidentified() {
-				img := canvas.NewImageFromResource(resourceUnidentifiedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_unidentified.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
@@ -102,28 +102,28 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				label.Importance = widget.HighImportance
 			}
 			if invItem.Flags.Damned() {
-				img := canvas.NewImageFromResource(resourceDamnedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_damned.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Cursed() {
-				img := canvas.NewImageFromResource(resourceCursedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_cursed.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Blessed() {
-				img := canvas.NewImageFromResource(resourceBlessedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_blessed.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.SuccessImportance
 			}
 			if invItem.Flags.Applied() {
-				img := canvas.NewImageFromResource(resourceAppliedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_applied.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
@@ -132,7 +132,7 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				label.TextStyle.Bold = false
 			}
 			if invItem.Flags.Locked() {
-				img := canvas.NewImageFromResource(resourceLockedPng)
+				img := canvas.NewImageFromResource(data.GetResource("icon_locked.png"))
 				img.FillMode = canvas.ImageFillOriginal
 				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
@@ -158,22 +158,22 @@ func (inv *inventory) showDialog(window fyne.Window) {
 		}
 	}
 	invToolbar := widget.NewToolbar(
-		widget.NewToolbarAction(resourceGetPng, func() {
+		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			inv.request(&messages.MessageApply{
 				Tag: inv.getSelectedTag(),
 			})
 		}),
-		widget.NewToolbarAction(resourceGetPng, func() {
+		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			inv.request(&messages.MessageMark{
 				Tag: inv.getSelectedTag(),
 			})
 		}),
-		widget.NewToolbarAction(resourceGetPng, func() {
+		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			inv.request(&messages.MessageLock{
 				Tag: inv.getSelectedTag(),
 			})
 		}),
-		widget.NewToolbarAction(resourceGetPng, func() {
+		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			inv.request(&messages.MessageMove{
 				To:   0, // The ground, for now.
 				Tag:  inv.getSelectedTag(),
