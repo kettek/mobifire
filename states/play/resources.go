@@ -48,3 +48,73 @@ var resourceGetPng = &fyne.StaticResource{
 	StaticName:    "get",
 	StaticContent: sourceGetPng,
 }
+
+//go:embed icon_applied.png
+var sourceAppliedPng []byte
+var resourceAppliedPng = &fyne.StaticResource{
+	StaticName:    "applied",
+	StaticContent: sourceAppliedPng,
+}
+
+//go:embed icon_locked.png
+var sourceLockedPng []byte
+var resourceLockedPng = &fyne.StaticResource{
+	StaticName:    "locked",
+	StaticContent: sourceLockedPng,
+}
+
+//go:embed icon_unlocked.png
+var sourceUnlockedPng []byte
+var resourceUnlockedPng = &fyne.StaticResource{
+	StaticName:    "unlocked",
+	StaticContent: sourceUnlockedPng,
+}
+
+//go:embed icon_marked.png
+var sourceMarkedPng []byte
+var resourceMarkedPng = &fyne.StaticResource{
+	StaticName:    "marked",
+	StaticContent: sourceMarkedPng,
+}
+
+//go:embed icon_magic.png
+var sourceMagicPng []byte
+var resourceMagicPng = &fyne.StaticResource{
+	StaticName:    "magic",
+	StaticContent: sourceMagicPng,
+}
+
+//go:embed icon_cursed.png
+var sourceCursedPng []byte
+var resourceCursedPng = &fyne.StaticResource{
+	StaticName:    "cursed",
+	StaticContent: sourceCursedPng,
+}
+
+//go:embed icon_damned.png
+var sourceDamnedPng []byte
+var resourceDamnedPng = &fyne.StaticResource{
+	StaticName:    "damned",
+	StaticContent: sourceDamnedPng,
+}
+
+//go:embed icon_blessed.png
+var sourceBlessedPng []byte
+var resourceBlessedPng = &fyne.StaticResource{
+	StaticName:    "blessed",
+	StaticContent: sourceBlessedPng,
+}
+
+//go:embed icon_unpaid.png
+var sourceUnpaidPng []byte
+var resourceUnpaidPng = &fyne.StaticResource{
+	StaticName:    "unpaid",
+	StaticContent: sourceUnpaidPng,
+}
+
+//go:embed icon_unidentified.png
+var sourceUnidentifiedPng []byte
+var resourceUnidentifiedPng = &fyne.StaticResource{
+	StaticName:    "unidentified",
+	StaticContent: sourceUnidentifiedPng,
+}

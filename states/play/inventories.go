@@ -33,7 +33,8 @@ func (inv *inventory) showDialog(window fyne.Window) {
 		func() fyne.CanvasObject {
 			img := canvas.NewImageFromResource(resourceBlankPng)
 			img.FillMode = canvas.ImageFillOriginal
-			return container.NewBorder(nil, nil, img, widget.NewLabel(""), widget.NewLabel(""))
+			otherInfo := container.NewHBox(widget.NewLabel(""))
+			return container.NewBorder(nil, nil, img, otherInfo, widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, item fyne.CanvasObject) {
 			container := item.(*fyne.Container)
@@ -47,9 +48,51 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				container.Objects[1].(*canvas.Image).Refresh()
 			}
 			container.Objects[0].(*widget.Label).SetText(invItem.GetName())
+			otherContainer := container.Objects[2].(*fyne.Container)
+			otherContainer.RemoveAll()
+			if invItem.Flags.Unpaid() {
+				img := canvas.NewImageFromResource(resourceUnpaidPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Unidentified() {
+				img := canvas.NewImageFromResource(resourceUnidentifiedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Damned() {
+				img := canvas.NewImageFromResource(resourceDamnedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Cursed() {
+				img := canvas.NewImageFromResource(resourceCursedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Blessed() {
+				img := canvas.NewImageFromResource(resourceBlessedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Magic() {
+				img := canvas.NewImageFromResource(resourceMagicPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Applied() {
+				img := canvas.NewImageFromResource(resourceAppliedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
+			if invItem.Flags.Locked() {
+				img := canvas.NewImageFromResource(resourceLockedPng)
+				img.FillMode = canvas.ImageFillOriginal
+				otherContainer.Objects = append(otherContainer.Objects, img)
+			}
 			if invItem.TotalWeight > 0 {
 				kg := float64(invItem.Weight) / 1000
-				container.Objects[2].(*widget.Label).SetText(fmt.Sprintf("%.3fkg", kg))
+				otherContainer.Objects = append(otherContainer.Objects, widget.NewLabel(fmt.Sprintf("%.3fkg", kg)))
 			}
 		},
 	)
