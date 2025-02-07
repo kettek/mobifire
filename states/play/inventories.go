@@ -47,43 +47,56 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				container.Objects[1].(*canvas.Image).Resource = &face
 				container.Objects[1].(*canvas.Image).Refresh()
 			}
-			container.Objects[0].(*widget.Label).SetText(invItem.GetName())
+			label := container.Objects[0].(*widget.Label)
+			label.Importance = widget.MediumImportance
 			otherContainer := container.Objects[2].(*fyne.Container)
 			otherContainer.RemoveAll()
 			if invItem.Flags.Unpaid() {
 				img := canvas.NewImageFromResource(resourceUnpaidPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.Importance = widget.WarningImportance
 			}
 			if invItem.Flags.Unidentified() {
 				img := canvas.NewImageFromResource(resourceUnidentifiedPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.Importance = widget.LowImportance
+				label.TextStyle.Italic = true
+			} else {
+				label.TextStyle.Italic = false
 			}
 			if invItem.Flags.Damned() {
 				img := canvas.NewImageFromResource(resourceDamnedPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Cursed() {
 				img := canvas.NewImageFromResource(resourceCursedPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Blessed() {
 				img := canvas.NewImageFromResource(resourceBlessedPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.Importance = widget.SuccessImportance
 			}
 			if invItem.Flags.Magic() {
 				img := canvas.NewImageFromResource(resourceMagicPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				//label.Importance = widget.HighImportance
 			}
 			if invItem.Flags.Applied() {
 				img := canvas.NewImageFromResource(resourceAppliedPng)
 				img.FillMode = canvas.ImageFillOriginal
 				otherContainer.Objects = append(otherContainer.Objects, img)
+				label.TextStyle.Bold = true
+			} else {
+				label.TextStyle.Bold = false
 			}
 			if invItem.Flags.Locked() {
 				img := canvas.NewImageFromResource(resourceLockedPng)
@@ -94,6 +107,9 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				kg := float64(invItem.Weight) / 1000
 				otherContainer.Objects = append(otherContainer.Objects, widget.NewLabel(fmt.Sprintf("%.3fkg", kg)))
 			}
+
+			// SetText after because we adjust styling with the flags checks.
+			label.SetText(invItem.GetName())
 		},
 	)
 	inv.list.OnSelected = func(i widget.ListItemID) {
