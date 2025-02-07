@@ -118,3 +118,54 @@ var resourceUnidentifiedPng = &fyne.StaticResource{
 	StaticName:    "unidentified",
 	StaticContent: sourceUnidentifiedPng,
 }
+
+// type icons
+
+//go:embed type_ammo.png
+var sourceAmmoPng []byte
+var resourceAmmoPng = &fyne.StaticResource{
+	StaticName:    "ammo",
+	StaticContent: sourceAmmoPng,
+}
+
+//go:embed type_ranged.png
+var sourceRangedPng []byte
+var resourceRangedPng = &fyne.StaticResource{
+	StaticName:    "ranged",
+	StaticContent: sourceRangedPng,
+}
+
+//go:embed type_weapon.png
+var sourceWeaponPng []byte
+var resourceWeaponPng = &fyne.StaticResource{
+	StaticName:    "weapon",
+	StaticContent: sourceWeaponPng,
+}
+
+//go:embed type_bodyarmor.png
+var sourceBodyarmorPng []byte
+var resourceBodyarmorPng = &fyne.StaticResource{
+	StaticName:    "bodyarmor",
+	StaticContent: sourceBodyarmorPng,
+}
+
+//go:embed type_shield.png
+var sourceShieldPng []byte
+var resourceShieldPng = &fyne.StaticResource{
+	StaticName:    "shield",
+	StaticContent: sourceShieldPng,
+}
+
+//go:embed type_cloak.png
+var sourceCloakPng []byte
+var resourceCloakPng = &fyne.StaticResource{
+	StaticName:    "cloak",
+	StaticContent: sourceCloakPng,
+}
+
+//go:embed type_container.png
+var sourceContainerPng []byte
+var resourceContainerPng = &fyne.StaticResource{
+	StaticName:    "container",
+	StaticContent: sourceContainerPng,
+}

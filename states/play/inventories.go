@@ -32,9 +32,14 @@ func (inv *inventory) showDialog(window fyne.Window) {
 		},
 		func() fyne.CanvasObject {
 			img := canvas.NewImageFromResource(resourceBlankPng)
-			img.FillMode = canvas.ImageFillOriginal
-			otherInfo := container.NewHBox(widget.NewLabel(""))
-			return container.NewBorder(nil, nil, img, otherInfo, widget.NewLabel(""))
+			img.FillMode = canvas.ImageFillContain
+			img.ScaleMode = canvas.ImageScalePixels
+			/*img2 := canvas.NewImageFromResource(resourceBlankPng)
+			img2.FillMode = canvas.ImageFillContain
+			img2.ScaleMode = canvas.ImageScalePixels*/
+			flags := container.NewHBox(widget.NewLabel(""))
+			return container.New(&layouts.InventoryEntry{IconSize: data.CurrentFaceSet().Width}, img /*img2,*/, widget.NewLabel(""), flags, widget.NewLabel(""))
+			//return container.NewBorder(nil, nil, container.New(&layouts.Height2Width{}, img), otherInfo, widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, item fyne.CanvasObject) {
 			container := item.(*fyne.Container)
@@ -44,55 +49,83 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				return
 			}
 			if face, ok := data.GetFace(int(invItem.Face)); ok {
-				container.Objects[1].(*canvas.Image).Resource = &face
-				container.Objects[1].(*canvas.Image).Refresh()
+				container.Objects[0].(*canvas.Image).Resource = &face
+				container.Objects[0].(*canvas.Image).Refresh()
 			}
-			label := container.Objects[0].(*widget.Label)
+
+			/*typeIcon := container.Objects[1].(*canvas.Image)
+			if invItem.Type.IsAmmo() {
+				typeIcon.Resource = resourceAmmoPng
+			} else if invItem.Type.IsRangedWeapon() {
+				typeIcon.Resource = resourceRangedPng
+			} else if invItem.Type.IsMeleeWeapon() {
+				typeIcon.Resource = resourceWeaponPng
+			} else if invItem.Type.IsContainer() {
+				typeIcon.Resource = resourceContainerPng
+			} else if invItem.Type.IsBodyArmor() {
+				typeIcon.Resource = resourceBodyarmorPng
+			} else if invItem.Type.IsShield() {
+				typeIcon.Resource = resourceShieldPng
+			} else if invItem.Type.IsCloak() {
+				typeIcon.Resource = resourceCloakPng
+			} else {
+				typeIcon.Resource = resourceBlankPng
+			}
+			typeIcon.Refresh()*/
+
+			label := container.Objects[1].(*widget.Label)
 			label.Importance = widget.MediumImportance
 			otherContainer := container.Objects[2].(*fyne.Container)
 			otherContainer.RemoveAll()
 			if invItem.Flags.Unpaid() {
 				img := canvas.NewImageFromResource(resourceUnpaidPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.WarningImportance
 			}
 			if invItem.Flags.Unidentified() {
 				img := canvas.NewImageFromResource(resourceUnidentifiedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.LowImportance
 				label.TextStyle.Italic = true
 			} else {
 				label.TextStyle.Italic = false
 			}
+			if invItem.Flags.Magic() {
+				/*img := canvas.NewImageFromResource(resourceMagicPng)
+				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
+				otherContainer.Objects = append(otherContainer.Objects, img)*/
+				label.Importance = widget.HighImportance
+			}
 			if invItem.Flags.Damned() {
 				img := canvas.NewImageFromResource(resourceDamnedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Cursed() {
 				img := canvas.NewImageFromResource(resourceCursedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.DangerImportance
 			}
 			if invItem.Flags.Blessed() {
 				img := canvas.NewImageFromResource(resourceBlessedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.Importance = widget.SuccessImportance
-			}
-			if invItem.Flags.Magic() {
-				img := canvas.NewImageFromResource(resourceMagicPng)
-				img.FillMode = canvas.ImageFillOriginal
-				otherContainer.Objects = append(otherContainer.Objects, img)
-				//label.Importance = widget.HighImportance
 			}
 			if invItem.Flags.Applied() {
 				img := canvas.NewImageFromResource(resourceAppliedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 				label.TextStyle.Bold = true
 			} else {
@@ -101,11 +134,12 @@ func (inv *inventory) showDialog(window fyne.Window) {
 			if invItem.Flags.Locked() {
 				img := canvas.NewImageFromResource(resourceLockedPng)
 				img.FillMode = canvas.ImageFillOriginal
+				img.ScaleMode = canvas.ImageScalePixels
 				otherContainer.Objects = append(otherContainer.Objects, img)
 			}
 			if invItem.TotalWeight > 0 {
 				kg := float64(invItem.Weight) / 1000
-				otherContainer.Objects = append(otherContainer.Objects, widget.NewLabel(fmt.Sprintf("%.3fkg", kg)))
+				container.Objects[3].(*widget.Label).SetText(fmt.Sprintf("%.2fkg", kg))
 			}
 
 			// SetText after because we adjust styling with the flags checks.
