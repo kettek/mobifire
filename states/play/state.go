@@ -380,7 +380,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 
 		// Catch examine messages so we can add them to their target item/object...
-		if msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandExamine {
+		if (msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandExamine) || (msg.Type == messages.MessageTypeSpell && msg.Subtype == messages.SubMessageTypeSpellInfo) {
 			if obj := GetObject(s.pendingExamineTag); obj != nil {
 				// It's a little hacky, but when we encounter "Examine again", we immediately send an examine request again.
 				if strings.HasPrefix(msg.Message, "Examine again") {
