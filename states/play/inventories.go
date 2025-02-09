@@ -169,9 +169,12 @@ func (inv *inventory) showDialog(window fyne.Window) {
 			})
 		}),
 		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
-			inv.request(&messages.MessageLock{
-				Tag: inv.getSelectedTag(),
-			})
+			if item := GetObject(inv.getSelectedTag()); item != nil {
+				inv.request(&messages.MessageLock{
+					Tag:  inv.getSelectedTag(),
+					Lock: !item.Flags.Locked(),
+				})
+			}
 		}),
 		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
 			inv.request(&messages.MessageMove{
