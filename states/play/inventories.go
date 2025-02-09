@@ -25,6 +25,12 @@ type inventory struct {
 	list          *widget.List
 	info          *widget.RichText
 	infoScroll    *container.Scroll
+	// toolbar actions
+	actionApply    *widget.ToolbarAction
+	actionMark     *widget.ToolbarAction
+	actionLock     *widget.ToolbarAction
+	actionDrop     *widget.ToolbarAction
+	actionDropSome *widget.ToolbarAction
 }
 
 func (inv *inventory) showDialog(window fyne.Window) {
@@ -158,65 +164,73 @@ func (inv *inventory) showDialog(window fyne.Window) {
 			})
 			inv.info.Segments = data.TextToRichTextSegments(item.examineInfo)
 		}
+		// Sync UI to item.
+		inv.syncToSelected()
 	}
-	invToolbar := widget.NewToolbar(
-		widget.NewToolbarAction(data.GetResource("icon_apply.png"), func() {
-			inv.request(&messages.MessageApply{
-				Tag: inv.getSelectedTag(),
-			})
-		}),
-		widget.NewToolbarAction(data.GetResource("icon_marked.png"), func() {
-			inv.request(&messages.MessageMark{
-				Tag: inv.getSelectedTag(),
-			})
-		}),
-		widget.NewToolbarAction(data.GetResource("icon_locked.png"), func() {
-			if item := GetObject(inv.getSelectedTag()); item != nil {
-				inv.request(&messages.MessageLock{
-					Tag:  inv.getSelectedTag(),
-					Lock: !item.Flags.Locked(),
-				})
-			}
-		}),
-		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
-			inv.request(&messages.MessageMove{
-				To:   0, // The ground, for now.
+	inv.actionApply = widget.NewToolbarAction(data.GetResource("icon_apply.png"), func() {
+		inv.request(&messages.MessageApply{
+			Tag: inv.getSelectedTag(),
+		})
+	})
+	inv.actionMark = widget.NewToolbarAction(data.GetResource("icon_marked.png"), func() {
+		inv.request(&messages.MessageMark{
+			Tag: inv.getSelectedTag(),
+		})
+	})
+	inv.actionLock = widget.NewToolbarAction(data.GetResource("icon_locked.png"), func() {
+		if item := GetObject(inv.getSelectedTag()); item != nil {
+			inv.request(&messages.MessageLock{
 				Tag:  inv.getSelectedTag(),
-				Nrof: 0, // Perhaps add a drop amount prompt?
+				Lock: !item.Flags.Locked(),
 			})
-		}),
-		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
-			if item := GetObject(inv.getSelectedTag()); item != nil {
-				var countEntry *widget.Entry
+		}
+	})
+	inv.actionDrop = widget.NewToolbarAction(data.GetResource("icon_drop.png"), func() {
+		inv.request(&messages.MessageMove{
+			To:   0, // The ground, for now.
+			Tag:  inv.getSelectedTag(),
+			Nrof: 0, // Perhaps add a drop amount prompt?
+		})
+	})
+	inv.actionDropSome = widget.NewToolbarAction(data.GetResource("icon_dropsome.png"), func() {
+		if item := GetObject(inv.getSelectedTag()); item != nil {
+			var countEntry *widget.Entry
 
-				countEntry = widget.NewEntry()
-				if item.Nrof > 1 {
-					countEntry.SetText(fmt.Sprintf("%d", item.Nrof/2))
-				} else {
-					countEntry.SetText(fmt.Sprintf("%d", item.Nrof))
-				}
-				dialog.ShowForm("Drop Item", "Drop", "Cancel", []*widget.FormItem{
-					widget.NewFormItem("Amount", countEntry),
-				}, func(b bool) {
-					if !b {
-						return
-					}
-					count, _ := strconv.Atoi(countEntry.Text)
-					inv.request(&messages.MessageMove{
-						To:   0, // The ground, for now.
-						Tag:  inv.getSelectedTag(),
-						Nrof: int32(count), // Perhaps add a drop amount prompt?
-					})
-				}, window)
+			countEntry = widget.NewEntry()
+			if item.Nrof > 1 {
+				countEntry.SetText(fmt.Sprintf("%d", item.Nrof/2))
+			} else {
+				countEntry.SetText(fmt.Sprintf("%d", item.Nrof))
 			}
-		}),
+			dialog.ShowForm("Drop Item", "Drop", "Cancel", []*widget.FormItem{
+				widget.NewFormItem("Amount", countEntry),
+			}, func(b bool) {
+				if !b {
+					return
+				}
+				count, _ := strconv.Atoi(countEntry.Text)
+				inv.request(&messages.MessageMove{
+					To:   0, // The ground, for now.
+					Tag:  inv.getSelectedTag(),
+					Nrof: int32(count), // Perhaps add a drop amount prompt?
+				})
+			}, window)
+		}
+	})
+
+	invToolbar := widget.NewToolbar(
+		inv.actionApply,
+		inv.actionDrop,
+		inv.actionDropSome,
+		inv.actionLock,
+		inv.actionMark,
 	)
 
 	inv.info = widget.NewRichTextWithText("...")
 	inv.info.Wrapping = fyne.TextWrapWord
 	inv.infoScroll = container.NewVScroll(inv.info)
 
-	invContainer := container.NewBorder(widget.NewLabel(inv.name), invToolbar, nil, nil, container.New(&layouts.Inventory{}, inv.list, inv.infoScroll))
+	invContainer := container.NewBorder(widget.NewLabel(inv.name), container.NewThemeOverride(invToolbar, noPaddingTheme{}), nil, nil, container.New(&layouts.Inventory{}, inv.list, inv.infoScroll))
 
 	dialog := layouts.NewDialog(window)
 	dialog.Full = true
@@ -259,11 +273,45 @@ func (inv *inventory) RefreshList() {
 	}
 }
 
+func (inv *inventory) syncToSelected() {
+	if item := GetObject(inv.getSelectedTag()); item != nil {
+		// Update apply icon
+		icon := inv.actionApply.Icon
+		if item.Flags.Applied() {
+			if item.Flags.Open() {
+				// Show "close container" icon
+			} else {
+				if item.Type.IsContainer() {
+					// Show "open container" icon
+				} else {
+					// Show "unapply" icon
+				}
+			}
+		} else {
+			if item.Type.IsDrink() || item.Type.IsPotion() {
+				icon = data.GetResource("icon_drink.png")
+			} else if item.Type.IsFood() || item.Type.IsFlesh() {
+				icon = data.GetResource("icon_eat.png")
+			} else if item.Type.IsSpellCastingConsumable() {
+				icon = data.GetResource("icon_cast.png")
+			} else if item.Type.IsReadable() {
+				icon = data.GetResource("icon_read.png")
+			} else {
+				icon = data.GetResource("icon_apply.png")
+			}
+		}
+		if icon != inv.actionApply.Icon {
+			inv.actionApply.SetIcon(icon)
+		}
+	}
+}
+
 func (inv *inventory) RefreshItem(tag int32) {
 	items := inv.sortItems()
 	for i, item := range items {
 		if item == tag {
 			if inv.selectedIndex == i {
+				inv.syncToSelected()
 				// FIXME: When an item is identified by an examine, we end up receiving 2 MessageUpdateItem(s) (the "You discover mystic forces on those items")... maybe we can clear the info if that text is discovered.
 				// It's the selected one... let's do an examine request.
 				/*inv.request(&messages.MessageExamine{

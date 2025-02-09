@@ -34,3 +34,27 @@ func (m myTheme) Size(name fyne.ThemeSizeName) float32 {
 	}
 	return theme.DefaultTheme().Size(name)
 }
+
+type noPaddingTheme struct{}
+
+func (m noPaddingTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	return theme.DefaultTheme().Color(name, variant)
+}
+
+func (m noPaddingTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (m noPaddingTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (m noPaddingTheme) Size(name fyne.ThemeSizeName) float32 {
+	if name == theme.SizeNameInnerPadding || name == theme.SizeNamePadding {
+		return 0
+	}
+	if name == theme.SizeNameInlineIcon {
+		return theme.DefaultTheme().Size(name) * 2
+	}
+	return theme.DefaultTheme().Size(name)
+}

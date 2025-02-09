@@ -535,7 +535,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		toolbarApplyAction = widget.NewToolbarAction(data.GetResource("icon_apply.png"), func() {
 			s.conn.SendCommand("apply", 0)
 		})
-		toolbarGetAction = widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
+		toolbarGetAction = widget.NewToolbarAction(data.GetResource("icon_pickup.png"), func() {
 			s.conn.SendCommand("get", 0)
 		})
 		toolbar = NewToolbar(
