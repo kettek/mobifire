@@ -3,10 +3,12 @@ package play
 import (
 	"fmt"
 	"slices"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/states/play/layouts"
@@ -182,6 +184,31 @@ func (inv *inventory) showDialog(window fyne.Window) {
 				Tag:  inv.getSelectedTag(),
 				Nrof: 0, // Perhaps add a drop amount prompt?
 			})
+		}),
+		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
+			if item := GetObject(inv.getSelectedTag()); item != nil {
+				var countEntry *widget.Entry
+
+				countEntry = widget.NewEntry()
+				if item.Nrof > 1 {
+					countEntry.SetText(fmt.Sprintf("%d", item.Nrof/2))
+				} else {
+					countEntry.SetText(fmt.Sprintf("%d", item.Nrof))
+				}
+				dialog.ShowForm("Drop Item", "Drop", "Cancel", []*widget.FormItem{
+					widget.NewFormItem("Amount", countEntry),
+				}, func(b bool) {
+					if !b {
+						return
+					}
+					count, _ := strconv.Atoi(countEntry.Text)
+					inv.request(&messages.MessageMove{
+						To:   0, // The ground, for now.
+						Tag:  inv.getSelectedTag(),
+						Nrof: int32(count), // Perhaps add a drop amount prompt?
+					})
+				}, window)
+			}
 		}),
 	)
 
