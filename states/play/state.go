@@ -193,7 +193,14 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			next(states.Prior)
 		} else {
 			s.playerTag = msg.Tag
-			// TODO: Store weight, face, and name?
+			// Add the player as an object manually. We need this for updtime and I'm sure inspecting ourself.
+			AddObject(messages.ItemObject{
+				Tag:         msg.Tag,
+				Weight:      msg.Weight,
+				TotalWeight: msg.Weight,
+				Face:        msg.Face,
+				Name:        msg.Name,
+			})
 		}
 	})
 
@@ -258,7 +265,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		msg := m.(*messages.MessageUpdateItem)
 		item := GetObject(msg.Tag)
 		if item == nil {
-			dialog.NewError(errors.New("Item not found"), s.window).Show()
+			dialog.NewError(fmt.Errorf("Item %d not found", msg.Tag), s.window).Show()
 			return
 		}
 		var oldInventory, newInventory *inventory // Store inventory information so we can update the inventories after the item has been fully updated.
