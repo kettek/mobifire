@@ -160,17 +160,17 @@ func (inv *inventory) showDialog(window fyne.Window) {
 		}
 	}
 	invToolbar := widget.NewToolbar(
-		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
+		widget.NewToolbarAction(data.GetResource("icon_apply.png"), func() {
 			inv.request(&messages.MessageApply{
 				Tag: inv.getSelectedTag(),
 			})
 		}),
-		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
+		widget.NewToolbarAction(data.GetResource("icon_marked.png"), func() {
 			inv.request(&messages.MessageMark{
 				Tag: inv.getSelectedTag(),
 			})
 		}),
-		widget.NewToolbarAction(data.GetResource("icon_get.png"), func() {
+		widget.NewToolbarAction(data.GetResource("icon_locked.png"), func() {
 			if item := GetObject(inv.getSelectedTag()); item != nil {
 				inv.request(&messages.MessageLock{
 					Tag:  inv.getSelectedTag(),
