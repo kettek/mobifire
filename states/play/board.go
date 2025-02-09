@@ -58,7 +58,7 @@ func (b *multiBoard) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	if b.container.Size().Width != b.lastWidth || b.container.Size().Height != b.lastHeight {
 		b.lastWidth = b.container.Size().Width
 		b.lastHeight = b.container.Size().Height
-		rows, cols := b.CalculateCells(b.container.Size())
+		rows, cols := CalculateBoardSize(b.container.Size(), b.cellWidth, b.cellHeight)
 		if rows != b.lastRows || cols != b.lastCols {
 			b.lastRows = rows
 			b.lastCols = cols
@@ -94,12 +94,10 @@ func (b *multiBoard) ClearBoard(z int) {
 	b.container.Refresh()
 }
 
-func (b *multiBoard) CalculateCells(size fyne.Size) (int, int) {
-	// ... I don't know if size is scaled or not.
-	rows := size.Width / float32(b.boards[0].CellWidth)
-	cols := size.Height / float32(b.boards[0].CellHeight)
-	// Use Ceil +1 so we don't have any blank space.
-	return int(math.Ceil(float64(rows))) + 1, int(math.Ceil(float64(cols))) + 1
+func CalculateBoardSize(size fyne.Size, cellWidth, cellHeight int) (int, int) {
+	rows := size.Width / float32(cellWidth)
+	cols := size.Height / float32(cellHeight)
+	return int(math.Ceil(float64(rows)) + 1), int(math.Ceil(float64(cols)) + 1)
 }
 
 func (b *multiBoard) SetBoardSize(rows, cols int) {

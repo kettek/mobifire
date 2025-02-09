@@ -55,16 +55,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageAccountPlayers{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageAccountPlayers)
 		s.refreshCharacters(msg.Characters, next)
-		// It's kind of dumb, but reset our view to 11,11
-		s.conn.Send(&messages.MessageSetup{
-			MapSize: struct {
-				Use   bool
-				Value string
-			}{
-				Use:   true,
-				Value: "11x11",
-			},
-		})
 	})
 
 	// Selection

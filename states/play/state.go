@@ -54,6 +54,20 @@ func NewState(conn *net.Connection, character string) *State {
 // Enter sets up all the necessary UI and network handling.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
+	// First let's send a setup for our current map size.
+	{
+		w, h := CalculateBoardSize(s.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
+		s.conn.Send(&messages.MessageSetup{
+			MapSize: struct {
+				Use   bool
+				Value string
+			}{
+				Use:   true,
+				Value: fmt.Sprintf("%dx%d", w, h),
+			},
+		})
+	}
+	// Now actually try to join the world.
 	s.conn.Send(&messages.MessageAccountPlay{Character: s.character})
 	// It's a little silly, but we have to handle character select failure here, as Crossfire's protocol is all over the place with state confirmations.
 	s.On(&messages.MessageAccountPlay{}, &messages.MessageAccountPlay{}, func(m messages.Message, failure *messages.MessageFailure) {
@@ -260,6 +274,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			}
 		}
 		inventory.RefreshList()
+
+		// If it's a non-ground or non-player inventory, then we must be accessing a container... so let's automatically open a window (for now).
+		if msg.Location != 0 && msg.Location != s.playerTag && s.playerTag != 0 /* Don't call this is the player is not yet set, as the server dumps each inventory item individually before sending the player _and then_ resending all items in one msg */ {
+			inventory.showDialog(s.window)
+		}
+
 	})
 	s.On(&messages.MessageUpdateItem{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageUpdateItem)
@@ -305,6 +325,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			currentInventory.RefreshItem(msg.Tag)
 		}
 		fmt.Println("Update item", msg.Tag, msg.Flags, msg.Fields)
+		for _, f := range msg.Fields {
+			fmt.Printf("%T: %v\n", f, f)
+		}
 	})
 	s.On(&messages.MessageDeleteInventory{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageDeleteInventory)
