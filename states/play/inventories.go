@@ -229,6 +229,24 @@ func (inv *inventory) RefreshList() {
 	}
 }
 
+func (inv *inventory) RefreshItem(tag int32) {
+	items := inv.sortItems()
+	for i, item := range items {
+		if item == tag {
+			if inv.selectedIndex == i {
+				// FIXME: When an item is identified by an examine, we end up receiving 2 MessageUpdateItem(s) (the "You discover mystic forces on those items")... maybe we can clear the info if that text is discovered.
+				// It's the selected one... let's do an examine request.
+				/*inv.request(&messages.MessageExamine{
+					Tag: inv.getSelectedTag(),
+				})*/
+			}
+			break
+		}
+	}
+	// Update the list, ofc. TODO: We could check if in view, maybe?
+	inv.RefreshList()
+}
+
 func (inv *inventory) sortItems() []int32 {
 	inv.sortedItems = make([]int32, len(inv.items))
 	copy(inv.sortedItems, inv.items)

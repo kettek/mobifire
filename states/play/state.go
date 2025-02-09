@@ -254,6 +254,51 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 		inventory.RefreshList()
 	})
+	s.On(&messages.MessageUpdateItem{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageUpdateItem)
+		item := GetObject(msg.Tag)
+		if item == nil {
+			dialog.NewError(errors.New("Item not found"), s.window).Show()
+			return
+		}
+		var oldInventory, newInventory *inventory // Store inventory information so we can update the inventories after the item has been fully updated.
+		for _, mf := range msg.Fields {
+			switch f := mf.(type) {
+			case messages.MessageUpdateItemLocation:
+				oldInventory, _ = acquireInventory(item.containerTag)
+				newInventory, _ = acquireInventory(int32(f))
+				item.containerTag = int32(f)
+			case messages.MessageUpdateItemFlags:
+				item.Flags = messages.ItemFlags(f)
+			case messages.MessageUpdateItemWeight:
+				item.Weight = int32(f)
+			case messages.MessageUpdateItemFace:
+				item.Face = int32(f)
+			case messages.MessageUpdateItemName:
+				item.Name = f.Name
+				item.PluralName = f.PluralName
+			case messages.MessageUpdateItemAnim:
+				item.Anim = int16(f)
+			case messages.MessageUpdateItemAnimSpeed:
+				item.AnimSpeed = int8(f)
+			case messages.MessageUpdateItemNrof:
+				item.Nrof = int32(f)
+			}
+		}
+
+		if oldInventory != nil {
+			oldInventory.removeItem(msg.Tag)
+			oldInventory.RefreshInfo()
+			oldInventory.RefreshList()
+		}
+		if newInventory != nil {
+			newInventory.addItem(msg.Tag)
+		}
+		if currentInventory, ok := acquireInventory(item.containerTag); ok {
+			currentInventory.RefreshItem(msg.Tag)
+		}
+		fmt.Println("Update item", msg.Tag, msg.Flags, msg.Fields)
+	})
 	s.On(&messages.MessageDeleteInventory{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageDeleteInventory)
 		inv, _ := acquireInventory(msg.Tag)
