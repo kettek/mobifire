@@ -43,7 +43,3 @@ func (dm *DataManager) Init(window fyne.Window, conn *net.Connection, handler *m
 	})
 
 }
-
-func (dm *DataManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
-	// Not used, as we cause this.
-}

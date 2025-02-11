@@ -97,10 +97,6 @@ func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *
 	})
 }
 
-func (m *SkillsManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
-	// Not used at the moment. We should add support for not-yet-loaded skill images, though.
-}
-
 func (m *SkillsManager) Skill(num uint16) Skill {
 	return m.skills[num]
 }
