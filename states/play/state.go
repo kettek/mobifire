@@ -37,7 +37,8 @@ type State struct {
 	pendingExamineTag int32
 
 	//
-	managers []Manager
+	managers Managers
+
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -51,12 +52,9 @@ func NewState(conn *net.Connection, character string) *State {
 		sayOptions: []string{"hi", "yes", "no"},
 	}
 
-	dm := NewDataManager(&state.managers)
-	state.managers = append(state.managers, dm)
-	mm := NewMapManager()
-	state.managers = append(state.managers, mm)
-	sm := NewSkillsManager()
-	state.managers = append(state.managers, sm)
+	state.managers.Add(NewDataManager(&state.managers))
+	state.managers.Add(NewMapManager())
+	state.managers.Add(NewSkillsManager())
 	return state
 }
 
@@ -89,9 +87,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	})
 
 	// Managers setup.
-	for _, m := range s.managers {
-		m.Init(s.window, s.conn, &s.MessageHandler)
-	}
+	s.managers.Init(s.window, s.conn, &s.MessageHandler)
 
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
@@ -468,7 +464,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				inv.showDialog(s.window)
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				sm := s.GetManager(&SkillsManager{}).(*SkillsManager)
+				sm := s.managers.GetByType(&SkillsManager{}).(*SkillsManager)
 				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
 			}),
@@ -511,7 +507,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
-	board := s.GetManager(&MapManager{}).(*MapManager).CanvasObject()
+	board := s.managers.GetByType(&MapManager{}).(*MapManager).CanvasObject()
 
 	s.container = container.New(&layouts.Game{
 		Board:    board,
@@ -642,13 +638,4 @@ func (s *State) ShowInputWithOptions(title string, submit string, opts *[]string
 	}, s.window)
 }
 
-func (s *State) GetManager(m Manager) Manager {
-	for _, m2 := range s.managers {
-		// Yeah, yeah, we're using reflect, so sue me.
-		if reflect.TypeOf(m) == reflect.TypeOf(m2) {
-			return m2
-		}
-	}
-	return nil
-}
-
+type PopUpWrapper struct {

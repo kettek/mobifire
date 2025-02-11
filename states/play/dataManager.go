@@ -12,10 +12,10 @@ type DataManager struct {
 	conn          *net.Connection
 	handler       *messages.MessageHandler
 	pendingImages []int32
-	managers      *[]Manager
+	managers      *Managers
 }
 
-func NewDataManager(managers *[]Manager) *DataManager {
+func NewDataManager(managers *Managers) *DataManager {
 	return &DataManager{
 		managers: managers,
 	}
@@ -37,7 +37,7 @@ func (dm *DataManager) Init(window fyne.Window, conn *net.Connection, handler *m
 		msg := m.(*messages.MessageImage2)
 		data.AddFaceImage(*msg)
 		img, _ := data.GetFace(int(msg.Face))
-		for _, manager := range *dm.managers {
+		for _, manager := range dm.managers.GetFaceLoadedManagers() {
 			manager.OnFaceLoaded(int16(msg.Face), &img)
 		}
 	})
