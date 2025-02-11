@@ -12,7 +12,6 @@ import (
 )
 
 type MapManager struct {
-	window  fyne.Window
 	conn    *net.Connection
 	handler *messages.MessageHandler
 
@@ -25,11 +24,24 @@ func NewMapManager() *MapManager {
 	return &MapManager{}
 }
 
-func (mm *MapManager) Init(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
-	mm.window = window
+func (mm *MapManager) SetConnection(conn *net.Connection) {
 	mm.conn = conn
-	mm.handler = handler
+}
 
+func (mm *MapManager) SetHandler(handler *messages.MessageHandler) {
+	mm.handler = handler
+}
+
+func (mm *MapManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
+	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
+		if mm.pendingImages[i].Num == faceID {
+			mm.mb.SetCell(mm.pendingImages[i].X, mm.pendingImages[i].Y, mm.pendingImages[i].Z, faceImage)
+			mm.pendingImages = append(mm.pendingImages[:i], mm.pendingImages[i+1:]...)
+		}
+	}
+}
+
+func (mm *MapManager) Init() {
 	// Multiboard seutp.
 	faceset := data.CurrentFaceSet()
 	mm.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
@@ -103,15 +115,6 @@ func (mm *MapManager) Init(window fyne.Window, conn *net.Connection, handler *me
 	mm.handler.On(&messages.MessageNewMap{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		mm.mb.Clear()
 	})
-}
-
-func (mm *MapManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
-	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
-		if mm.pendingImages[i].Num == faceID {
-			mm.mb.SetCell(mm.pendingImages[i].X, mm.pendingImages[i].Y, mm.pendingImages[i].Z, faceImage)
-			mm.pendingImages = append(mm.pendingImages[:i], mm.pendingImages[i+1:]...)
-		}
-	}
 }
 
 func (mm *MapManager) CanvasObject() fyne.CanvasObject {

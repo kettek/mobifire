@@ -36,11 +36,19 @@ func NewSkillsManager() *SkillsManager {
 	return &SkillsManager{}
 }
 
-func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
+func (s *SkillsManager) SetWindow(window fyne.Window) {
 	s.window = window
-	s.conn = conn
-	s.handler = handler
+}
 
+func (s *SkillsManager) SetConnection(conn *net.Connection) {
+	s.conn = conn
+}
+
+func (s *SkillsManager) SetHandler(handler *messages.MessageHandler) {
+	s.handler = handler
+}
+
+func (s *SkillsManager) Init() {
 	s.skills = make(map[uint16]Skill)
 	s.knownSkills = make(map[uint16]messages.MessageStatSkill)
 

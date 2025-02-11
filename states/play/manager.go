@@ -1,6 +1,7 @@
 package play
 
 import (
+	"fmt"
 	"reflect"
 
 	"fyne.io/fyne/v2"
@@ -26,12 +27,25 @@ func (m *Managers) Remove(manager Manager) {
 
 func (m *Managers) Init(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
 	for _, manager := range *m {
-		manager.Init(window, conn, handler)
+		if manager, ok := manager.(ManagersAccessor); ok {
+			manager.SetManagers(m)
+		}
+		if manager, ok := manager.(WindowAccessor); ok {
+			manager.SetWindow(window)
+		}
+		if manager, ok := manager.(ConnectionAccessor); ok {
+			manager.SetConnection(conn)
+		}
+		if manager, ok := manager.(HandlerAccessor); ok {
+			manager.SetHandler(handler)
+		}
+		manager.Init()
 	}
 }
 
 func (m *Managers) GetByType(manager Manager) Manager {
 	for _, v := range *m {
+		fmt.Printf("%T %T %+v %+v\n", v, manager, v, manager)
 		if reflect.TypeOf(v) == reflect.TypeOf(manager) {
 			return v
 		}
@@ -39,21 +53,37 @@ func (m *Managers) GetByType(manager Manager) Manager {
 	return nil
 }
 
-func (m *Managers) GetFaceLoadedManagers() []ManagerWithFaceLoaded {
-	var managers []ManagerWithFaceLoaded
+func (m *Managers) GetFaceReceivers() []FaceReceiver {
+	var managers []FaceReceiver
 	for _, v := range *m {
-		if manager, ok := v.(ManagerWithFaceLoaded); ok {
-			managers = append(managers, manager)
+		if v, ok := v.(FaceReceiver); ok {
+			managers = append(managers, v)
 		}
 	}
 	return managers
 }
 
 type Manager interface {
-	Init(window fyne.Window, conn *net.Connection, manager *messages.MessageHandler)
+	Init()
 }
 
-type ManagerWithFaceLoaded interface {
+type FaceReceiver interface {
 	Manager
 	OnFaceLoaded(faceID int16, faceImage *data.FaceImage)
+}
+
+type ManagersAccessor interface {
+	SetManagers(managers *Managers)
+}
+
+type WindowAccessor interface {
+	SetWindow(window fyne.Window)
+}
+
+type ConnectionAccessor interface {
+	SetConnection(conn *net.Connection)
+}
+
+type HandlerAccessor interface {
+	SetHandler(handler *messages.MessageHandler)
 }
