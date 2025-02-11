@@ -17,6 +17,8 @@ type MapManager struct {
 	handler *messages.MessageHandler
 
 	mb *multiBoard
+
+	pendingImages []boardPendingImage
 }
 
 func NewMapManager() *MapManager {
@@ -89,8 +91,7 @@ func (mm *MapManager) Init(window fyne.Window, conn *net.Connection, handler *me
 					}
 					faceImage, ok := data.GetFace(int(d.FaceNum))
 					if !ok {
-						// FIXME: this is dumb.
-						pendingImages = append(pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: int16(d.FaceNum)})
+						mm.pendingImages = append(mm.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: int16(d.FaceNum)})
 						continue
 					}
 					mm.mb.SetCell(m.X, m.Y, int(d.Layer), &faceImage)
@@ -103,6 +104,16 @@ func (mm *MapManager) Init(window fyne.Window, conn *net.Connection, handler *me
 		mm.mb.Clear()
 	})
 }
+
+func (mm *MapManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
+	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
+		if mm.pendingImages[i].Num == faceID {
+			mm.mb.SetCell(mm.pendingImages[i].X, mm.pendingImages[i].Y, mm.pendingImages[i].Z, faceImage)
+			mm.pendingImages = append(mm.pendingImages[:i], mm.pendingImages[i+1:]...)
+		}
+	}
+}
+
 func (mm *MapManager) CanvasObject() fyne.CanvasObject {
 	return mm.mb.container
 }

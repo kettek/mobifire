@@ -40,9 +40,6 @@ type State struct {
 	managers []Manager
 }
 
-// TODO: MOVE THIS
-var pendingImages []boardPendingImage
-
 // NewState creates a new State from a connection and a desired character to play as.
 func NewState(conn *net.Connection, character string) *State {
 	state := &State{
@@ -54,6 +51,8 @@ func NewState(conn *net.Connection, character string) *State {
 		sayOptions: []string{"hi", "yes", "no"},
 	}
 
+	dm := NewDataManager(&state.managers)
+	state.managers = append(state.managers, dm)
 	mm := NewMapManager()
 	state.managers = append(state.managers, mm)
 	sm := NewSkillsManager()
@@ -363,29 +362,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 	})
 
-	// Image and animation message processing.
-	s.On(&messages.MessageFace2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageFace2)
-		if _, ok := data.GetFace(int(msg.Num)); !ok {
-			s.conn.Send(&messages.MessageAskFace{Face: int32(msg.Num)})
-		}
-	})
-
-	s.On(&messages.MessageImage2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageImage2)
-		data.AddFaceImage(*msg)
-		for i := len(pendingImages) - 1; i >= 0; i-- {
-			if pendingImages[i].Num == int16(msg.Face) {
-				faceImage, _ := data.GetFace(int(msg.Face))
-				// FIXME: pending images should be handled by the data package, somehow... Maybe add Manager or State hooks that have arbitrary callbacks when a given image by Face is loaded.
-				mm := s.GetManager(&MapManager{}).(*MapManager)
-				mm.mb.SetCell(pendingImages[i].X, pendingImages[i].Y, pendingImages[i].Z, &faceImage)
-
-				pendingImages = append(pendingImages[:i], pendingImages[i+1:]...)
-			}
-		}
-	})
-
 	messagesList := widget.NewList(
 		func() int {
 			return len(s.messages)
@@ -667,10 +643,10 @@ func (s *State) ShowInputWithOptions(title string, submit string, opts *[]string
 }
 
 func (s *State) GetManager(m Manager) Manager {
-	for _, m := range s.managers {
+	for _, m2 := range s.managers {
 		// Yeah, yeah, we're using reflect, so sue me.
-		if reflect.TypeOf(m) == reflect.TypeOf(m) {
-			return m
+		if reflect.TypeOf(m) == reflect.TypeOf(m2) {
+			return m2
 		}
 	}
 	return nil
