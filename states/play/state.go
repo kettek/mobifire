@@ -25,12 +25,10 @@ type State struct {
 	messages.MessageHandler
 	window          fyne.Window
 	container       *fyne.Container
-	mb              *multiBoard
 	commandsManager commandsManager
 	character       string
 	conn            *net.Connection
 	messages        []messages.MessageDrawExtInfo
-	pendingImages   []boardPendingImage
 	// To be moved to a character-specific location.
 	sayOptions []string
 	//
