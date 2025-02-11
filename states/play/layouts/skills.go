@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 )
 
 type SkillEntry struct {
@@ -37,6 +38,8 @@ func (e *SkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 type FullSkillEntry struct {
 	IconSize int
+	Perc     float32
+	Rect     *canvas.Rectangle
 }
 
 func (e *FullSkillEntry) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -53,6 +56,11 @@ func (e *FullSkillEntry) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func (e *FullSkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	width := float32(0.0)
+
+	fw := size.Width*e.Perc - size.Height // skip the icon
+	e.Rect.Resize(fyne.NewSize(fw, size.Height))
+	e.Rect.Move(fyne.NewPos(size.Height, 0))
+
 	// 0: icon
 	scale := math.Max(1, math.Floor(float64(e.IconSize)/float64(size.Height)))
 

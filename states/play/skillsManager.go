@@ -2,6 +2,7 @@ package play
 
 import (
 	"fmt"
+	"image/color"
 	"slices"
 
 	"fyne.io/fyne/v2"
@@ -22,6 +23,7 @@ type SkillsManager struct {
 	handler     *messages.MessageHandler
 	skills      map[uint16]Skill
 	knownSkills map[uint16]messages.MessageStatSkill
+	exp         []uint64
 }
 
 // Skill is a convenience merger around SkillInfo and SkillExtraInfo.
@@ -57,7 +59,7 @@ func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *
 		switch data := msg.Data.(type) {
 		case messages.MessageReplyInfoDataSkillInfo:
 			for num, skill := range data.Skills {
-				if sk, ok := s.skills[uint16(num)]; !ok {
+				if sk, ok := s.skills[uint16(num)]; ok {
 					sk.SkillInfo = skill
 					s.skills[uint16(num)] = sk
 				} else {
@@ -68,7 +70,7 @@ func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *
 			}
 		case messages.MessageReplyInfoDataSkillExtra:
 			for num, skill := range data.Skills {
-				if sk, ok := s.skills[uint16(num)]; !ok {
+				if sk, ok := s.skills[uint16(num)]; ok {
 					sk.SkillExtraInfo = skill
 					s.skills[uint16(num)] = sk
 				} else {
@@ -77,6 +79,8 @@ func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *
 					}
 				}
 			}
+		case messages.MessageReplyInfoDataExpTable:
+			s.exp = data
 		}
 	})
 
@@ -87,10 +91,30 @@ func (s *SkillsManager) Init(window fyne.Window, conn *net.Connection, handler *
 	s.conn.Send(&messages.MessageRequestInfo{
 		Data: messages.MessageRequestInfoSkillExtra(1),
 	})
+	// Also request exp table.
+	s.conn.Send(&messages.MessageRequestInfo{
+		Data: messages.MessageRequestInfoExpTable{},
+	})
 }
 
 func (m *SkillsManager) Skill(num uint16) Skill {
 	return m.skills[num]
+}
+
+func (m *SkillsManager) ExpToNextLevel(skill uint16) uint64 {
+	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
+		return 0
+	}
+	exp := m.exp[m.knownSkills[skill].Level]
+	return exp - uint64(m.knownSkills[skill].Exp)
+}
+
+func (m *SkillsManager) ExpToNextLevelPercentage(skill uint16) float64 {
+	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
+		return 0
+	}
+	exp := m.exp[m.knownSkills[skill].Level]
+	return float64(m.knownSkills[skill].Exp) / float64(exp)
 }
 
 func (m *SkillsManager) KnownSkillsSlice() []uint8 {
@@ -150,15 +174,22 @@ func (m *SkillsManager) ShowSimpleSkillsList(cb func(id int)) {
 func (m *SkillsManager) ShowSkillsList() {
 	var popup *widget.PopUp
 	skillIDs := m.KnownSkillsSlice()
+
+	info := widget.NewRichTextWithText("...")
+	info.Wrapping = fyne.TextWrapWord
+
 	list := widget.NewList(
 		func() int {
 			return len(skillIDs)
 		},
 		func() fyne.CanvasObject {
-			return container.New(&layouts.FullSkillEntry{IconSize: data.CurrentFaceSet().Width}, &canvas.Image{}, widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""))
+			rect := canvas.NewRectangle(color.NRGBA{255, 255, 255, 100})
+			return container.New(&layouts.FullSkillEntry{IconSize: data.CurrentFaceSet().Width, Rect: rect}, &canvas.Image{}, widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""), rect)
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			skill := m.skills[uint16(skillIDs[i])]
+			// Set the percentage until next level (used for BG)
+			o.(*fyne.Container).Layout.(*layouts.FullSkillEntry).Perc = float32(m.ExpToNextLevelPercentage(uint16(skillIDs[i])))
+			skill := m.Skill(uint16(skillIDs[i]))
 			if face, ok := data.GetFace(int(skill.Face)); ok {
 				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = &face
 			} else {
@@ -173,13 +204,22 @@ func (m *SkillsManager) ShowSkillsList() {
 		},
 	)
 	list.OnSelected = func(id widget.ListItemID) {
-		popup.Hide()
+		skill := m.Skill(uint16(skillIDs[id]))
+		next := m.ExpToNextLevel(uint16(skillIDs[id]))
+		v, p := humanize.ComputeSI(float64(next))
+		f := humanize.SIWithDigits(v, 4, p)
+		info.Segments = data.TextToRichTextSegments(f + " until level " + fmt.Sprintf("%d", m.knownSkills[uint16(skillIDs[id])].Level+1) + "\n" + skill.Description)
+		info.Refresh()
 	}
+
+	infoScroll := container.NewVScroll(info)
+
+	cnt := container.New(&layouts.Inventory{}, list, infoScroll)
 
 	dialog := layouts.NewDialog(m.window)
 	dialog.Full = true
 
-	popup = widget.NewPopUp(container.New(dialog, list), m.window.Canvas())
+	popup = widget.NewPopUp(container.New(dialog, cnt), m.window.Canvas())
 
 	ps := popup.MinSize()
 	ws := m.window.Canvas().Size()
