@@ -42,9 +42,12 @@ type State struct {
 	managers []Manager
 }
 
+// TODO: MOVE THIS
+var pendingImages []boardPendingImage
+
 // NewState creates a new State from a connection and a desired character to play as.
 func NewState(conn *net.Connection, character string) *State {
-	return &State{
+	state := &State{
 		conn:      conn,
 		character: character,
 		commandsManager: commandsManager{
@@ -52,6 +55,9 @@ func NewState(conn *net.Connection, character string) *State {
 		},
 		sayOptions: []string{"hi", "yes", "no"},
 	}
+
+	mm := NewMapManager()
+	state.managers = append(state.managers, mm)
 	sm := NewSkillsManager()
 	state.managers = append(state.managers, sm)
 	return state
@@ -359,28 +365,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 	})
 
-	// Setup message handling.
-	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageSetup)
-		if msg.MapSize.Use {
-			parts := strings.Split(msg.MapSize.Value, "x")
-			if len(parts) != 2 {
-				fmt.Println("Invalid map size:", msg.MapSize.Value)
-				return
-			}
-			rows, err := strconv.Atoi(parts[0])
-			if err != nil {
-				fmt.Println("Invalid map size:", msg.MapSize.Value)
-				return
-			}
-			cols, err := strconv.Atoi(parts[1])
-			if err != nil {
-				fmt.Println("Invalid map size:", msg.MapSize.Value)
-			}
-			s.mb.SetBoardSize(rows+1, cols+1)
-		}
-	})
-
 	// Image and animation message processing.
 	s.On(&messages.MessageFace2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageFace2)
@@ -392,51 +376,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageImage2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageImage2)
 		data.AddFaceImage(*msg)
-		for i := len(s.pendingImages) - 1; i >= 0; i-- {
-			if s.pendingImages[i].Num == int16(msg.Face) {
+		for i := len(pendingImages) - 1; i >= 0; i-- {
+			if pendingImages[i].Num == int16(msg.Face) {
 				faceImage, _ := data.GetFace(int(msg.Face))
-				s.mb.SetCell(s.pendingImages[i].X, s.pendingImages[i].Y, s.pendingImages[i].Z, &faceImage)
-				s.pendingImages = append(s.pendingImages[:i], s.pendingImages[i+1:]...)
+				// FIXME: pending images should be handled by the data package, somehow... Maybe add Manager or State hooks that have arbitrary callbacks when a given image by Face is loaded.
+				mm := s.GetManager(&MapManager{}).(*MapManager)
+				mm.mb.SetCell(pendingImages[i].X, pendingImages[i].Y, pendingImages[i].Z, &faceImage)
+
+				pendingImages = append(pendingImages[:i], pendingImages[i+1:]...)
 			}
 		}
-	})
-
-	s.On(&messages.MessageMap2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageMap2)
-
-		for _, m := range msg.Coords {
-			if len(m.Data) == 0 {
-				// TODO ???
-				continue
-			}
-			for _, c := range m.Data {
-				switch d := c.(type) {
-				case messages.MessageMap2CoordDataDarkness:
-					// TODO
-				case messages.MessageMap2CoordDataAnim:
-					// TODO
-				case messages.MessageMap2CoordDataClear:
-					s.mb.SetCells(m.X, m.Y, nil)
-				case messages.MessageMap2CoordDataClearLayer:
-					s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
-				case messages.MessageMap2CoordDataImage:
-					if d.FaceNum == 0 {
-						s.mb.SetCell(m.X, m.Y, int(d.Layer), nil)
-						continue
-					}
-					faceImage, ok := data.GetFace(int(d.FaceNum))
-					if !ok {
-						s.pendingImages = append(s.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: int16(d.FaceNum)})
-						continue
-					}
-					s.mb.SetCell(m.X, m.Y, int(d.Layer), &faceImage)
-				}
-			}
-		}
-	})
-
-	s.On(&messages.MessageNewMap{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		s.mb.Clear()
 	})
 
 	messagesList := widget.NewList(
@@ -519,20 +468,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 	})
 
-	// Use our current face set for the board... could we make setting the faceset dynamic...??
-	faceset := data.CurrentFaceSet()
-	s.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
-
-	// Setup hooks for requesting map resizes.
-	s.mb.onSizeChanged = func(rows, cols int) {
-		s.conn.Send(&messages.MessageSetup{
-			MapSize: struct {
-				Use   bool
-				Value string
-			}{Use: true, Value: fmt.Sprintf("%dx%d", rows, cols)},
-		})
-	}
-
 	// Right-hand toolbar stuff
 	var toolbar *Toolbar
 	{
@@ -602,12 +537,14 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
+	board := s.GetManager(&MapManager{}).(*MapManager).CanvasObject()
+
 	s.container = container.New(&layouts.Game{
-		Board:    s.mb.container,
+		Board:    board,
 		Messages: messagesList,
 		Left:     leftArea,
 		Right:    toolbars,
-	}, s.mb.container, container.NewStack(messagesListBackground, container.NewThemeOverride(messagesList, sizedTheme)), leftArea, toolbars)
+	}, board, container.NewStack(messagesListBackground, container.NewThemeOverride(messagesList, sizedTheme)), leftArea, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 
