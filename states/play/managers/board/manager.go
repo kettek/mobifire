@@ -1,4 +1,4 @@
-package play
+package board
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
-type MapManager struct {
+type Manager struct {
 	conn    *net.Connection
 	handler *messages.MessageHandler
 
@@ -20,19 +20,19 @@ type MapManager struct {
 	pendingImages []boardPendingImage
 }
 
-func NewMapManager() *MapManager {
-	return &MapManager{}
+func NewManager() *Manager {
+	return &Manager{}
 }
 
-func (mm *MapManager) SetConnection(conn *net.Connection) {
+func (mm *Manager) SetConnection(conn *net.Connection) {
 	mm.conn = conn
 }
 
-func (mm *MapManager) SetHandler(handler *messages.MessageHandler) {
+func (mm *Manager) SetHandler(handler *messages.MessageHandler) {
 	mm.handler = handler
 }
 
-func (mm *MapManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
+func (mm *Manager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
 		if mm.pendingImages[i].Num == faceID {
 			mm.mb.SetCell(mm.pendingImages[i].X, mm.pendingImages[i].Y, mm.pendingImages[i].Z, faceImage)
@@ -41,7 +41,7 @@ func (mm *MapManager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 	}
 }
 
-func (mm *MapManager) Init() {
+func (mm *Manager) Init() {
 	// Multiboard seutp.
 	faceset := data.CurrentFaceSet()
 	mm.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
@@ -54,7 +54,7 @@ func (mm *MapManager) Init() {
 		})
 	}
 
-	// Map setup handler.
+	// Manager setup handler.
 	mm.handler.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageSetup)
 		if msg.MapSize.Use {
@@ -76,7 +76,7 @@ func (mm *MapManager) Init() {
 		}
 	})
 
-	// Map update handlers.
+	// Manager update handlers.
 
 	mm.handler.On(&messages.MessageMap2{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageMap2)
@@ -117,6 +117,6 @@ func (mm *MapManager) Init() {
 	})
 }
 
-func (mm *MapManager) CanvasObject() fyne.CanvasObject {
+func (mm *Manager) CanvasObject() fyne.CanvasObject {
 	return mm.mb.container
 }

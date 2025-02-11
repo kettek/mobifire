@@ -17,6 +17,10 @@ import (
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/play/layouts"
+	"github.com/kettek/mobifire/states/play/managers"
+	"github.com/kettek/mobifire/states/play/managers/board"
+	"github.com/kettek/mobifire/states/play/managers/face"
+	"github.com/kettek/mobifire/states/play/managers/skills"
 	"github.com/kettek/termfire/messages"
 )
 
@@ -52,9 +56,9 @@ func NewState(conn *net.Connection, character string) *State {
 		sayOptions: []string{"hi", "yes", "no"},
 	}
 
-	state.managers.Add(NewFaceManager(&state.managers))
-	state.managers.Add(NewMapManager())
-	state.managers.Add(NewSkillsManager())
+	state.managers.Add(face.NewManager())
+	state.managers.Add(board.NewManager())
+	state.managers.Add(skills.NewManager())
 	return state
 }
 
@@ -63,7 +67,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 	// First let's send a setup for our current map size.
 	{
-		w, h := CalculateBoardSize(s.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
+		w, h := board.CalculateBoardSize(s.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
 		s.conn.Send(&messages.MessageSetup{
 			MapSize: struct {
 				Use   bool
@@ -464,7 +468,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				inv.showDialog(s.window)
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				sm := s.managers.GetByType(&SkillsManager{}).(*SkillsManager)
+				sm := s.managers.GetByType(&skills.Manager{}).(*skills.Manager)
 				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
 			}),
@@ -507,7 +511,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
-	board := s.managers.GetByType(&MapManager{}).(*MapManager).CanvasObject()
+	board := s.managers.GetByType(&board.Manager{}).(*board.Manager).CanvasObject()
 
 	s.container = container.New(&layouts.Game{
 		Board:    board,

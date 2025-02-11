@@ -1,4 +1,4 @@
-package play
+package board
 
 import (
 	"math"

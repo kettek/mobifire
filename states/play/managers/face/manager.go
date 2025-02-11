@@ -1,25 +1,26 @@
-package play
+package face
 
 import (
 	"fyne.io/fyne/v2"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
+	"github.com/kettek/mobifire/states/play/managers"
 	"github.com/kettek/termfire/messages"
 )
 
-type FaceManager struct {
+type Manager struct {
 	window        fyne.Window
 	conn          *net.Connection
 	handler       *messages.MessageHandler
 	pendingImages []int32
-	managers      *Managers
+	managers      *managers.Managers
 }
 
-func NewFaceManager() *FaceManager {
-	return &FaceManager{}
+func NewManager() *Manager {
+	return &Manager{}
 }
 
-func (fm *FaceManager) Init() {
+func (fm *Manager) Init() {
 	fm.handler.On(&messages.MessageFace2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		msg := m.(*messages.MessageFace2)
 		if _, ok := data.GetFace(int(msg.Num)); !ok {
@@ -32,19 +33,19 @@ func (fm *FaceManager) Init() {
 		data.AddFaceImage(*msg)
 		img, _ := data.GetFace(int(msg.Face))
 		for _, manager := range fm.managers.GetFaceReceivers() {
-			manager.(FaceReceiver).OnFaceLoaded(int16(msg.Face), &img)
+			manager.(managers.FaceReceiver).OnFaceLoaded(int16(msg.Face), &img)
 		}
 	})
 }
 
-func (fm *FaceManager) SetConnection(conn *net.Connection) {
+func (fm *Manager) SetConnection(conn *net.Connection) {
 	fm.conn = conn
 }
 
-func (fm *FaceManager) SetHandler(handler *messages.MessageHandler) {
+func (fm *Manager) SetHandler(handler *messages.MessageHandler) {
 	fm.handler = handler
 }
 
-func (fm *FaceManager) SetManagers(managers *Managers) {
+func (fm *Manager) SetManagers(managers *managers.Managers) {
 	fm.managers = managers
 }

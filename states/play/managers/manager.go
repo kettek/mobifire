@@ -1,7 +1,6 @@
-package play
+package managers
 
 import (
-	"fmt"
 	"reflect"
 
 	"fyne.io/fyne/v2"
@@ -45,7 +44,6 @@ func (m *Managers) Init(window fyne.Window, conn *net.Connection, handler *messa
 
 func (m *Managers) GetByType(manager Manager) Manager {
 	for _, v := range *m {
-		fmt.Printf("%T %T %+v %+v\n", v, manager, v, manager)
 		if reflect.TypeOf(v) == reflect.TypeOf(manager) {
 			return v
 		}

@@ -1,4 +1,4 @@
-package play
+package skills
 
 import (
 	"fmt"
@@ -16,8 +16,8 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
-// SkillsManager provides storage and handling of player skills.
-type SkillsManager struct {
+// Manager provides storage and handling of player skills.
+type Manager struct {
 	window      fyne.Window
 	conn        *net.Connection
 	handler     *messages.MessageHandler
@@ -32,23 +32,23 @@ type Skill struct {
 	messages.SkillExtraInfo
 }
 
-func NewSkillsManager() *SkillsManager {
-	return &SkillsManager{}
+func NewManager() *Manager {
+	return &Manager{}
 }
 
-func (s *SkillsManager) SetWindow(window fyne.Window) {
+func (s *Manager) SetWindow(window fyne.Window) {
 	s.window = window
 }
 
-func (s *SkillsManager) SetConnection(conn *net.Connection) {
+func (s *Manager) SetConnection(conn *net.Connection) {
 	s.conn = conn
 }
 
-func (s *SkillsManager) SetHandler(handler *messages.MessageHandler) {
+func (s *Manager) SetHandler(handler *messages.MessageHandler) {
 	s.handler = handler
 }
 
-func (s *SkillsManager) Init() {
+func (s *Manager) Init() {
 	s.skills = make(map[uint16]Skill)
 	s.knownSkills = make(map[uint16]messages.MessageStatSkill)
 
@@ -105,11 +105,11 @@ func (s *SkillsManager) Init() {
 	})
 }
 
-func (m *SkillsManager) Skill(num uint16) Skill {
+func (m *Manager) Skill(num uint16) Skill {
 	return m.skills[num]
 }
 
-func (m *SkillsManager) ExpToNextLevel(skill uint16) uint64 {
+func (m *Manager) ExpToNextLevel(skill uint16) uint64 {
 	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
 		return 0
 	}
@@ -117,7 +117,7 @@ func (m *SkillsManager) ExpToNextLevel(skill uint16) uint64 {
 	return exp - uint64(m.knownSkills[skill].Exp)
 }
 
-func (m *SkillsManager) ExpToNextLevelPercentage(skill uint16) float64 {
+func (m *Manager) ExpToNextLevelPercentage(skill uint16) float64 {
 	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
 		return 0
 	}
@@ -125,7 +125,7 @@ func (m *SkillsManager) ExpToNextLevelPercentage(skill uint16) float64 {
 	return float64(m.knownSkills[skill].Exp) / float64(exp)
 }
 
-func (m *SkillsManager) KnownSkillsSlice() []uint8 {
+func (m *Manager) KnownSkillsSlice() []uint8 {
 	var skills []uint8
 	for _, skill := range m.knownSkills {
 		skills = append(skills, skill.Skill)
@@ -141,7 +141,7 @@ func (m *SkillsManager) KnownSkillsSlice() []uint8 {
 	return skills
 }
 
-func (m *SkillsManager) ShowSimpleSkillsList(cb func(id int)) {
+func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 	var popup *widget.PopUp
 	skillIDs := m.KnownSkillsSlice()
 	list := widget.NewList(
@@ -179,7 +179,7 @@ func (m *SkillsManager) ShowSimpleSkillsList(cb func(id int)) {
 	popup.ShowAtPosition(fyne.NewPos(x, y))
 }
 
-func (m *SkillsManager) ShowSkillsList() {
+func (m *Manager) ShowSkillsList() {
 	var popup *widget.PopUp
 	skillIDs := m.KnownSkillsSlice()
 
