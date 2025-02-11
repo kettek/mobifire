@@ -52,7 +52,7 @@ func NewState(conn *net.Connection, character string) *State {
 		sayOptions: []string{"hi", "yes", "no"},
 	}
 
-	state.managers.Add(NewDataManager(&state.managers))
+	state.managers.Add(NewFaceManager(&state.managers))
 	state.managers.Add(NewMapManager())
 	state.managers.Add(NewSkillsManager())
 	return state
