@@ -41,7 +41,7 @@ type State struct {
 	pendingExamineTag int32
 
 	//
-	managers Managers
+	managers managers.Managers
 
 }
 
@@ -65,19 +65,10 @@ func NewState(conn *net.Connection, character string) *State {
 // Enter sets up all the necessary UI and network handling.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
-	// First let's send a setup for our current map size.
-	{
-		w, h := board.CalculateBoardSize(s.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
-		s.conn.Send(&messages.MessageSetup{
-			MapSize: struct {
-				Use   bool
-				Value string
-			}{
-				Use:   true,
-				Value: fmt.Sprintf("%dx%d", w, h),
-			},
-		})
-	}
+	s.managers.SetupAccessors(s.window, s.conn, &s.MessageHandler)
+
+	s.managers.PreInit()
+
 	// Now actually try to join the world.
 	s.conn.Send(&messages.MessageAccountPlay{Character: s.character})
 	// It's a little silly, but we have to handle character select failure here, as Crossfire's protocol is all over the place with state confirmations.
@@ -90,8 +81,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		err.Show()
 	})
 
-	// Managers setup.
-	s.managers.Init(s.window, s.conn, &s.MessageHandler)
+	s.managers.Init()
 
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{

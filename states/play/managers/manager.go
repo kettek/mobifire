@@ -24,7 +24,7 @@ func (m *Managers) Remove(manager Manager) {
 	}
 }
 
-func (m *Managers) Init(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
+func (m *Managers) SetupAccessors(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
 	for _, manager := range *m {
 		if manager, ok := manager.(ManagersAccessor); ok {
 			manager.SetManagers(m)
@@ -38,7 +38,23 @@ func (m *Managers) Init(window fyne.Window, conn *net.Connection, handler *messa
 		if manager, ok := manager.(HandlerAccessor); ok {
 			manager.SetHandler(handler)
 		}
-		manager.Init()
+	}
+}
+
+func (m *Managers) PreInit() {
+	for _, manager := range *m {
+		// It's a little silly, but we actually want to setup up accessor here.
+		if manager, ok := manager.(PreInitializer); ok {
+			manager.PreInit()
+		}
+	}
+}
+
+func (m *Managers) Init() {
+	for _, manager := range *m {
+		if manager, ok := manager.(Initializer); ok {
+			manager.Init()
+		}
 	}
 }
 
@@ -62,11 +78,17 @@ func (m *Managers) GetFaceReceivers() []FaceReceiver {
 }
 
 type Manager interface {
+}
+
+type PreInitializer interface {
+	PreInit()
+}
+
+type Initializer interface {
 	Init()
 }
 
 type FaceReceiver interface {
-	Manager
 	OnFaceLoaded(faceID int16, faceImage *data.FaceImage)
 }
 

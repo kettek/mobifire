@@ -12,6 +12,7 @@ import (
 )
 
 type Manager struct {
+	window  fyne.Window
 	conn    *net.Connection
 	handler *messages.MessageHandler
 
@@ -32,6 +33,10 @@ func (mm *Manager) SetHandler(handler *messages.MessageHandler) {
 	mm.handler = handler
 }
 
+func (mm *Manager) SetWindow(window fyne.Window) {
+	mm.window = window
+}
+
 func (mm *Manager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
 		if mm.pendingImages[i].Num == faceID {
@@ -39,6 +44,20 @@ func (mm *Manager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 			mm.pendingImages = append(mm.pendingImages[:i], mm.pendingImages[i+1:]...)
 		}
 	}
+}
+
+func (mm *Manager) PreInit() {
+	// Request a board size of the proper dimensions we want.
+	w, h := CalculateBoardSize(mm.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
+	mm.conn.Send(&messages.MessageSetup{
+		MapSize: struct {
+			Use   bool
+			Value string
+		}{
+			Use:   true,
+			Value: fmt.Sprintf("%dx%d", w, h),
+		},
+	})
 }
 
 func (mm *Manager) Init() {
