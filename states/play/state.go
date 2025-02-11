@@ -37,6 +37,9 @@ type State struct {
 	playerTag int32
 	//
 	pendingExamineTag int32
+
+	//
+	managers []Manager
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -49,6 +52,9 @@ func NewState(conn *net.Connection, character string) *State {
 		},
 		sayOptions: []string{"hi", "yes", "no"},
 	}
+	sm := NewSkillsManager()
+	state.managers = append(state.managers, sm)
+	return state
 }
 
 // Enter sets up all the necessary UI and network handling.
@@ -73,10 +79,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageAccountPlay{}, &messages.MessageAccountPlay{}, func(m messages.Message, failure *messages.MessageFailure) {
 		err := dialog.NewError(errors.New(failure.Reason), s.window)
 		err.SetOnClosed(func() {
+			s.conn.SetMessageHandler(nil)
 			next(states.Prior)
 		})
 		err.Show()
 	})
+
+	// Managers setup.
+	for _, m := range s.managers {
+		m.Init(s.window, s.conn, &s.MessageHandler)
+	}
 
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
@@ -547,6 +559,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				inv.showDialog(s.window)
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
+				sm := s.GetManager(&SkillsManager{}).(*SkillsManager)
+				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
 			}),
 		)
@@ -716,3 +730,14 @@ func (s *State) ShowInputWithOptions(title string, submit string, opts *[]string
 		}
 	}, s.window)
 }
+
+func (s *State) GetManager(m Manager) Manager {
+	for _, m := range s.managers {
+		// Yeah, yeah, we're using reflect, so sue me.
+		if reflect.TypeOf(m) == reflect.TypeOf(m) {
+			return m
+		}
+	}
+	return nil
+}
+

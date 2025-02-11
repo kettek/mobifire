@@ -10,6 +10,7 @@ require (
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
@@ -27,7 +28,7 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/kettek/go-multipath/v2 v2.0.0-alpha.11 // indirect
 	github.com/kettek/gobl v0.4.0 // indirect
-	github.com/kettek/termfire v0.0.0-20250209062121-9ce45ab97b4f // indirect
+	github.com/kettek/termfire v0.0.0-20250210230253-72d8020763ea // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect

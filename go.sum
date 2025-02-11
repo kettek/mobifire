@@ -65,6 +65,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsr
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
+github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
@@ -248,6 +250,14 @@ github.com/kettek/termfire v0.0.0-20250209060018-ca9bd85952f6 h1:lr7HreRKD4G0CCn
 github.com/kettek/termfire v0.0.0-20250209060018-ca9bd85952f6/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/kettek/termfire v0.0.0-20250209062121-9ce45ab97b4f h1:XxHvK8rIuDlYCLk/CQLueXQrSJnXuvkqbQFl8y7dEPQ=
 github.com/kettek/termfire v0.0.0-20250209062121-9ce45ab97b4f/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
+github.com/kettek/termfire v0.0.0-20250210220834-9d2a4945aebc h1:j4eY40OnOdVZ0r5LrtzArk465q7E3o8CN4sCS5SkObA=
+github.com/kettek/termfire v0.0.0-20250210220834-9d2a4945aebc/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
+github.com/kettek/termfire v0.0.0-20250210222759-dde6a7ff467a h1:losJJeOsE/cWh5k16eU3bw4XRSuR4Pj2fbU8nWEVrDo=
+github.com/kettek/termfire v0.0.0-20250210222759-dde6a7ff467a/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
+github.com/kettek/termfire v0.0.0-20250210225429-79ecef7b8f13 h1:bGCajslSbod07P8JaCgksD/06cMEbV52Z0tJa2GlBlQ=
+github.com/kettek/termfire v0.0.0-20250210225429-79ecef7b8f13/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
+github.com/kettek/termfire v0.0.0-20250210230253-72d8020763ea h1:eD0QCOuQLHdJr7i/Ky8AfJGmv8NnU4MoCFOIT/uZq/k=
+github.com/kettek/termfire v0.0.0-20250210230253-72d8020763ea/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
