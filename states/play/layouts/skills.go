@@ -29,8 +29,8 @@ func (e *SkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	scale := math.Max(1, math.Floor(float64(e.IconSize)/float64(size.Height)))
 
 	objects[0].Resize(fyne.NewSize(float32(e.IconSize)*float32(scale), float32(e.IconSize)*float32(scale)))
-	objects[0].Move(fyne.NewPos(0, 0))
-	width += objects[0].Size().Width
+	objects[0].Move(fyne.NewPos(0, float32(math.Round(float64(size.Height/2-objects[0].Size().Height/2)))))
+	width += size.Height
 	// 1: name (remaining width)
 	objects[1].Resize(fyne.NewSize(size.Width-width, size.Height))
 	objects[1].Move(fyne.NewPos(width, 0))
@@ -57,16 +57,16 @@ func (e *FullSkillEntry) MinSize(objects []fyne.CanvasObject) fyne.Size {
 func (e *FullSkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	width := float32(0.0)
 
-	fw := size.Width*e.Perc - size.Height // skip the icon
-	e.Rect.Resize(fyne.NewSize(fw, size.Height))
-	e.Rect.Move(fyne.NewPos(size.Height, 0))
-
 	// 0: icon
 	scale := math.Max(1, math.Floor(float64(e.IconSize)/float64(size.Height)))
 
-	objects[0].Resize(fyne.NewSize(float32(e.IconSize)*float32(scale), size.Height))
-	objects[0].Move(fyne.NewPos(0, 0))
-	width += objects[0].Size().Width
+	objects[0].Resize(fyne.NewSize(float32(e.IconSize)*float32(scale), float32(e.IconSize)*float32(scale)))
+	objects[0].Move(fyne.NewPos(float32(math.Round(float64(size.Height/2-objects[0].Size().Width/2))), float32(math.Round(float64(size.Height/2-objects[0].Size().Height/2)))))
+	width += size.Height
+
+	fw := size.Width*e.Perc - width // skip the icon
+	e.Rect.Resize(fyne.NewSize(fw, size.Height))
+	e.Rect.Move(fyne.NewPos(width, 0))
 
 	// Set name pos
 	objects[1].Move(fyne.NewPos(width, 0))
