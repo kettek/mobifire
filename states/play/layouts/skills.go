@@ -29,7 +29,7 @@ func (e *SkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	// 0: icon
 	scale := math.Max(1, math.Floor(float64(e.IconSize)/float64(size.Height)))
 
-	padding := fyne.CurrentApp().Settings().Theme().Size(theme.SizeNameInnerPadding)
+	padding := fyne.CurrentApp().Settings().Theme().Size(theme.SizeNameInnerPadding) / 2
 
 	objects[0].Resize(fyne.NewSize(float32(e.IconSize)*float32(scale), float32(e.IconSize)*float32(scale)))
 	objects[0].Move(fyne.NewPos(0, float32(math.Round(float64(size.Height/2-objects[0].Size().Height/2)))))
@@ -59,7 +59,7 @@ func (e *FullSkillEntry) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func (e *FullSkillEntry) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	width := float32(0.0)
-	padding := fyne.CurrentApp().Settings().Theme().Size(theme.SizeNameInnerPadding)
+	padding := fyne.CurrentApp().Settings().Theme().Size(theme.SizeNameInnerPadding) / 2
 
 	// 0: icon
 	scale := math.Max(1, math.Floor(float64(e.IconSize)/float64(size.Height)))
