@@ -14,6 +14,12 @@ func (l *Inventory) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (l *Inventory) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	// If it's just one, make it full size.
+	if len(objects) == 1 {
+		objects[0].Resize(size)
+		objects[0].Move(fyne.NewPos(0, 0))
+		return
+	}
 	// 3:2 ratio
 	infoWidth := size.Width / 2
 	listWidth := size.Width - infoWidth
