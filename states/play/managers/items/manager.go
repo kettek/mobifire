@@ -1,4 +1,4 @@
-package inventory
+package items
 
 import (
 	"fyne.io/fyne/v2"
@@ -10,6 +10,9 @@ type Manager struct {
 	window  fyne.Window
 	conn    *net.Connection
 	handler *messages.MessageHandler
+
+	// inventories []*Inventory
+	// items []*Item
 }
 
 func NewManager() *Manager {
