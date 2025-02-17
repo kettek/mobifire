@@ -12,6 +12,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
+	"github.com/kettek/mobifire/states/play/cfwidgets"
 	"github.com/kettek/mobifire/states/play/layouts"
 	"github.com/kettek/termfire/messages"
 )
@@ -142,7 +143,7 @@ func (m *Manager) KnownSkillsSlice() []uint8 {
 }
 
 func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
-	var popup *widget.PopUp
+	var popup *cfwidgets.PopUp
 	skillIDs := m.KnownSkillsSlice()
 	list := widget.NewList(
 		func() int {
@@ -170,17 +171,13 @@ func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 	dialog := layouts.NewDialog(m.window)
 	dialog.Full = true
 
-	popup = widget.NewPopUp(container.New(dialog, list), m.window.Canvas())
+	popup = cfwidgets.NewPopUp(container.New(dialog, list), m.window.Canvas())
 
-	ps := popup.MinSize()
-	ws := m.window.Canvas().Size()
-	x := (ws.Width - ps.Width) / 2
-	y := (ws.Height - ps.Height) / 2
-	popup.ShowAtPosition(fyne.NewPos(x, y))
+	popup.ShowCentered(m.window.Canvas())
 }
 
 func (m *Manager) ShowSkillsList() {
-	var popup *widget.PopUp
+	var popup *cfwidgets.PopUp
 	skillIDs := m.KnownSkillsSlice()
 
 	info := widget.NewRichTextWithText("...")
@@ -227,12 +224,7 @@ func (m *Manager) ShowSkillsList() {
 	dialog := layouts.NewDialog(m.window)
 	dialog.Full = true
 
-	popup = widget.NewPopUp(container.New(dialog, cnt), m.window.Canvas())
+	popup = cfwidgets.NewPopUp(container.New(dialog, cnt), m.window.Canvas())
 
-	ps := popup.MinSize()
-	ws := m.window.Canvas().Size()
-	x := (ws.Width - ps.Width) / 2
-	y := (ws.Height - ps.Height) / 2
-	popup.ShowAtPosition(fyne.NewPos(x, y))
-
+	popup.ShowCentered(m.window.Canvas())
 }
