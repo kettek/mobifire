@@ -21,6 +21,7 @@ import (
 	"github.com/kettek/mobifire/states/play/managers/action"
 	"github.com/kettek/mobifire/states/play/managers/board"
 	"github.com/kettek/mobifire/states/play/managers/face"
+	"github.com/kettek/mobifire/states/play/managers/items"
 	"github.com/kettek/mobifire/states/play/managers/skills"
 	"github.com/kettek/termfire/messages"
 )
@@ -60,6 +61,7 @@ func NewState(conn *net.Connection, character string) *State {
 	state.managers.Add(face.NewManager())
 	state.managers.Add(board.NewManager())
 	state.managers.Add(skills.NewManager())
+	state.managers.Add(items.NewManager())
 	state.managers.Add(action.NewManager())
 	return state
 }
