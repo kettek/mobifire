@@ -20,7 +20,7 @@ func NewManager() *Manager {
 	return &Manager{}
 }
 
-// SetManagers sets the managers for the manager.
+// SetManager sets the managers for the manager.
 func (mgr *Manager) SetWindow(w fyne.Window) {
 	mgr.window = w
 }

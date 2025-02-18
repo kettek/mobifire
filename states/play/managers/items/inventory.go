@@ -18,6 +18,9 @@ type Inventory struct {
 	pendingExamineTag int32
 	widget            *InventoryWidget
 
+	// I really didn't want to have this field, but whatever, it makes nested calls easier.
+	conn *net.Connection
+
 	// This is dynamically set when the main state calls show inventory, so as to provide a callback for actions.
 	onSelect func(*Item) bool
 }
@@ -37,6 +40,7 @@ func (inv *Inventory) clear() {
 }
 
 func (inv *Inventory) setup(handler *messages.MessageHandler, conn *net.Connection) {
+	inv.conn = conn
 	inv.handlers = append(inv.handlers, handler.On(&messages.MessageItem2{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageItem2)
 		if msg.Location != inv.Item.Tag {
@@ -98,11 +102,17 @@ func (inv *Inventory) handleItem2(msg *messages.MessageItem2) {
 	}
 	inv.sortItems()
 	// Update UI
+	if inv.widget != nil {
+		inv.widget.itemList.Refresh()
+	}
 }
 
 func (inv *Inventory) handleDeleteInventory(_ *messages.MessageDeleteInventory) {
 	inv.clear()
 	// Update UI
+	if inv.widget != nil {
+		inv.widget.itemList.Refresh()
+	}
 }
 
 func (inv *Inventory) handleUpdateItem(msg *messages.MessageUpdateItem) {
@@ -125,6 +135,9 @@ func (inv *Inventory) handleUpdateItem(msg *messages.MessageUpdateItem) {
 	if changed {
 		inv.sortItems()
 		// Update UI
+		if inv.widget != nil {
+			inv.widget.itemList.Refresh()
+		}
 	}
 }
 
@@ -137,6 +150,9 @@ func (inv *Inventory) handleDeleteItem(msg *messages.MessageDeleteItem) {
 	}
 	if changed {
 		// Update UI
+		if inv.widget != nil {
+			inv.widget.itemList.Refresh()
+		}
 	}
 }
 
@@ -154,7 +170,11 @@ func (inv *Inventory) addItem(item *Item) {
 func (inv *Inventory) removeItemByTag(tag int32) bool {
 	for i, item := range inv.Items {
 		if item.Tag == tag {
+			selectedTag := inv.widget.selectedTag()
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
+			if inv.widget != nil && selectedTag == tag {
+				inv.widget.refreshSelected()
+			}
 			return true
 		}
 	}
