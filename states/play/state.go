@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
-	"strconv"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -40,11 +38,7 @@ type State struct {
 	//
 	playerTag int32
 	//
-	pendingExamineTag int32
-
-	//
 	managers managers.Managers
-
 }
 
 // NewState creates a new State from a connection and a desired character to play as.
@@ -216,143 +210,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			next(states.Prior)
 		} else {
 			s.playerTag = msg.Tag
-			// Add the player as an object manually. We need this for updtime and I'm sure inspecting ourself.
-			AddObject(messages.ItemObject{
-				Tag:         msg.Tag,
-				Weight:      msg.Weight,
-				TotalWeight: msg.Weight,
-				Face:        msg.Face,
-				Name:        msg.Name,
-			})
-		}
-	})
-
-	// Item/Inventory handling.
-	s.On(&messages.MessageItem2{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageItem2)
-
-		// Iterate thru global objects.
-		for _, o := range msg.Objects {
-			// Replace or add object.
-			var obj *Object
-			obj = GetObject(o.Tag)
-			if obj == nil {
-				obj = AddObject(o)
-			}
-			obj.ItemObject = o // Fully replace, I s'pose.
-		}
-
-		inventory, exists := acquireInventory(msg.Location)
-		if !exists {
-			inventory.OnRequest = func(m messages.Message) {
-				switch m := m.(type) {
-				case *messages.MessageExamine:
-					// Clear out old examine info.
-					if obj := GetObject(m.Tag); obj != nil {
-						obj.examineInfo = ""
-					}
-					s.pendingExamineTag = m.Tag
-					s.conn.Send(m)
-				default: // Send all others straight thru
-					s.conn.Send(m)
-				}
-			}
-		}
-		if inventory.name == "" {
-			if msg.Location == 0 { // Ground
-				inventory.name = "Ground"
-			} else if msg.Location == s.playerTag {
-				inventory.name = fmt.Sprintf("%s's Inventory", s.character)
-			} else {
-				inventoryItem := GetObject(msg.Location)
-				if inventoryItem != nil {
-					inventory.name = inventoryItem.Name
-				}
-			}
-		}
-		// Iterate them objects.
-		for _, o := range msg.Objects {
-			if item := GetObject(o.Tag); item != nil { // It's impossible that item is nil here, but whatever.
-				// Remove from old inventory.
-				if oldInventory, ok := acquireInventory(item.containerTag); ok {
-					oldInventory.removeItem(o.Tag)
-				}
-				// Add to new
-				inventory.addItem(o.Tag)
-				item.containerTag = msg.Location
-			}
-		}
-		inventory.RefreshList()
-
-		// If it's a non-ground or non-player inventory, then we must be accessing a container... so let's automatically open a window (for now).
-		if msg.Location != 0 && msg.Location != s.playerTag && s.playerTag != 0 /* Don't call this is the player is not yet set, as the server dumps each inventory item individually before sending the player _and then_ resending all items in one msg */ {
-			inventory.showDialog(s.window)
-		}
-
-	})
-	s.On(&messages.MessageUpdateItem{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageUpdateItem)
-		item := GetObject(msg.Tag)
-		if item == nil {
-			dialog.NewError(fmt.Errorf("Item %d not found", msg.Tag), s.window).Show()
-			return
-		}
-		var oldInventory, newInventory *inventory // Store inventory information so we can update the inventories after the item has been fully updated.
-		for _, mf := range msg.Fields {
-			switch f := mf.(type) {
-			case messages.MessageUpdateItemLocation:
-				oldInventory, _ = acquireInventory(item.containerTag)
-				newInventory, _ = acquireInventory(int32(f))
-				item.containerTag = int32(f)
-			case messages.MessageUpdateItemFlags:
-				item.Flags = messages.ItemFlags(f)
-			case messages.MessageUpdateItemWeight:
-				item.Weight = int32(f)
-			case messages.MessageUpdateItemFace:
-				item.Face = int32(f)
-			case messages.MessageUpdateItemName:
-				item.Name = f.Name
-				item.PluralName = f.PluralName
-			case messages.MessageUpdateItemAnim:
-				item.Anim = int16(f)
-			case messages.MessageUpdateItemAnimSpeed:
-				item.AnimSpeed = int8(f)
-			case messages.MessageUpdateItemNrof:
-				item.Nrof = int32(f)
-			}
-		}
-
-		if oldInventory != nil {
-			oldInventory.removeItem(msg.Tag)
-			oldInventory.RefreshInfo()
-			oldInventory.RefreshList()
-		}
-		if newInventory != nil {
-			newInventory.addItem(msg.Tag)
-		}
-		if currentInventory, ok := acquireInventory(item.containerTag); ok {
-			currentInventory.RefreshItem(msg.Tag)
-		}
-		fmt.Println("Update item", msg.Tag, msg.Flags, msg.Fields)
-		for _, f := range msg.Fields {
-			fmt.Printf("%T: %v\n", f, f)
-		}
-	})
-	s.On(&messages.MessageDeleteInventory{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageDeleteInventory)
-		inv, _ := acquireInventory(msg.Tag)
-		inv.clear()
-	})
-	s.On(&messages.MessageDeleteItem{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
-		msg := m.(*messages.MessageDeleteItem)
-		for _, tag := range msg.Tags {
-			if item := GetObject(tag); item != nil {
-				if inv, ok := acquireInventory(item.containerTag); ok {
-					inv.removeItem(tag)
-					inv.RefreshList()
-				}
-				RemoveObject(tag)
-			}
 		}
 	})
 
@@ -381,26 +238,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 		if s.commandsManager.checkDrawExtInfo(msg) {
 			return
-		}
-
-		// Catch examine messages so we can add them to their target item/object...
-		if (msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandExamine) || (msg.Type == messages.MessageTypeSpell && msg.Subtype == messages.SubMessageTypeSpellInfo) {
-			if obj := GetObject(s.pendingExamineTag); obj != nil {
-				// It's a little hacky, but when we encounter "Examine again", we immediately send an examine request again.
-				if strings.HasPrefix(msg.Message, "Examine again") {
-					s.conn.Send(&messages.MessageExamine{
-						Tag: s.pendingExamineTag,
-					})
-					return
-				} else if strings.HasPrefix(msg.Message, "You examine the") {
-					// Ignore strings that start with "You examine the", as this is probably a second examine request. This _could_ cause issues if the extra examine information actually contains that string, but until that becomes an issue, so it shall remain as it is.
-					return
-				}
-				obj.examineInfo += msg.Message + "\n"
-				inv, _ := acquireInventory(obj.containerTag)
-				inv.RefreshInfo()
-				return
-			}
 		}
 
 		// This isn't right to do, but for now, split all messages if their columns exceed 50.
@@ -458,25 +295,15 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			toolbarApplyAction,
 			toolbarGetAction,
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				inv, _ := acquireInventory(s.playerTag)
-				inv.showDialog(s.window)
+				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
+				im.ShowInventory(s.playerTag, func(item *items.Item) bool {
+					return false
+				})
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
 				sm := s.managers.GetByType(&skills.Manager{}).(*skills.Manager)
 				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
-			}),
-			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
-				im.ShowLimitedInventory(s.playerTag, func(item *items.Item) bool {
-					return false
-				})
-			}),
-			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
-				im.ShowInventory(s.playerTag, func(item *items.Item) bool {
-					return false
-				})
 			}),
 		)
 	}
