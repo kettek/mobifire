@@ -37,6 +37,17 @@ func (mgr *Manager) SetHandler(h *messages.MessageHandler) {
 
 // Init sets up broad message handling for inventories, such as making them, deleting them, or transferring items between inventories. Further message response functionality is defined in the Inventory type itself.
 func (mgr *Manager) Init() {
+	mgr.handler.On(&messages.MessagePlayer{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
+		// We also handle player message, as this gives us the player's name and tag.
+		msg := m.(*messages.MessagePlayer)
+		if msg.Name == "" {
+			return
+		}
+		inv, _ := mgr.ensureInventory(msg.Tag)
+		inv.Item.Name = msg.Name + "'s Inventory" // TODO: Maybe set a field to denote player inventory and determine the title on popup.
+		inv.Item.Weight = msg.Weight
+		inv.Item.TotalWeight = msg.Weight
+	})
 	mgr.handler.On(&messages.MessageItem2{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageItem2)
 		inv, existed := mgr.ensureInventory(msg.Location)
@@ -62,6 +73,7 @@ func (mgr *Manager) Init() {
 				for _, inv := range mgr.inventories {
 					if item := inv.getItemByTag(msg.Tag); item != nil {
 						targetInv.addItem(item)
+						targetInv.sortItems()
 						inv.removeItemByTag(msg.Tag)
 						break
 					}
@@ -78,7 +90,7 @@ func (mgr *Manager) ensureInventory(tag int32) (*Inventory, bool) {
 		}
 	}
 	inv := newInventory(tag)
-	inv.setup(mgr.handler)
+	inv.setup(mgr.handler, mgr.conn)
 	mgr.inventories = append(mgr.inventories, inv)
 	return inv, false
 }
@@ -93,10 +105,21 @@ func (mgr *Manager) removeInventory(tag int32) {
 	}
 }
 
-func (mgr *Manager) ShowPopup(tag int32) {
+func (mgr *Manager) ShowInventory(tag int32, onSelect func(item *Item) bool) {
 	for _, inv := range mgr.inventories {
 		if inv.Item.Tag == tag {
-			inv.ShowPopup(mgr.window, mgr.conn)
+			inv.onSelect = onSelect
+			inv.showPopup(mgr.window, mgr.conn, false)
+			return
+		}
+	}
+}
+
+func (mgr *Manager) ShowLimitedInventory(tag int32, onSelect func(item *Item) bool) {
+	for _, inv := range mgr.inventories {
+		if inv.Item.Tag == tag {
+			inv.onSelect = onSelect
+			inv.showPopup(mgr.window, mgr.conn, true)
 			return
 		}
 	}

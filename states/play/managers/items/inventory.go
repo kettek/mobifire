@@ -1,6 +1,9 @@
 package items
 
 import (
+	"slices"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/termfire/messages"
@@ -12,7 +15,11 @@ type Inventory struct {
 	Items    []*Item
 	handlers []*messages.Handler
 
-	widget *InventoryWidget
+	pendingExamineTag int32
+	widget            *InventoryWidget
+
+	// This is dynamically set when the main state calls show inventory, so as to provide a callback for actions.
+	onSelect func(*Item) bool
 }
 
 func newInventory(tag int32) *Inventory {
@@ -29,7 +36,7 @@ func (inv *Inventory) clear() {
 	inv.Items = nil
 }
 
-func (inv *Inventory) setup(handler *messages.MessageHandler) {
+func (inv *Inventory) setup(handler *messages.MessageHandler, conn *net.Connection) {
 	inv.handlers = append(inv.handlers, handler.On(&messages.MessageItem2{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageItem2)
 		if msg.Location != inv.Item.Tag {
@@ -52,12 +59,44 @@ func (inv *Inventory) setup(handler *messages.MessageHandler) {
 		msg := m.(*messages.MessageDeleteItem)
 		inv.handleDeleteItem(msg)
 	}))
+	inv.handlers = append(inv.handlers, handler.On(&messages.MessageDrawExtInfo{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
+		msg := m.(*messages.MessageDrawExtInfo)
+		if inv.pendingExamineTag == 0 {
+			return
+		}
+		if (msg.Type == messages.MessageTypeCommand && msg.Subtype == messages.SubMessageTypeCommandExamine) || (msg.Type == messages.MessageTypeSpell && msg.Subtype == messages.SubMessageTypeSpellInfo) {
+			if item := inv.getItemByTag(inv.pendingExamineTag); item != nil {
+				// It's a little hacky, but when we encounter "Examine again", we immediately send an examine request again.
+				if strings.HasPrefix(msg.Message, "Examine again") {
+					conn.Send(&messages.MessageExamine{
+						Tag: inv.pendingExamineTag,
+					})
+					return
+				} else if strings.HasPrefix(msg.Message, "You examine the") {
+					// Ignore strings that start with "You examine the", as this is probably a second examine request. This _could_ cause issues if the extra examine information actually contains that string, but until that becomes an issue, so it shall remain as it is.
+					return
+				}
+				item.examineInfo += msg.Message + "\n"
+				// Update UI
+				if inv.widget != nil && inv.widget.selectedTag() == item.Tag {
+					inv.widget.SetExamineInfo(item.examineInfo)
+				}
+			}
+		}
+	}))
+}
+
+func (inv *Inventory) sortItems() {
+	slices.SortStableFunc(inv.Items, func(a, b *Item) int {
+		return int(a.Type - b.Type)
+	})
 }
 
 func (inv *Inventory) handleItem2(msg *messages.MessageItem2) {
 	for _, o := range msg.Objects {
 		inv.addItem(&Item{ItemObject: o})
 	}
+	inv.sortItems()
 	// Update UI
 }
 
@@ -84,6 +123,7 @@ func (inv *Inventory) handleUpdateItem(msg *messages.MessageUpdateItem) {
 	}
 
 	if changed {
+		inv.sortItems()
 		// Update UI
 	}
 }
@@ -130,9 +170,13 @@ func (inv *Inventory) getItemByTag(tag int32) *Item {
 	return nil
 }
 
-func (inv *Inventory) showPopup(window fyne.Window, conn *net.Connection) {
+func (inv *Inventory) showPopup(window fyne.Window, conn *net.Connection, limited bool) {
 	if inv.widget == nil {
-		inv.widget = newInventoryWidget(window, conn)
+		inv.widget = newInventoryWidget(inv, window, conn)
 	}
-	inv.widget.Show()
+	if limited {
+		inv.widget.ShowLimited()
+	} else {
+		inv.widget.Show()
+	}
 }

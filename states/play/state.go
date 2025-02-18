@@ -466,6 +466,18 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
 			}),
+			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
+				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
+				im.ShowLimitedInventory(s.playerTag, func(item *items.Item) bool {
+					return false
+				})
+			}),
+			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
+				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
+				im.ShowInventory(s.playerTag, func(item *items.Item) bool {
+					return false
+				})
+			}),
 		)
 	}
 
