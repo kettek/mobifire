@@ -24,6 +24,7 @@ type Manager struct {
 	handler       *messages.MessageHandler
 	skillsManager *skills.Manager
 	spells        []Spell
+	skills        []uint8
 }
 
 func NewManager() *Manager {
@@ -53,6 +54,7 @@ func (mgr *Manager) Init() {
 			mgr.spells = append(mgr.spells, spell)
 		}
 		mgr.sortSpells()
+		mgr.getSkills()
 	})
 	mgr.handler.On(&messages.MessageUpdateSpell{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageUpdateSpell)
@@ -101,6 +103,32 @@ func (mgr *Manager) sortSpells() {
 	})
 }
 
+func (mgr *Manager) getSkills() {
+	mgr.skills = nil
+	for _, spell := range mgr.spells {
+		found := false
+		for _, skill := range mgr.skills {
+			if skill == spell.Skill {
+				found = true
+				break
+			}
+		}
+		if !found {
+			mgr.skills = append(mgr.skills, spell.Skill)
+		}
+	}
+}
+
+func (mgr *Manager) getSpellsBySkill(skill uint8) []Spell {
+	var spells []Spell
+	for _, spell := range mgr.spells {
+		if spell.Skill == skill {
+			spells = append(spells, spell)
+		}
+	}
+	return spells
+}
+
 func (mgr *Manager) ShowSpellsList() {
 	var popup *cfwidgets.PopUp
 
@@ -108,67 +136,84 @@ func (mgr *Manager) ShowSpellsList() {
 	info.Wrapping = fyne.TextWrapWord
 	infoScroll := container.NewVScroll(info)
 
-	list := widget.NewList(
-		func() int {
-			return len(mgr.spells)
-		},
-		func() fyne.CanvasObject {
-			rect := canvas.NewRectangle(color.NRGBA{255, 255, 255, 100})
-			return container.New(&layouts.SpellEntry{IconSize: data.CurrentFaceSet().Width, Rect: rect}, rect, &canvas.Image{}, widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""))
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			spell := mgr.spells[i]
-			rect := o.(*fyne.Container).Objects[0].(*canvas.Rectangle)
-			icon := o.(*fyne.Container).Objects[1].(*canvas.Image)
-			name := o.(*fyne.Container).Objects[2].(*widget.Label)
-			level := o.(*fyne.Container).Objects[3].(*widget.Label)
-			mana := o.(*fyne.Container).Objects[4].(*widget.Label)
-			castingTime := o.(*fyne.Container).Objects[5].(*widget.Label)
+	makeListForSpells := func(spells []Spell) *widget.List {
+		list := widget.NewList(
+			func() int {
+				return len(spells)
+			},
+			func() fyne.CanvasObject {
+				rect := canvas.NewRectangle(color.NRGBA{255, 255, 255, 100})
+				return container.New(&layouts.SpellEntry{IconSize: data.CurrentFaceSet().Width, Rect: rect}, rect, &canvas.Image{}, widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""), widget.NewLabel(""))
+			},
+			func(i widget.ListItemID, o fyne.CanvasObject) {
+				spell := spells[i]
+				rect := o.(*fyne.Container).Objects[0].(*canvas.Rectangle)
+				icon := o.(*fyne.Container).Objects[1].(*canvas.Image)
+				name := o.(*fyne.Container).Objects[2].(*widget.Label)
+				level := o.(*fyne.Container).Objects[3].(*widget.Label)
+				mana := o.(*fyne.Container).Objects[4].(*widget.Label)
+				castingTime := o.(*fyne.Container).Objects[5].(*widget.Label)
 
-			if face, ok := data.GetFace(int(spell.Face)); ok {
-				icon.Resource = &face
-			} else {
-				icon.Resource = data.GetResource("blank.png")
-			}
-			icon.Refresh()
-			name.SetText(spell.Name)
-			level.SetText(fmt.Sprintf("%d", spell.Level))
-			if spell.Mana > 0 {
-				mana.SetText(fmt.Sprintf("%d", spell.Mana))
-			} else {
-				mana.SetText(fmt.Sprintf("%d", spell.Grace))
-			}
-			castingTime.SetText(fmt.Sprintf("%d", spell.CastingTime))
+				if face, ok := data.GetFace(int(spell.Face)); ok {
+					icon.Resource = &face
+				} else {
+					icon.Resource = data.GetResource("blank.png")
+				}
+				icon.Refresh()
+				name.SetText(spell.Name)
+				level.SetText(fmt.Sprintf("%d", spell.Level))
+				if spell.Mana > 0 {
+					mana.SetText(fmt.Sprintf("%d", spell.Mana))
+				} else {
+					mana.SetText(fmt.Sprintf("%d", spell.Grace))
+				}
+				castingTime.SetText(fmt.Sprintf("%d", spell.CastingTime))
 
-			// This is lame, but for now, hardcode check spell schools.
+				// This is lame, but for now, hardcode check spell schools.
+				skill := mgr.skillsManager.Skill(uint16(spell.Skill))
+				if skill.Name == "pyromancy" {
+					rect.FillColor = color.NRGBA{200, 0, 0, 100}
+				} else if skill.Name == "evocation" {
+					rect.FillColor = color.NRGBA{0, 0, 200, 100}
+				} else if skill.Name == "sorcery" {
+					rect.FillColor = color.NRGBA{200, 0, 200, 100}
+				} else if skill.Name == "summoning" {
+					rect.FillColor = color.NRGBA{0, 200, 0, 100}
+				} else if skill.Name == "praying" {
+					rect.FillColor = color.NRGBA{200, 200, 0, 100}
+				} else {
+					rect.FillColor = color.NRGBA{200, 200, 200, 100}
+				}
+				rect.Refresh()
+			},
+		)
+		list.OnSelected = func(id widget.ListItemID) {
+			spell := spells[id]
 			skill := mgr.skillsManager.Skill(uint16(spell.Skill))
-			if skill.Name == "pyromancy" {
-				rect.FillColor = color.NRGBA{200, 0, 0, 100}
-			} else if skill.Name == "evocation" {
-				rect.FillColor = color.NRGBA{0, 0, 200, 100}
-			} else if skill.Name == "sorcery" {
-				rect.FillColor = color.NRGBA{200, 0, 200, 100}
-			} else if skill.Name == "summoning" {
-				rect.FillColor = color.NRGBA{0, 200, 0, 100}
-			} else if skill.Name == "praying" {
-				rect.FillColor = color.NRGBA{200, 200, 0, 100}
-			} else {
-				rect.FillColor = color.NRGBA{200, 200, 200, 100}
-			}
-			rect.Refresh()
-
-		},
-	)
-	list.OnSelected = func(id widget.ListItemID) {
-		spell := mgr.spells[id]
-		skill := mgr.skillsManager.Skill(uint16(spell.Skill))
-		text := fmt.Sprintf("[b]%s[/b]\n\n[b]Skill:[/b] %s\n[b]Level:[/b] %d\n[b]Mana:[/b] %d\n[b]Casting Time:[/b] %d\n\n%s", spell.Name, skill.Name, spell.Level, spell.Mana, spell.CastingTime, spell.Description)
-		info.Segments = data.TextToRichTextSegments(text)
-		info.Refresh()
-		infoScroll.ScrollToTop()
+			text := fmt.Sprintf("[b]%s[/b]\n\n[b]Skill:[/b] %s\n[b]Level:[/b] %d\n[b]Mana:[/b] %d\n[b]Casting Time:[/b] %d\n\n%s", spell.Name, skill.Name, spell.Level, spell.Mana, spell.CastingTime, spell.Description)
+			info.Segments = data.TextToRichTextSegments(text)
+			info.Refresh()
+			infoScroll.ScrollToTop()
+		}
+		return list
 	}
 
-	cnt := container.New(&layouts.Inventory{}, list, infoScroll)
+	var skillTabs []*container.TabItem
+	for _, skillID := range mgr.skills {
+		skill := mgr.skillsManager.Skill(uint16(skillID))
+		skillTabs = append(skillTabs, container.NewTabItem("", makeListForSpells(mgr.getSpellsBySkill(skillID))))
+		if face, ok := data.GetFace(int(skill.Face)); ok {
+			skillTabs[len(skillTabs)-1].Icon = &face
+		}
+	}
+
+	tabs := container.NewAppTabs(skillTabs...)
+	/*tabs.OnSelected = func(tab *container.TabItem) {
+		list := tab.Content.(*widget.List)
+		list.Select(0)
+	}*/
+
+	cnt := container.New(&layouts.Inventory{}, tabs, infoScroll)
 
 	content := container.NewBorder(nil, nil, nil, nil, cnt)
 
