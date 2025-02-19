@@ -190,6 +190,15 @@ func (inv *Inventory) getItemByTag(tag int32) *Item {
 	return nil
 }
 
+func (inv *Inventory) getItemByName(name string) *Item {
+	for _, item := range inv.Items {
+		if item.Name == name {
+			return item
+		}
+	}
+	return nil
+}
+
 func (inv *Inventory) showPopup(window fyne.Window, conn *net.Connection, limited bool) {
 	if inv.widget == nil {
 		inv.widget = newInventoryWidget(inv, window, conn)

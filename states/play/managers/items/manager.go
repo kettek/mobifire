@@ -133,3 +133,23 @@ func (mgr *Manager) CloseInventory(tag int32) {
 		}
 	}
 }
+
+// GetItemByTag returns an item by its tag.
+func (mgr *Manager) GetItemByTag(tag int32) *Item {
+	for _, inv := range mgr.inventories {
+		if item := inv.getItemByTag(tag); item != nil {
+			return item
+		}
+	}
+	return nil
+}
+
+// GetItemByName returns an item by its name.
+func (mgr *Manager) GetItemByName(name string) *Item {
+	for _, inv := range mgr.inventories {
+		if item := inv.getItemByName(name); item != nil {
+			return item
+		}
+	}
+	return nil
+}
