@@ -21,6 +21,7 @@ import (
 	"github.com/kettek/mobifire/states/play/managers/face"
 	"github.com/kettek/mobifire/states/play/managers/items"
 	"github.com/kettek/mobifire/states/play/managers/skills"
+	"github.com/kettek/mobifire/states/play/managers/spells"
 	"github.com/kettek/termfire/messages"
 )
 
@@ -56,6 +57,7 @@ func NewState(conn *net.Connection, character string) *State {
 	state.managers.Add(face.NewManager())
 	state.managers.Add(board.NewManager())
 	state.managers.Add(skills.NewManager())
+	state.managers.Add(spells.NewManager())
 	state.managers.Add(items.NewManager())
 	state.managers.Add(action.NewManager())
 	return state
@@ -305,6 +307,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				sm := s.managers.GetByType(&skills.Manager{}).(*skills.Manager)
 				sm.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
+			}),
+			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
+				sm := s.managers.GetByType(&spells.Manager{}).(*spells.Manager)
+				sm.ShowSpellsList()
+				fmt.Println("Toolbar action 6")
 			}),
 		)
 	}

@@ -77,6 +77,10 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				Use   bool
 				Value uint8
 			}{Use: true, Value: 1},
+			SpellMon: struct {
+				Use   bool
+				Value uint8
+			}{Use: true, Value: 2},
 		}); err != nil {
 			fmt.Println("Failed to send setup message:", err)
 			next(nil)
