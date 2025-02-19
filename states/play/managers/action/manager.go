@@ -279,7 +279,25 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 				})
 			}),
 		)
-		actions := fyne.NewMenu("Actions", itemsMenu, spellsMenu, skillsMenu)
+		commandsMenu := fyne.NewMenuItem("command", func() {
+			entryWidget := widget.NewEntry()
+			dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
+				{Widget: entryWidget},
+			}, func(b bool) {
+				if b {
+					action := Entry{
+						Image: entry.Image, // Re-use last image for now... is this a bad idea?
+						Kind: EntryCommandKind{
+							Command: entryWidget.Text,
+							Repeat:  1,
+						},
+					}
+					m.SetAction(index, action)
+				}
+			}, m.window)
+		})
+
+		actions := fyne.NewMenu("Actions", itemsMenu, spellsMenu, skillsMenu, commandsMenu)
 		popup := widget.NewPopUpMenu(actions, m.window.Canvas())
 		bpos := button.Position()
 		bsize := button.Size()
