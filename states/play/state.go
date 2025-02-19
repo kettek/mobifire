@@ -309,7 +309,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		)
 	}
 
-	sizedTheme := myTheme{}
+	sizedTheme := layouts.Theme{}
 
 	toolbarSized := container.NewThemeOverride(toolbar, sizedTheme)
 	toolbars := container.NewHBox(layout.NewSpacer(), toolbarSized)

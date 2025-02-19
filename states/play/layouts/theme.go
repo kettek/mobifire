@@ -1,4 +1,4 @@
-package play
+package layouts
 
 import (
 	"image/color"
@@ -7,24 +7,24 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-type myTheme struct{}
+type Theme struct{}
 
-func (m myTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (m Theme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	if name == theme.ColorNameShadow {
 		return color.RGBA{0, 0, 0, 0} // Blank out shadows for chat area.
 	}
 	return theme.DefaultTheme().Color(name, variant)
 }
 
-func (m myTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (m Theme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
 
-func (m myTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (m Theme) Font(style fyne.TextStyle) fyne.Resource {
 	return theme.DefaultTheme().Font(style)
 }
 
-func (m myTheme) Size(name fyne.ThemeSizeName) float32 {
+func (m Theme) Size(name fyne.ThemeSizeName) float32 {
 	if name == theme.SizeNameInlineIcon {
 		return theme.DefaultTheme().Size(name) * 2 // I guess
 	} else if name == theme.SizeNameInnerPadding {
@@ -35,21 +35,21 @@ func (m myTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
 }
 
-type noPaddingTheme struct{}
+type NoPaddingTheme struct{}
 
-func (m noPaddingTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (m NoPaddingTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	return theme.DefaultTheme().Color(name, variant)
 }
 
-func (m noPaddingTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (m NoPaddingTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
 
-func (m noPaddingTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (m NoPaddingTheme) Font(style fyne.TextStyle) fyne.Resource {
 	return theme.DefaultTheme().Font(style)
 }
 
-func (m noPaddingTheme) Size(name fyne.ThemeSizeName) float32 {
+func (m NoPaddingTheme) Size(name fyne.ThemeSizeName) float32 {
 	if name == theme.SizeNameInnerPadding || name == theme.SizeNamePadding {
 		return 0
 	}
