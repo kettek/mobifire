@@ -255,6 +255,12 @@ func (iw *InventoryWidget) ShowLimited() {
 	iw.popup.ShowCentered(iw.window.Canvas())
 }
 
+func (iw *InventoryWidget) Hide() {
+	if iw.popup != nil {
+		iw.popup.Hide()
+	}
+}
+
 func (iw *InventoryWidget) selectedTag() int32 {
 	if iw.selectedIndex < 0 || iw.selectedIndex >= len(iw.inv.Items) {
 		return -1

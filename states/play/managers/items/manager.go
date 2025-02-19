@@ -124,3 +124,12 @@ func (mgr *Manager) ShowLimitedInventory(tag int32, onSelect func(item *Item) bo
 		}
 	}
 }
+
+func (mgr *Manager) CloseInventory(tag int32) {
+	for _, inv := range mgr.inventories {
+		if inv.Item.Tag == tag {
+			inv.closePopup()
+			return
+		}
+	}
+}

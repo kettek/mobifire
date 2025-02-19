@@ -200,3 +200,7 @@ func (inv *Inventory) showPopup(window fyne.Window, conn *net.Connection, limite
 		inv.widget.Show()
 	}
 }
+
+func (inv *Inventory) closePopup() {
+	inv.widget.Hide()
+}
