@@ -282,6 +282,8 @@ github.com/kettek/termfire v0.0.0-20250219091942-ebe1729443f5 h1:v8relJt8utUdfL6
 github.com/kettek/termfire v0.0.0-20250219091942-ebe1729443f5/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/kettek/termfire v0.0.0-20250219092215-5577fd581283 h1:c6f6jlUpGf3TpVzwD5P6k13MDtozWIwxSV6yURFpnns=
 github.com/kettek/termfire v0.0.0-20250219092215-5577fd581283/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
+github.com/kettek/termfire v0.0.0-20250219221118-948932f818d3 h1:+IVMjW5tPrKCUOKjaF/+I/byJa2vWVpD54XBx2SuSR8=
+github.com/kettek/termfire v0.0.0-20250219221118-948932f818d3/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
