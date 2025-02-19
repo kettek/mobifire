@@ -24,10 +24,13 @@ func (m *Managers) Remove(manager Manager) {
 	}
 }
 
-func (m *Managers) SetupAccessors(window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
+func (m *Managers) SetupAccessors(app fyne.App, window fyne.Window, conn *net.Connection, handler *messages.MessageHandler) {
 	for _, manager := range *m {
 		if manager, ok := manager.(ManagersAccessor); ok {
 			manager.SetManagers(m)
+		}
+		if manager, ok := manager.(AppAccessor); ok {
+			manager.SetApp(app)
 		}
 		if manager, ok := manager.(WindowAccessor); ok {
 			manager.SetWindow(window)
@@ -106,4 +109,8 @@ type ConnectionAccessor interface {
 
 type HandlerAccessor interface {
 	SetHandler(handler *messages.MessageHandler)
+}
+
+type AppAccessor interface {
+	SetApp(app fyne.App)
 }
