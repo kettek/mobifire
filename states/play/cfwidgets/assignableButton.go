@@ -1,8 +1,6 @@
 package cfwidgets
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
@@ -23,7 +21,6 @@ func NewAssignableButton(icon fyne.Resource, action func(), longAction func()) *
 }
 
 func (a *AssignableButton) TappedSecondary(e *fyne.PointEvent) {
-	fmt.Println("wuh")
 	if a.longAction != nil {
 		a.longAction()
 	}
