@@ -15,6 +15,7 @@ type EntryApplyKind struct {
 	ObjectName      string // The name of the object. This is used to do a lookup.
 	objectTag       int32  // The ID of the object. This is cached and used when possible. If the ObjectTag does not exist, the Name will be used to do a lookup.
 	OnlyIfUnapplied bool
+	Fire            bool // Whether to fire the object or not
 	exists          bool // This is set to true once the action has been triggered and the object tag is known to exist.
 }
 
@@ -154,6 +155,16 @@ func (e Entry) Trigger(m *Manager) {
 			}
 		}
 		if item := m.itemsManager.GetItemByTag(k.objectTag); item != nil {
+			if k.Fire {
+				if !item.Flags.Applied() {
+					m.conn.Send(&messages.MessageApply{
+						Tag: k.objectTag,
+					})
+				}
+				m.conn.SendCommand("fire", 1)
+				m.conn.SendCommand("fire_stop", 1)
+				return
+			}
 			if k.OnlyIfUnapplied && item.Flags.Applied() {
 				return
 			}

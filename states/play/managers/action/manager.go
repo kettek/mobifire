@@ -130,7 +130,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	}, func() {
 		itemsMenu := fyne.NewMenuItem("items", nil)
 		itemsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("always", func() {
+			fyne.NewMenuItem("apply (always)", func() {
 				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
 					action := Entry{
 						Image: data.GetResource("icon_apply.png"),
@@ -148,7 +148,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 					return true
 				})
 			}),
-			fyne.NewMenuItem("if unapplied", func() {
+			fyne.NewMenuItem("apply (if unapplied)", func() {
 				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
 					action := Entry{
 						Image: data.GetResource("icon_apply.png"),
@@ -158,6 +158,24 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 						},
 					}
 
+					if img, ok := data.GetFace(int(item.Face)); ok {
+						action.Image = &img
+						button.SetIcon(&img)
+					}
+					m.SetAction(index, action)
+					m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
+					return true
+				})
+			}),
+			fyne.NewMenuItem("auto-apply and fire", func() {
+				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
+					action := Entry{
+						Image: data.GetResource("icon_apply.png"),
+						Kind: EntryApplyKind{
+							ObjectName: item.Name,
+							Fire:       true,
+						},
+					}
 					if img, ok := data.GetFace(int(item.Face)); ok {
 						action.Image = &img
 						button.SetIcon(&img)
