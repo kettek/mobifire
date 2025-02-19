@@ -480,5 +480,3 @@ func (s *State) ShowInputWithOptions(title string, submit string, opts *[]string
 		}
 	}, s.window)
 }
-
-type PopUpWrapper struct {
