@@ -13,6 +13,7 @@ type Manager struct {
 	handler *messages.MessageHandler
 
 	inventories []*Inventory
+	playerTag   int32
 }
 
 // NewManager creates a new items/inventory manager.
@@ -43,6 +44,7 @@ func (mgr *Manager) Init() {
 		if msg.Name == "" {
 			return
 		}
+		mgr.playerTag = msg.Tag
 		inv, _ := mgr.ensureInventory(msg.Tag)
 		inv.Item.Name = msg.Name + "'s Inventory" // TODO: Maybe set a field to denote player inventory and determine the title on popup.
 		inv.Item.Weight = msg.Weight
@@ -152,4 +154,8 @@ func (mgr *Manager) GetItemByName(name string) *Item {
 		}
 	}
 	return nil
+}
+
+func (mgr *Manager) GetPlayerTag() int32 {
+	return mgr.playerTag
 }

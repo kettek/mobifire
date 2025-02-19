@@ -7,6 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"github.com/kettek/mobifire/data"
+	"github.com/kettek/mobifire/states/play/cfwidgets"
 	"github.com/kettek/termfire/messages"
 )
 
@@ -37,8 +38,9 @@ type EntryCommandKind struct {
 }
 
 type Entry struct {
-	Image fyne.Resource
-	Kind  interface{}
+	Image  fyne.Resource
+	widget *cfwidgets.AssignableButton
+	Kind   interface{}
 }
 
 func NewEntryFromString(data string) *Entry {
@@ -80,6 +82,9 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
+	if e.Image == nil {
+		e.Image = data.GetResource("blank.png")
+	}
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(e.Image.Content())))
 	base64.StdEncoding.Encode(dst, e.Image.Content())
 

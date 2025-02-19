@@ -327,27 +327,17 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	}
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 
-	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 1")
-		}),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 1")
-		}),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 1")
-		}),
+	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(4),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(0),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(1),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(2),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(3),
 	), sizedTheme)
-	leftAreaToolbarBot := container.NewThemeOverride(container.New(layout.NewGridLayout(3),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 1")
-		}),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 2")
-		}),
-		widget.NewButtonWithIcon("", data.GetResource("icon_inventory.png"), func() {
-			fmt.Println("Toolbar action 3")
-		}),
+	leftAreaToolbarBot := container.NewThemeOverride(container.New(layout.NewGridLayout(4),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(4),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(5),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(6),
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(7),
 	), sizedTheme)
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
