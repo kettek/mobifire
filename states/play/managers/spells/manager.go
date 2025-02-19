@@ -192,7 +192,7 @@ func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 			}
 			spell := spells[id]
 			skill := mgr.skillsManager.Skill(uint16(spell.Skill))
-			text := fmt.Sprintf("[b]%s[/b]\n\n[b]Skill:[/b] %s\n[b]Level:[/b] %d\n[b]Mana:[/b] %d\n[b]Casting Time:[/b] %d\n\n%s", spell.Name, skill.Name, spell.Level, spell.Mana, spell.CastingTime, spell.Description)
+			text := fmt.Sprintf("[b]%s[/b]\n\n[b]Skill:[/b] %s\n[b]Level:[/b] %d\n[b]Mana:[/b] %d\n[b]Casting Time:[/b] %d\n\n%s\n%s", spell.Name, skill.Name, spell.Level, spell.Mana, spell.CastingTime, spell.Description, spell.Requirements)
 			info.Segments = data.TextToRichTextSegments(text)
 			info.Refresh()
 			infoScroll.ScrollToTop()

@@ -26,8 +26,9 @@ type EntrySkillKind struct {
 type EntrySpellKind struct {
 	Spell  int32
 	Name   string
-	Ready  bool // Whether to ready or cast the spell
-	exists bool // This is set to true once the action has been triggered and the spell tag is known to exist.
+	Extra  string // Extra string to pass into the spell -- used for create food, etc.
+	Ready  bool   // Whether to ready or cast the spell
+	exists bool   // This is set to true once the action has been triggered and the spell tag is known to exist.
 }
 
 type EntryCommandKind struct {
@@ -164,9 +165,17 @@ func (e Entry) Trigger(m *Manager) {
 			}
 		}
 		if k.Ready {
-			m.conn.SendCommand(fmt.Sprintf("cast %d", k.Spell), 1)
+			if k.Extra != "" {
+				m.conn.SendCommand(fmt.Sprintf("cast %d %s", k.Spell, k.Extra), 1)
+			} else {
+				m.conn.SendCommand(fmt.Sprintf("cast %d", k.Spell), 1)
+			}
 		} else {
-			m.conn.SendCommand(fmt.Sprintf("invoke %d", k.Spell), 1)
+			if k.Extra != "" {
+				m.conn.SendCommand(fmt.Sprintf("invoke %d %s", k.Spell, k.Extra), 1)
+			} else {
+				m.conn.SendCommand(fmt.Sprintf("invoke %d", k.Spell), 1)
+			}
 		}
 	case EntrySkillKind:
 		// TODO: Maybe add ready and use skill option? This would ensure that a talisman or holy symbol gets equipped before using the skill.
