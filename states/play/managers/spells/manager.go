@@ -232,3 +232,12 @@ func (mgr *Manager) CloseSpellsList() {
 		mgr.popup.Hide()
 	}
 }
+
+func (mgr *Manager) GetSpellByName(name string) *Spell {
+	for _, spell := range mgr.spells {
+		if spell.Name == name {
+			return &spell
+		}
+	}
+	return nil
+}

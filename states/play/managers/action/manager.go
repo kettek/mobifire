@@ -8,6 +8,7 @@ import (
 	"github.com/kettek/mobifire/states/play/managers"
 	"github.com/kettek/mobifire/states/play/managers/items"
 	"github.com/kettek/mobifire/states/play/managers/skills"
+	"github.com/kettek/mobifire/states/play/managers/spells"
 )
 
 // Manager provides management of running and setting actions. Actions are tied to buttons that do some sort of dynamic action that is determined by the player, such as equipping an item, drinking a potion, readying a skill, etc.
@@ -17,6 +18,7 @@ type Manager struct {
 	entries       []Entry
 	skillsManager *skills.Manager
 	itemsManager  *items.Manager
+	spellsManager *spells.Manager
 }
 
 func NewManager() *Manager {
@@ -91,6 +93,9 @@ func (m *Manager) SetManagers(managers *managers.Managers) {
 		}
 		if manager, ok := manager.(*items.Manager); ok {
 			m.itemsManager = manager
+		}
+		if manager, ok := manager.(*spells.Manager); ok {
+			m.spellsManager = manager
 		}
 	}
 }

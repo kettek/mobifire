@@ -24,9 +24,10 @@ type EntrySkillKind struct {
 }
 
 type EntrySpellKind struct {
-	Spell int32
-	Name  string
-	Ready bool // Whether to ready or cast the spell
+	Spell  int32
+	Name   string
+	Ready  bool // Whether to ready or cast the spell
+	exists bool // This is set to true once the action has been triggered and the spell tag is known to exist.
 }
 
 type EntryCommandKind struct {
@@ -155,6 +156,13 @@ func (e Entry) Trigger(m *Manager) {
 			})
 		}
 	case EntrySpellKind:
+		if !k.exists {
+			// Lookup the given spell by name... I guess search _all_ spells for now.
+			if spell := m.spellsManager.GetSpellByName(k.Name); spell != nil {
+				k.Spell = spell.Tag
+				k.exists = true
+			}
+		}
 		if k.Ready {
 			m.conn.SendCommand(fmt.Sprintf("cast %d", k.Spell), 1)
 		} else {
