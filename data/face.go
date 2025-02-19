@@ -9,6 +9,7 @@ type FaceSet struct {
 	Width  int
 	Height int
 	Faces  map[int]FaceImage
+	Names  map[string]int
 }
 
 var faceSets = make(map[int]FaceSet)
@@ -19,6 +20,7 @@ func AddFaceSet(set int, width, height int) {
 		Width:  width,
 		Height: height,
 		Faces:  make(map[int]FaceImage),
+		Names:  make(map[string]int),
 	}
 }
 
@@ -34,6 +36,7 @@ func GetFaceSet(set int, num int) (FaceImage, bool) {
 }
 
 var faces = make(map[int]FaceImage)
+var names = make(map[string]int)
 
 var currentFaceSet int
 
@@ -42,6 +45,7 @@ func SetCurrentFaceSet(set int) {
 		return
 	}
 	faces = faceSets[set].Faces
+	names = faceSets[set].Names
 	currentFaceSet = set
 }
 
@@ -90,6 +94,7 @@ func AddFace(face messages.MessageFace2) bool {
 		Checksum: face.Checksum,
 		pending:  true,
 	}
+	names[face.Name] = int(face.Num)
 	return false
 }
 
@@ -105,6 +110,7 @@ func AddFaceImage(image messages.MessageImage2) {
 			Data:    image.Data,
 			pending: false,
 		}
+		names[face.name] = int(image.Face)
 		return
 	}
 	faces[int(image.Face)] = FaceImage{
@@ -117,4 +123,5 @@ func AddFaceImage(image messages.MessageImage2) {
 		Checksum: face.Checksum,
 		pending:  false,
 	}
+	names[face.name] = int(image.Face)
 }
