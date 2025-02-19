@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"slices"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -19,13 +20,24 @@ import (
 
 // Manager provides storage and handling of player skills.
 type Manager struct {
-	window      fyne.Window
-	conn        *net.Connection
-	handler     *messages.MessageHandler
-	skills      map[uint16]Skill
-	knownSkills map[uint16]messages.MessageStatSkill
-	exp         []uint64
+	window           fyne.Window
+	conn             *net.Connection
+	handler          *messages.MessageHandler
+	skills           map[uint16]Skill
+	knownSkills      map[uint16]messages.MessageStatSkill
+	knownSkillsSlice []uint8
+	exp              []uint64
+	sortMode         SortMode
+	sortAsc          bool
 }
+
+type SortMode int
+
+const (
+	SortByLevel SortMode = iota
+	SortByExp
+	SortByName
+)
 
 // Skill is a convenience merger around SkillInfo and SkillExtraInfo.
 type Skill struct {
@@ -59,6 +71,7 @@ func (s *Manager) Init() {
 			switch stat := stat.(type) {
 			case *messages.MessageStatSkill:
 				s.knownSkills[uint16(stat.Skill)] = *stat
+				s.syncKnownSkills()
 			}
 		}
 	})
@@ -77,6 +90,7 @@ func (s *Manager) Init() {
 					}
 				}
 			}
+			s.syncKnownSkills()
 		case messages.MessageReplyInfoDataSkillExtra:
 			for num, skill := range data.Skills {
 				if sk, ok := s.skills[uint16(num)]; ok {
@@ -88,6 +102,7 @@ func (s *Manager) Init() {
 					}
 				}
 			}
+			s.syncKnownSkills()
 		case messages.MessageReplyInfoDataExpTable:
 			s.exp = data
 		}
@@ -142,18 +157,57 @@ func (m *Manager) KnownSkillsSlice() []uint8 {
 	return skills
 }
 
+func (m *Manager) syncKnownSkills() {
+	m.knownSkillsSlice = m.KnownSkillsSlice()
+	m.sortKnownSkills()
+}
+
+func (m *Manager) sortKnownSkills() {
+	switch m.sortMode {
+	case SortByExp:
+		if m.sortAsc {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return int((m.ExpToNextLevelPercentage(uint16(a)) - m.ExpToNextLevelPercentage(uint16(b))) * 100000)
+			})
+		} else {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return int((m.ExpToNextLevelPercentage(uint16(b)) - m.ExpToNextLevelPercentage(uint16(a))) * 100000)
+			})
+		}
+	case SortByLevel:
+		if m.sortAsc {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return int(m.knownSkills[uint16(a)].Level - m.knownSkills[uint16(b)].Level)
+			})
+		} else {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return int(m.knownSkills[uint16(b)].Level - m.knownSkills[uint16(a)].Level)
+			})
+		}
+	case SortByName:
+		if m.sortAsc {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return strings.Compare(m.skills[uint16(a)].Name, m.skills[uint16(b)].Name)
+			})
+		} else {
+			slices.SortFunc(m.knownSkillsSlice, func(a, b uint8) int {
+				return strings.Compare(m.skills[uint16(b)].Name, m.skills[uint16(a)].Name)
+			})
+		}
+	}
+}
+
 func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 	var popup *cfwidgets.PopUp
-	skillIDs := m.KnownSkillsSlice()
 	list := widget.NewList(
 		func() int {
-			return len(skillIDs)
+			return len(m.knownSkillsSlice)
 		},
 		func() fyne.CanvasObject {
 			return container.New(&layouts.SkillEntry{IconSize: data.CurrentFaceSet().Width}, &canvas.Image{}, widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			skill := m.skills[uint16(skillIDs[i])]
+			skill := m.skills[uint16(m.knownSkillsSlice[i])]
 			if face, ok := data.GetFace(int(skill.Face)); ok {
 				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = &face
 			} else {
@@ -164,7 +218,7 @@ func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 		},
 	)
 	list.OnSelected = func(id widget.ListItemID) {
-		cb(int(skillIDs[id]))
+		cb(int(m.knownSkillsSlice[id]))
 		popup.Hide()
 	}
 
@@ -178,14 +232,13 @@ func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 
 func (m *Manager) ShowSkillsList() {
 	var popup *cfwidgets.PopUp
-	skillIDs := m.KnownSkillsSlice()
 
 	info := widget.NewRichTextWithText("...")
 	info.Wrapping = fyne.TextWrapWord
 
 	list := widget.NewList(
 		func() int {
-			return len(skillIDs)
+			return len(m.knownSkillsSlice)
 		},
 		func() fyne.CanvasObject {
 			rect := canvas.NewRectangle(color.NRGBA{255, 255, 255, 100})
@@ -193,8 +246,8 @@ func (m *Manager) ShowSkillsList() {
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			// Set the percentage until next level (used for BG)
-			o.(*fyne.Container).Layout.(*layouts.FullSkillEntry).Perc = float32(m.ExpToNextLevelPercentage(uint16(skillIDs[i])))
-			skill := m.Skill(uint16(skillIDs[i]))
+			o.(*fyne.Container).Layout.(*layouts.FullSkillEntry).Perc = float32(m.ExpToNextLevelPercentage(uint16(m.knownSkillsSlice[i])))
+			skill := m.Skill(uint16(m.knownSkillsSlice[i]))
 			if face, ok := data.GetFace(int(skill.Face)); ok {
 				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = &face
 			} else {
@@ -202,18 +255,18 @@ func (m *Manager) ShowSkillsList() {
 			}
 			o.(*fyne.Container).Objects[0].(*canvas.Image).Refresh()
 			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(skill.Name)
-			o.(*fyne.Container).Objects[2].(*widget.Label).SetText(fmt.Sprintf("%d", m.knownSkills[uint16(skillIDs[i])].Level))
-			v, p := humanize.ComputeSI(float64(m.knownSkills[uint16(skillIDs[i])].Exp))
+			o.(*fyne.Container).Objects[2].(*widget.Label).SetText(fmt.Sprintf("%d", m.knownSkills[uint16(m.knownSkillsSlice[i])].Level))
+			v, p := humanize.ComputeSI(float64(m.knownSkills[uint16(m.knownSkillsSlice[i])].Exp))
 			f := humanize.SIWithDigits(v, 4, p)
 			o.(*fyne.Container).Objects[3].(*widget.Label).SetText(f)
 		},
 	)
 	list.OnSelected = func(id widget.ListItemID) {
-		skill := m.Skill(uint16(skillIDs[id]))
-		next := m.ExpToNextLevel(uint16(skillIDs[id]))
+		skill := m.Skill(uint16(m.knownSkillsSlice[id]))
+		next := m.ExpToNextLevel(uint16(m.knownSkillsSlice[id]))
 		v, p := humanize.ComputeSI(float64(next))
 		f := humanize.SIWithDigits(v, 4, p)
-		info.Segments = data.TextToRichTextSegments(f + " until level " + fmt.Sprintf("%d", m.knownSkills[uint16(skillIDs[id])].Level+1) + "\n" + skill.Description)
+		info.Segments = data.TextToRichTextSegments(f + " until level " + fmt.Sprintf("%d", m.knownSkills[uint16(m.knownSkillsSlice[id])].Level+1) + "\n" + skill.Description)
 		info.Refresh()
 	}
 
@@ -221,10 +274,47 @@ func (m *Manager) ShowSkillsList() {
 
 	cnt := container.New(&layouts.Inventory{}, list, infoScroll)
 
+	var actionSortDir, actionSortExp, actionSortLevel, actionSortName *widget.ToolbarAction
+	actionSortDir = widget.NewToolbarAction(data.GetResource("icon_descending.png"), func() {
+		m.sortAsc = !m.sortAsc
+		if m.sortAsc {
+			actionSortDir.SetIcon(data.GetResource("icon_ascending.png"))
+		} else {
+			actionSortDir.SetIcon(data.GetResource("icon_descending.png"))
+		}
+		m.sortKnownSkills()
+		list.Refresh()
+	})
+	actionSortExp = widget.NewToolbarAction(data.GetResource("icon_exp.png"), func() {
+		m.sortMode = SortByExp
+		m.sortKnownSkills()
+		list.Refresh()
+	})
+	actionSortLevel = widget.NewToolbarAction(data.GetResource("icon_level.png"), func() {
+		m.sortMode = SortByLevel
+		m.sortKnownSkills()
+		list.Refresh()
+	})
+	actionSortName = widget.NewToolbarAction(data.GetResource("icon_name.png"), func() {
+		m.sortMode = SortByName
+		m.sortKnownSkills()
+		list.Refresh()
+	})
+	topControls := widget.NewToolbar(
+		actionSortLevel,
+		actionSortExp,
+		actionSortName,
+		widget.NewToolbarSeparator(),
+		actionSortDir,
+	)
+	topBar := container.NewHBox(widget.NewLabel("Skills"), topControls)
+
+	blep := container.NewBorder(topBar, nil, nil, nil, cnt)
+
 	dialog := layouts.NewDialog(m.window)
 	dialog.Full = true
 
-	popup = cfwidgets.NewPopUp(container.New(dialog, cnt), m.window.Canvas())
+	popup = cfwidgets.NewPopUp(container.New(dialog, blep), m.window.Canvas())
 
 	popup.ShowCentered(m.window.Canvas())
 }
