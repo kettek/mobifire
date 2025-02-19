@@ -25,6 +25,7 @@ type Manager struct {
 	skillsManager *skills.Manager
 	spells        []Spell
 	skills        []uint8
+	popup         *cfwidgets.PopUp
 }
 
 func NewManager() *Manager {
@@ -129,9 +130,7 @@ func (mgr *Manager) getSpellsBySkill(skill uint8) []Spell {
 	return spells
 }
 
-func (mgr *Manager) ShowSpellsList() {
-	var popup *cfwidgets.PopUp
-
+func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 	info := widget.NewRichTextWithText("...")
 	info.Wrapping = fyne.TextWrapWord
 	infoScroll := container.NewVScroll(info)
@@ -188,6 +187,9 @@ func (mgr *Manager) ShowSpellsList() {
 			},
 		)
 		list.OnSelected = func(id widget.ListItemID) {
+			if onSelect != nil && onSelect(spells[id]) {
+				return
+			}
 			spell := spells[id]
 			skill := mgr.skillsManager.Skill(uint16(spell.Skill))
 			text := fmt.Sprintf("[b]%s[/b]\n\n[b]Skill:[/b] %s\n[b]Level:[/b] %d\n[b]Mana:[/b] %d\n[b]Casting Time:[/b] %d\n\n%s", spell.Name, skill.Name, spell.Level, spell.Mana, spell.CastingTime, spell.Description)
@@ -220,7 +222,13 @@ func (mgr *Manager) ShowSpellsList() {
 	dialog := layouts.NewDialog(mgr.window)
 	dialog.Full = true
 
-	popup = cfwidgets.NewPopUp(container.New(dialog, content), mgr.window.Canvas())
+	mgr.popup = cfwidgets.NewPopUp(container.New(dialog, content), mgr.window.Canvas())
 
-	popup.ShowCentered(mgr.window.Canvas())
+	mgr.popup.ShowCentered(mgr.window.Canvas())
+}
+
+func (mgr *Manager) CloseSpellsList() {
+	if mgr.popup != nil {
+		mgr.popup.Hide()
+	}
 }

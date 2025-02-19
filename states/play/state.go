@@ -310,7 +310,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
 				sm := s.managers.GetByType(&spells.Manager{}).(*spells.Manager)
-				sm.ShowSpellsList()
+				sm.ShowSpellsList(nil)
 				fmt.Println("Toolbar action 6")
 			}),
 		)

@@ -154,6 +154,12 @@ func (e Entry) Trigger(m *Manager) {
 				Tag: k.objectTag,
 			})
 		}
+	case EntrySpellKind:
+		if k.Ready {
+			m.conn.SendCommand(fmt.Sprintf("cast %d", k.Spell), 1)
+		} else {
+			m.conn.SendCommand(fmt.Sprintf("invoke %d", k.Spell), 1)
+		}
 	case EntrySkillKind:
 		// TODO: Maybe add ready and use skill option? This would ensure that a talisman or holy symbol gets equipped before using the skill.
 		if k.Ready {
