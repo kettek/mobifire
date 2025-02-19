@@ -27,6 +27,7 @@ import (
 // State provides the actual play state of the game.
 type State struct {
 	messages.MessageHandler
+	app             fyne.App
 	window          fyne.Window
 	container       *fyne.Container
 	commandsManager commandsManager
@@ -63,7 +64,7 @@ func NewState(conn *net.Connection, character string) *State {
 // Enter sets up all the necessary UI and network handling.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
-	s.managers.SetupAccessors(s.window, s.conn, &s.MessageHandler)
+	s.managers.SetupAccessors(s.app, s.window, s.conn, &s.MessageHandler)
 
 	s.managers.PreInit()
 
@@ -366,6 +367,11 @@ func (s *State) Container() *fyne.Container {
 // SetWindow sets the window for dialog usage.
 func (s *State) SetWindow(window fyne.Window) {
 	s.window = window
+}
+
+// SetApp sets the app for preferences usage.
+func (s *State) SetApp(app fyne.App) {
+	s.app = app
 }
 
 // ShowTextDialog shows a near fullscreen dialog, wow.
