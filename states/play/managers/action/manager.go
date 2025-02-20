@@ -301,23 +301,33 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 				})
 			}),
 		)
-		commandsMenu := fyne.NewMenuItem("command", func() {
-			entryWidget := widget.NewEntry()
-			dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
-				{Widget: entryWidget},
-			}, func(b bool) {
-				if b {
-					action := Entry{
-						Image: entry.Image, // Re-use last image for now... is this a bad idea?
-						Kind: EntryCommandKind{
-							Command: entryWidget.Text,
-							Repeat:  1,
-						},
-					}
-					m.SetAction(index, action)
+		commandsMenu := fyne.NewMenuItem("command", nil)
+		commandsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+			fyne.NewMenuItem("step forward", func() {
+				action := Entry{
+					Image: entry.Image, // Re-use last image for now... is this a bad idea?
+					Kind:  EntryStepForwardKind{},
 				}
-			}, m.window)
-		})
+				m.SetAction(index, action)
+			}),
+			fyne.NewMenuItem("custom", func() {
+				entryWidget := widget.NewEntry()
+				dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
+					{Widget: entryWidget},
+				}, func(b bool) {
+					if b {
+						action := Entry{
+							Image: entry.Image, // Re-use last image for now... is this a bad idea?
+							Kind: EntryCommandKind{
+								Command: entryWidget.Text,
+								Repeat:  1,
+							},
+						}
+						m.SetAction(index, action)
+					}
+				}, m.window)
+			}),
+		)
 
 		actions := fyne.NewMenu("Actions", currentItem, fyne.NewMenuItemSeparator(), itemsMenu, spellsMenu, skillsMenu, commandsMenu)
 		popup := widget.NewPopUpMenu(actions, m.window.Canvas())
@@ -348,4 +358,26 @@ func (m *Manager) SetDirectionFromString(str string) {
 	case "west":
 		m.lastDir = 7
 	}
+}
+
+func (m *Manager) GetStringFromDirection() string {
+	switch m.lastDir {
+	case 1:
+		return "north"
+	case 2:
+		return "northeast"
+	case 3:
+		return "east"
+	case 4:
+		return "southeast"
+	case 5:
+		return "south"
+	case 6:
+		return "southwest"
+	case 7:
+		return "west"
+	case 8:
+		return "northwest"
+	}
+	return ""
 }

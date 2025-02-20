@@ -38,10 +38,14 @@ type EntryCommandKind struct {
 	Repeat  int
 }
 
+type EntryStepForwardKind struct {
+}
+
 type Entry struct {
 	Image  fyne.Resource
 	widget *cfwidgets.AssignableButton
 	Kind   interface{}
+	Next   *Entry `json:",omitempty"`
 }
 
 func (e Entry) TypeString() string {
@@ -71,6 +75,8 @@ func (e Entry) TypeString() string {
 	case EntryCommandKind:
 		str = "command"
 		str += " " + k.Command
+	case EntryStepForwardKind:
+		str = "step forward"
 	}
 	return str
 }
@@ -109,6 +115,9 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 	case EntryCommandKind:
 		kind = "command"
 		value, err = json.Marshal(e.Kind.(EntryCommandKind))
+	case EntryStepForwardKind:
+		kind = "step_forward"
+		value, err = json.Marshal(e.Kind.(EntryStepForwardKind))
 	}
 	if err != nil {
 		return nil, err
@@ -158,6 +167,12 @@ func (e *Entry) Unmarshal(index int, b []byte) error {
 		e.Kind = kind
 	} else if wrapper.Data.Kind == "command" {
 		var kind EntryCommandKind
+		if err := json.Unmarshal(wrapper.Data.Value, &kind); err != nil {
+			return err
+		}
+		e.Kind = kind
+	} else if wrapper.Data.Kind == "step_forward" {
+		var kind EntryStepForwardKind
 		if err := json.Unmarshal(wrapper.Data.Value, &kind); err != nil {
 			return err
 		}
@@ -233,5 +248,7 @@ func (e Entry) Trigger(m *Manager) {
 		}
 	case EntryCommandKind:
 		m.conn.SendCommand(k.Command, uint32(k.Repeat))
+	case EntryStepForwardKind:
+		m.conn.SendCommand(m.GetStringFromDirection(), 1)
 	}
 }
