@@ -170,10 +170,11 @@ func (inv *Inventory) addItem(item *Item) {
 func (inv *Inventory) removeItemByTag(tag int32) bool {
 	for i, item := range inv.Items {
 		if item.Tag == tag {
-			selectedTag := inv.widget.selectedTag()
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
-			if inv.widget != nil && selectedTag == tag {
-				inv.widget.refreshSelected()
+			if inv.widget != nil {
+				if tag == inv.widget.selectedTag() {
+					inv.widget.refreshSelected()
+				}
 			}
 			return true
 		}
