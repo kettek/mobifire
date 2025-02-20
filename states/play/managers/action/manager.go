@@ -128,6 +128,9 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	button = cfwidgets.NewAssignableButton(entry.Image, func() {
 		m.TriggerAction(index)
 	}, func() {
+		currentItem := fyne.NewMenuItem(m.Action(index).TypeString(), nil)
+		currentItem.Disabled = true
+
 		itemsMenu := fyne.NewMenuItem("items", nil)
 		itemsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
 			fyne.NewMenuItem("apply (always)", func() {
@@ -315,7 +318,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 			}, m.window)
 		})
 
-		actions := fyne.NewMenu("Actions", itemsMenu, spellsMenu, skillsMenu, commandsMenu)
+		actions := fyne.NewMenu("Actions", currentItem, fyne.NewMenuItemSeparator(), itemsMenu, spellsMenu, skillsMenu, commandsMenu)
 		popup := widget.NewPopUpMenu(actions, m.window.Canvas())
 		bpos := button.Position()
 		bsize := button.Size()

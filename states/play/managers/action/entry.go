@@ -44,6 +44,37 @@ type Entry struct {
 	Kind   interface{}
 }
 
+func (e Entry) TypeString() string {
+	str := ""
+	switch k := e.Kind.(type) {
+	case EntryApplyKind:
+		str = "apply"
+		str += " " + k.ObjectName
+		if k.OnlyIfUnapplied {
+			str += " (if unapplied)"
+		}
+		if k.Fire {
+			str += " (fire)"
+		}
+	case EntrySkillKind:
+		str = "skill"
+		str += " " + k.Name
+		if k.Ready {
+			str += " (ready)"
+		}
+	case EntrySpellKind:
+		str = "spell"
+		str += " " + k.Name
+		if k.Ready {
+			str += " (ready)"
+		}
+	case EntryCommandKind:
+		str = "command"
+		str += " " + k.Command
+	}
+	return str
+}
+
 func NewEntryFromString(data string) *Entry {
 	var entry Entry
 	json.Unmarshal([]byte(data), &entry)
