@@ -134,7 +134,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 
 		itemsMenu := fyne.NewMenuItem("items", nil)
 		itemsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("apply (always)", func() {
+			fyne.NewMenuItem("apply (or unapply)", func() {
 				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
 					action := Entry{
 						Image: data.GetResource("icon_apply.png"),
@@ -171,7 +171,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 					return true
 				})
 			}),
-			fyne.NewMenuItem("auto-apply and fire", func() {
+			fyne.NewMenuItem("apply and fire", func() {
 				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
 					action := Entry{
 						Image: data.GetResource("icon_apply.png"),
