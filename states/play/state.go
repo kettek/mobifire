@@ -324,6 +324,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	thumbPad := &thumbpadWidget{}
 	thumbPad.onCommand = func(cmd string) {
 		s.conn.SendCommand(cmd, 0)
+		s.managers.GetByType(&action.Manager{}).(*action.Manager).SetDirectionFromString(cmd)
 	}
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 

@@ -192,7 +192,7 @@ func (e Entry) Trigger(m *Manager) {
 						Tag: k.objectTag,
 					})
 				}
-				m.conn.SendCommand("fire", 1)
+				m.conn.SendCommand(fmt.Sprintf("fire %d", m.lastDir), 1)
 				m.conn.SendCommand("fire_stop", 1)
 				return
 			}

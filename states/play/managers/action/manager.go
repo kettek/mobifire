@@ -24,6 +24,7 @@ type Manager struct {
 	skillsManager *skills.Manager
 	itemsManager  *items.Manager
 	spellsManager *spells.Manager
+	lastDir       int8 // Last direction the player issued a movement in.
 }
 
 func NewManager() *Manager {
@@ -326,4 +327,25 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	})
 	entry.widget = button
 	return entry.widget
+}
+
+func (m *Manager) SetDirectionFromString(str string) {
+	switch str {
+	case "northwest":
+		m.lastDir = 8
+	case "north":
+		m.lastDir = 1
+	case "northeast":
+		m.lastDir = 2
+	case "east":
+		m.lastDir = 3
+	case "southeast":
+		m.lastDir = 4
+	case "south":
+		m.lastDir = 5
+	case "southwest":
+		m.lastDir = 6
+	case "west":
+		m.lastDir = 7
+	}
 }
