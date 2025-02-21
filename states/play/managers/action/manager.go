@@ -73,8 +73,24 @@ func (m *Manager) SetAction(i int, entry Entry) {
 	if i >= len(m.entries) {
 		m.entries = append(m.entries, make([]Entry, i-len(m.entries)+1)...)
 	}
+
+	entry.widget = m.entries[i].widget
+	if entry.Image == nil {
+		entry.Image = m.entries[i].Image
+	}
+
+	if entry.widget != nil {
+		entry.widget.SetIcon(entry.Image)
+	}
+
 	m.entries[i] = entry
 	m.saveActions()
+}
+
+func (m *Manager) ClearAction(i int) {
+	m.SetAction(i, Entry{
+		Image: data.GetResource("icon_action_blank.png"),
+	})
 }
 
 func (m *Manager) Action(i int) *Entry {
@@ -118,7 +134,7 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	entry := m.Action(index)
 	if entry == nil {
 		m.SetAction(index, Entry{
-			Image: data.GetResource("icon_blank.png"),
+			Image: data.GetResource("icon_action_blank.png"),
 		})
 		entry = m.Action(index)
 	}
@@ -129,207 +145,44 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	button = cfwidgets.NewAssignableButton(entry.Image, func() {
 		m.TriggerAction(index)
 	}, func() {
-		currentItem := fyne.NewMenuItem(m.Action(index).TypeString(), nil)
-		currentItem.Disabled = true
+		var currentItem *fyne.MenuItem
+		if entry.Kind != nil {
+			currentItem = fyne.NewMenuItem(m.Action(index).TypeString(), nil)
 
-		itemsMenu := fyne.NewMenuItem("items", nil)
-		itemsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("apply (or unapply)", func() {
-				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntryApplyKind{
-							ObjectName:      item.Name,
-							OnlyIfUnapplied: false,
-						},
-					}
-					if img, ok := data.GetFace(int(item.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					m.SetAction(index, action)
-					m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
-					return true
-				})
-			}),
-			fyne.NewMenuItem("apply (if unapplied)", func() {
-				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntryApplyKind{
-							ObjectName:      item.Name,
-							OnlyIfUnapplied: true,
-						},
-					}
-
-					if img, ok := data.GetFace(int(item.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					m.SetAction(index, action)
-					m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
-					return true
-				})
-			}),
-			fyne.NewMenuItem("apply and fire", func() {
-				m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntryApplyKind{
-							ObjectName: item.Name,
-							Fire:       true,
-						},
-					}
-					if img, ok := data.GetFace(int(item.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					m.SetAction(index, action)
-					m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
-					return true
-				})
-			}),
-		)
-		spellsMenu := fyne.NewMenuItem("spells", nil)
-		spellsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("invoke", func() {
-				m.spellsManager.ShowSpellsList(func(spell spells.Spell) bool {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntrySpellKind{
-							Spell: int32(spell.Tag),
-							Name:  spell.Name,
-						},
-					}
-					if img, ok := data.GetFace(int(spell.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-						button.Refresh()
-					}
-					if spell.Usage > 0 {
-						entryWidget := widget.NewEntry()
-						dialog.ShowForm("Spell Parameter", "Submit", "Cancel", []*widget.FormItem{
-							{Text: "Parameter", Widget: entryWidget},
-						}, func(b bool) {
-							if b {
-								kind := action.Kind.(EntrySpellKind)
-								kind.Extra = entryWidget.Text
-								action.Kind = kind
-								m.SetAction(index, action)
-								m.spellsManager.CloseSpellsList()
-							}
-						}, m.window)
-					} else {
-						m.SetAction(index, action)
-						m.spellsManager.CloseSpellsList()
-					}
-					return true
-				})
-			}),
-			fyne.NewMenuItem("ready", func() {
-				m.spellsManager.ShowSpellsList(func(spell spells.Spell) bool {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntrySpellKind{
-							Spell: int32(spell.Tag),
-							Name:  spell.Name,
-							Ready: true,
-						},
-					}
-					if img, ok := data.GetFace(int(spell.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					// TODO: Check if readied spells can have parameters... I presume they can?
-					if spell.Usage > 0 {
-						entryWidget := widget.NewEntry()
-						dialog.ShowForm("Spell Parameter", "Submit", "Cancel", []*widget.FormItem{
-							{Text: "Parameter", Widget: entryWidget},
-						}, func(b bool) {
-							if b {
-								kind := action.Kind.(EntrySpellKind)
-								kind.Extra = entryWidget.Text
-								action.Kind = kind
-								m.SetAction(index, action)
-								m.spellsManager.CloseSpellsList()
-							}
-						}, m.window)
-					} else {
-						m.SetAction(index, action)
-						m.spellsManager.CloseSpellsList()
-					}
-					return true
-				})
-			}),
-		)
-		skillsMenu := fyne.NewMenuItem("skills", nil)
-		skillsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("use", func() {
-				m.skillsManager.ShowSimpleSkillsList(func(id int) {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntrySkillKind{
-							Skill: int32(id),
-							Name:  m.skillsManager.Skill(uint16(id)).Name,
-							Ready: false,
-						},
-					}
-					skill := m.skillsManager.Skill(uint16(id))
-					if img, ok := data.GetFace(int(skill.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					m.SetAction(index, action)
-				})
-			}),
-			fyne.NewMenuItem("ready", func() {
-				m.skillsManager.ShowSimpleSkillsList(func(id int) {
-					action := Entry{
-						Image: data.GetResource("icon_apply.png"),
-						Kind: EntrySkillKind{
-							Skill: int32(id),
-							Name:  m.skillsManager.Skill(uint16(id)).Name,
-							Ready: true,
-						},
-					}
-					skill := m.skillsManager.Skill(uint16(id))
-					if img, ok := data.GetFace(int(skill.Face)); ok {
-						action.Image = &img
-						button.SetIcon(&img)
-					}
-					m.SetAction(index, action)
-				})
-			}),
-		)
-		commandsMenu := fyne.NewMenuItem("command", nil)
-		commandsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
-			fyne.NewMenuItem("step forward", func() {
-				action := Entry{
-					Image: entry.Image, // Re-use last image for now... is this a bad idea?
-					Kind:  EntryStepForwardKind{},
+			actionItems := m.getActionMenuItems(func(e Entry) {
+				last := entry
+				for last.Next != nil {
+					last = last.Next
 				}
-				m.SetAction(index, action)
-			}),
-			fyne.NewMenuItem("custom", func() {
-				entryWidget := widget.NewEntry()
-				dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
-					{Widget: entryWidget},
-				}, func(b bool) {
-					if b {
-						action := Entry{
-							Image: entry.Image, // Re-use last image for now... is this a bad idea?
-							Kind: EntryCommandKind{
-								Command: entryWidget.Text,
-								Repeat:  1,
-							},
-						}
-						m.SetAction(index, action)
-					}
-				}, m.window)
-			}),
-		)
+				last.Next = &e
+				m.SetAction(index, *entry) // FIXME: I don't like this deref.
+			})
 
-		actions := fyne.NewMenu("Actions", currentItem, fyne.NewMenuItemSeparator(), itemsMenu, spellsMenu, skillsMenu, commandsMenu)
+			if entry.Next != nil {
+				actionItems = append(actionItems, fyne.NewMenuItemSeparator())
+				for e := entry.Next; e != nil; e = e.Next {
+					actionItems = append(actionItems, fyne.NewMenuItem(e.TypeString(), nil))
+				}
+			}
+
+			actionItems = append([]*fyne.MenuItem{fyne.NewMenuItem("clear", func() {
+				m.ClearAction(index)
+				button.SetIcon(data.GetResource("icon_action_blank.png"))
+			}), fyne.NewMenuItemSeparator()}, actionItems...)
+
+			currentItem.ChildMenu = fyne.NewMenu("Sub Actions", actionItems...)
+		}
+
+		actionItems := m.getActionMenuItems(func(entry Entry) {
+			m.SetAction(index, entry)
+		})
+
+		// Prepend current item entry if the entry is empty.
+		if entry.Kind != nil {
+			actionItems = append([]*fyne.MenuItem{currentItem, fyne.NewMenuItemSeparator()}, actionItems...)
+		}
+
+		actions := fyne.NewMenu("Actions", actionItems...)
 		popup := widget.NewPopUpMenu(actions, m.window.Canvas())
 		bpos := button.Position()
 		bsize := button.Size()
@@ -337,6 +190,196 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	})
 	entry.widget = button
 	return entry.widget
+}
+
+func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
+	itemsMenu := fyne.NewMenuItem("items", nil)
+	itemsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+		fyne.NewMenuItem("apply (or unapply)", func() {
+			m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntryApplyKind{
+						ObjectName:      item.Name,
+						OnlyIfUnapplied: false,
+					},
+				}
+				if img, ok := data.GetFace(int(item.Face)); ok {
+					action.Image = &img
+				}
+				setAction(action)
+				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
+				return true
+			})
+		}),
+		fyne.NewMenuItem("apply (if unapplied)", func() {
+			m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntryApplyKind{
+						ObjectName:      item.Name,
+						OnlyIfUnapplied: true,
+					},
+				}
+
+				if img, ok := data.GetFace(int(item.Face)); ok {
+					action.Image = &img
+				}
+				setAction(action)
+				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
+				return true
+			})
+		}),
+		fyne.NewMenuItem("apply and fire", func() {
+			m.itemsManager.ShowLimitedInventory(m.itemsManager.GetPlayerTag(), func(item *items.Item) bool {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntryApplyKind{
+						ObjectName: item.Name,
+						Fire:       true,
+					},
+				}
+				if img, ok := data.GetFace(int(item.Face)); ok {
+					action.Image = &img
+				}
+				setAction(action)
+				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
+				return true
+			})
+		}),
+	)
+	spellsMenu := fyne.NewMenuItem("spells", nil)
+	spellsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+		fyne.NewMenuItem("invoke", func() {
+			m.spellsManager.ShowSpellsList(func(spell spells.Spell) bool {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntrySpellKind{
+						Spell: int32(spell.Tag),
+						Name:  spell.Name,
+					},
+				}
+				if img, ok := data.GetFace(int(spell.Face)); ok {
+					action.Image = &img
+				}
+				if spell.Usage > 0 {
+					entryWidget := widget.NewEntry()
+					dialog.ShowForm("Spell Parameter", "Submit", "Cancel", []*widget.FormItem{
+						{Text: "Parameter", Widget: entryWidget},
+					}, func(b bool) {
+						if b {
+							kind := action.Kind.(EntrySpellKind)
+							kind.Extra = entryWidget.Text
+							action.Kind = kind
+							setAction(action)
+							m.spellsManager.CloseSpellsList()
+						}
+					}, m.window)
+				} else {
+					setAction(action)
+					m.spellsManager.CloseSpellsList()
+				}
+				return true
+			})
+		}),
+		fyne.NewMenuItem("ready", func() {
+			m.spellsManager.ShowSpellsList(func(spell spells.Spell) bool {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntrySpellKind{
+						Spell: int32(spell.Tag),
+						Name:  spell.Name,
+						Ready: true,
+					},
+				}
+				if img, ok := data.GetFace(int(spell.Face)); ok {
+					action.Image = &img
+				}
+				// TODO: Check if readied spells can have parameters... I presume they can?
+				if spell.Usage > 0 {
+					entryWidget := widget.NewEntry()
+					dialog.ShowForm("Spell Parameter", "Submit", "Cancel", []*widget.FormItem{
+						{Text: "Parameter", Widget: entryWidget},
+					}, func(b bool) {
+						if b {
+							kind := action.Kind.(EntrySpellKind)
+							kind.Extra = entryWidget.Text
+							action.Kind = kind
+							setAction(action)
+							m.spellsManager.CloseSpellsList()
+						}
+					}, m.window)
+				} else {
+					setAction(action)
+					m.spellsManager.CloseSpellsList()
+				}
+				return true
+			})
+		}),
+	)
+	skillsMenu := fyne.NewMenuItem("skills", nil)
+	skillsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+		fyne.NewMenuItem("use", func() {
+			m.skillsManager.ShowSimpleSkillsList(func(id int) {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntrySkillKind{
+						Skill: int32(id),
+						Name:  m.skillsManager.Skill(uint16(id)).Name,
+						Ready: false,
+					},
+				}
+				skill := m.skillsManager.Skill(uint16(id))
+				if img, ok := data.GetFace(int(skill.Face)); ok {
+					action.Image = &img
+				}
+				setAction(action)
+			})
+		}),
+		fyne.NewMenuItem("ready", func() {
+			m.skillsManager.ShowSimpleSkillsList(func(id int) {
+				action := Entry{
+					Image: data.GetResource("icon_apply.png"),
+					Kind: EntrySkillKind{
+						Skill: int32(id),
+						Name:  m.skillsManager.Skill(uint16(id)).Name,
+						Ready: true,
+					},
+				}
+				skill := m.skillsManager.Skill(uint16(id))
+				if img, ok := data.GetFace(int(skill.Face)); ok {
+					action.Image = &img
+				}
+				setAction(action)
+			})
+		}),
+	)
+	commandsMenu := fyne.NewMenuItem("command", nil)
+	commandsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+		fyne.NewMenuItem("step forward", func() {
+			action := Entry{
+				Kind: EntryStepForwardKind{},
+			}
+			setAction(action)
+		}),
+		fyne.NewMenuItem("custom", func() {
+			entryWidget := widget.NewEntry()
+			dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
+				{Widget: entryWidget},
+			}, func(b bool) {
+				if b {
+					action := Entry{
+						Kind: EntryCommandKind{
+							Command: entryWidget.Text,
+							Repeat:  1,
+						},
+					}
+					setAction(action)
+				}
+			}, m.window)
+		}),
+	)
+	return []*fyne.MenuItem{itemsMenu, spellsMenu, skillsMenu, commandsMenu}
 }
 
 func (m *Manager) SetDirectionFromString(str string) {

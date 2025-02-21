@@ -251,4 +251,7 @@ func (e Entry) Trigger(m *Manager) {
 	case EntryStepForwardKind:
 		m.conn.SendCommand(m.GetStringFromDirection(), 1)
 	}
+	if e.Next != nil {
+		e.Next.Trigger(m)
+	}
 }
