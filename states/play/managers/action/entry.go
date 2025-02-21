@@ -105,6 +105,7 @@ type kindWrapper struct {
 type entryWrapper struct {
 	Image string // base64 data of image
 	Data  kindWrapper
+	Next  json.RawMessage
 }
 
 func (e *Entry) MarshalJSON() ([]byte, error) {
@@ -148,6 +149,14 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 			Kind:  kind,
 			Value: json.RawMessage(value),
 		},
+	}
+	if e.Next != nil {
+		next, err := json.Marshal(e.Next)
+		if err != nil {
+			fmt.Println("error marshalling next entry:", err)
+		} else {
+			wrapper.Next = next
+		}
 	}
 
 	return json.Marshal(wrapper)
@@ -205,6 +214,13 @@ func (e *Entry) Unmarshal(index int, b []byte) error {
 		return nil // Don't return error, as we shouldn't explode if something wack happened to the embedded image.
 	}
 	e.Image = fyne.NewStaticResource(fmt.Sprintf("entry_%d", index), b64)
+
+	if len(wrapper.Next) > 0 && string(wrapper.Next) != "null" {
+		e.Next = &Entry{}
+		if err := e.Next.Unmarshal(index+100 /* fixme: this is dumb */, wrapper.Next); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
