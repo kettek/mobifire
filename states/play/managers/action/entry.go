@@ -41,6 +41,10 @@ type EntryCommandKind struct {
 type EntryStepForwardKind struct {
 }
 
+type EntryFaceKind struct {
+	Dir string
+}
+
 type Entry struct {
 	Image  fyne.Resource
 	widget *cfwidgets.AssignableButton
@@ -77,6 +81,12 @@ func (e Entry) TypeString() string {
 		str += " " + k.Command
 	case EntryStepForwardKind:
 		str = "step forward"
+	case EntryFaceKind:
+		if k.Dir == "" {
+			str = "face"
+		} else {
+			str = "face " + k.Dir
+		}
 	}
 	return str
 }
@@ -118,6 +128,9 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 	case EntryStepForwardKind:
 		kind = "step_forward"
 		value, err = json.Marshal(e.Kind.(EntryStepForwardKind))
+	case EntryFaceKind:
+		kind = "face"
+		value, err = json.Marshal(e.Kind.(EntryFaceKind))
 	}
 	if err != nil {
 		return nil, err
@@ -173,6 +186,12 @@ func (e *Entry) Unmarshal(index int, b []byte) error {
 		e.Kind = kind
 	} else if wrapper.Data.Kind == "step_forward" {
 		var kind EntryStepForwardKind
+		if err := json.Unmarshal(wrapper.Data.Value, &kind); err != nil {
+			return err
+		}
+		e.Kind = kind
+	} else if wrapper.Data.Kind == "face" {
+		var kind EntryFaceKind
 		if err := json.Unmarshal(wrapper.Data.Value, &kind); err != nil {
 			return err
 		}
@@ -250,6 +269,14 @@ func (e Entry) Trigger(m *Manager) {
 		m.conn.SendCommand(k.Command, uint32(k.Repeat))
 	case EntryStepForwardKind:
 		m.conn.SendCommand(m.GetStringFromDirection(), 1)
+	case EntryFaceKind:
+		if k.Dir == "" {
+			// If blank, use last known direction used by the player.
+			m.conn.SendCommand("face "+m.GetStringFromDirection(), 1)
+		} else {
+			// Otherwise whatever was set.
+			m.conn.SendCommand("face "+k.Dir, 1)
+		}
 	}
 	if e.Next != nil {
 		e.Next.Trigger(m)

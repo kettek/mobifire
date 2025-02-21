@@ -354,6 +354,28 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 			})
 		}),
 	)
+	faceMenu := fyne.NewMenuItem("face", nil)
+	faceMenuItems := []*fyne.MenuItem{}
+	var dirs = []string{"down", "north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"}
+	for _, dir := range dirs {
+		faceMenuItems = append(faceMenuItems, fyne.NewMenuItem(dir, func() {
+			action := Entry{
+				Kind: EntryFaceKind{
+					Dir: dir,
+				},
+			}
+			setAction(action)
+		}))
+	}
+	faceMenuItems = append([]*fyne.MenuItem{fyne.NewMenuItem("last step", func() {
+		action := Entry{
+			Kind: EntryFaceKind{},
+		}
+		setAction(action)
+	})}, faceMenuItems...)
+	faceMenu.ChildMenu = fyne.NewMenu("Sub Actions",
+		faceMenuItems...,
+	)
 	commandsMenu := fyne.NewMenuItem("command", nil)
 	commandsMenu.ChildMenu = fyne.NewMenu("Sub Actions",
 		fyne.NewMenuItem("step forward", func() {
@@ -362,6 +384,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 			}
 			setAction(action)
 		}),
+		faceMenu,
 		fyne.NewMenuItem("custom", func() {
 			entryWidget := widget.NewEntry()
 			dialog.ShowForm("Command", "Submit", "Cancel", []*widget.FormItem{
