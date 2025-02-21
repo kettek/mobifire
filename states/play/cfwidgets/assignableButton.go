@@ -25,3 +25,9 @@ func (a *AssignableButton) TappedSecondary(e *fyne.PointEvent) {
 		a.longAction()
 	}
 }
+
+func (a *AssignableButton) TriggerSecondary() {
+	if a.longAction != nil {
+		a.longAction()
+	}
+}

@@ -143,7 +143,13 @@ func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	}
 	var button *cfwidgets.AssignableButton
 	button = cfwidgets.NewAssignableButton(entry.Image, func() {
-		m.TriggerAction(index)
+		if entry.Kind == nil {
+			// Trigger the longpress/set action if there is no kind set.
+			button.TriggerSecondary()
+		} else {
+			// Otherwise charge on.
+			m.TriggerAction(index)
+		}
 	}, func() {
 		var currentItem *fyne.MenuItem
 		if entry.Kind != nil {
