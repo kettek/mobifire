@@ -91,7 +91,7 @@ func (mm *Manager) Init() {
 			if err != nil {
 				fmt.Println("Invalid map size:", msg.MapSize.Value)
 			}
-			mm.mb.SetBoardSize(rows+1, cols+1)
+			mm.mb.SetBoardSize(rows+2, cols+2) // FIXME: CF can send beyond scope of what we can see... I'm not certain how to fix this with how Fyne does widget rendering... Maybe use canvas.Raster for the board...?
 		}
 	})
 
@@ -112,6 +112,7 @@ func (mm *Manager) Init() {
 			for _, c := range m.Data {
 				switch d := c.(type) {
 				case messages.MessageMap2CoordDataDarkness:
+					mm.mb.SetDarkness(m.X, m.Y, uint8(d.Darkness))
 					// TODO
 				case messages.MessageMap2CoordDataAnim:
 					// TODO

@@ -1,11 +1,12 @@
 package board
 
 import (
+	"image/color"
 	"math"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/data"
 )
@@ -20,10 +21,12 @@ type boardPendingImage struct {
 type fyneLayout = fyne.Layout
 
 type multiBoard struct {
-	fyneLayout
 	container             *fyne.Container
 	boards                []*board
+	darkness              [][]uint8
+	darknessOverlay       *canvas.Raster
 	lastWidth, lastHeight float32
+	realWidth, realHeight float32
 	cellWidth, cellHeight int
 	lastRows, lastCols    int
 	onSizeChanged         func(rows, cols int)
@@ -34,8 +37,6 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 		cellWidth:  cellWidth,
 		cellHeight: cellHeight,
 	}
-
-	b.fyneLayout = layout.NewStackLayout()
 
 	var boardContainers []fyne.CanvasObject
 	for i := 0; i < count; i++ {
@@ -49,6 +50,29 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 			}
 		}
 	}
+	for y := 0; y < h; y++ {
+		b.darkness = append(b.darkness, make([]uint8, w))
+	}
+
+	// darkness overlay
+	b.darknessOverlay = canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
+		cellX := x / cellWidth
+		cellY := y / cellHeight
+
+		if cellX < 0 || cellX >= b.boards[0].Width || cellY < 0 || cellY >= b.boards[0].Height {
+			return color.Black
+		}
+
+		clr := color.NRGBA{0, 0, 0, 0}
+
+		darkness := b.darkness[cellY][cellX]
+
+		if darkness != 0 {
+			clr.A = 255 - darkness
+		}
+
+		return clr
+	})
 
 	b.container = container.New(b, boardContainers...)
 
@@ -68,7 +92,15 @@ func (b *multiBoard) MinSize(objects []fyne.CanvasObject) fyne.Size {
 			}
 		}
 	}
-	return b.fyneLayout.MinSize(objects)
+	return fyne.NewSize(b.realWidth, b.realHeight)
+}
+
+func (b *multiBoard) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Move(fyne.NewPos(0, 0))
+		//o.Move(fyne.NewPos((size.Width-b.realWidth)/2, (size.Height-b.realHeight)/2))
+		o.Resize(fyne.NewSize(b.realWidth, b.realHeight))
+	}
 }
 
 func (b *multiBoard) SetCell(x, y, z int, face *data.FaceImage) {
@@ -80,6 +112,11 @@ func (b *multiBoard) SetCells(x, y int, face *data.FaceImage) {
 	for _, board := range b.boards {
 		board.SetFace(x, y, face)
 	}
+	b.container.Refresh()
+}
+
+func (b *multiBoard) SetDarkness(x, y int, darkness uint8) {
+	b.darkness[y][x] = darkness
 	b.container.Refresh()
 }
 
@@ -108,6 +145,16 @@ func (b *multiBoard) SetBoardSize(rows, cols int) {
 		b.boards[i] = newBoard(rows, cols, b.cellWidth, b.cellHeight)
 		b.container.Add(b.boards[i].Container)
 	}
+	b.darkness = nil
+	for y := 0; y < cols; y++ {
+		b.darkness = append(b.darkness, make([]uint8, rows))
+	}
+
+	b.realWidth = float32(rows * b.cellWidth)
+	b.realHeight = float32(cols * b.cellHeight)
+
+	b.container.Add(b.darknessOverlay)
+
 	b.container.Refresh()
 }
 
@@ -115,6 +162,26 @@ func (b *multiBoard) Shift(dx, dy int) {
 	for _, board := range b.boards {
 		board.Shift(dx, dy)
 	}
+
+	if dx == 0 && dy == 0 {
+		return
+	}
+	var updates []darknessUpdate
+
+	for y := 0; y < b.boards[0].Height; y++ {
+		for x := 0; x < b.boards[0].Width; x++ {
+			if x+dx < 0 || x+dx >= b.boards[0].Width || y+dy < 0 || y+dy >= b.boards[0].Height {
+				updates = append(updates, darknessUpdate{x, y, 0})
+			} else {
+				updates = append(updates, darknessUpdate{x, y, b.darkness[y+dy][x+dx]})
+			}
+		}
+	}
+
+	for _, update := range updates {
+		b.darkness[update.y][update.x] = update.darkness
+	}
+	b.container.Refresh()
 }
 
 type board struct {
@@ -147,10 +214,14 @@ func newBoard(w, h, cellWidth, cellHeight int) *board {
 	return b
 }
 
-type cellUpdate struct {
+type darknessUpdate struct {
 	x, y     int
-	Face     *data.FaceImage
-	Darkness uint8
+	darkness uint8
+}
+
+type cellUpdate struct {
+	x, y int
+	Face *data.FaceImage
 }
 
 func (b *board) Shift(dx, dy int) {
@@ -162,9 +233,9 @@ func (b *board) Shift(dx, dy int) {
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
 			if x+dx < 0 || x+dx >= b.Width || y+dy < 0 || y+dy >= b.Height {
-				updates = append(updates, cellUpdate{x, y, nil, 0})
+				updates = append(updates, cellUpdate{x, y, nil})
 			} else {
-				updates = append(updates, cellUpdate{x, y, b.Tiles[y+dy][x+dx].Face, 0})
+				updates = append(updates, cellUpdate{x, y, b.Tiles[y+dy][x+dx].Face})
 			}
 		}
 	}
