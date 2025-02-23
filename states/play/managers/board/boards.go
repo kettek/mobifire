@@ -281,22 +281,22 @@ func (b *board) Tick(t uint32) {
 				continue
 			}
 			t.Counter += int(delta)
-			if t.Flags == 1 { // Randomize
-				if t.Counter >= int(t.Speed) {
+			if t.Counter >= int(t.Speed) {
+				if t.Flags == 1 { // Randomize
 					t.Counter = 0
 					t.Frame = rand.Intn(len(t.Anim.Faces))
-				}
-			} else {
-				for t.Counter >= int(t.Speed) {
-					t.Counter -= int(t.Speed)
-					t.Frame++
-					if t.Frame >= len(t.Anim.Faces) {
-						t.Frame = 0
+				} else {
+					for t.Counter >= int(t.Speed) {
+						t.Counter -= int(t.Speed)
+						t.Frame++
+						if t.Frame >= len(t.Anim.Faces) {
+							t.Frame = 0
+						}
 					}
 				}
-			}
-			if face, ok := data.GetFace(t.Anim.Faces[t.Frame]); ok {
-				b.SetFace(x, y, face)
+				if face, ok := data.GetFace(t.Anim.Faces[t.Frame]); ok {
+					b.SetFace(x, y, face)
+				}
 			}
 		}
 	}
