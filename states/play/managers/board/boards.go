@@ -212,9 +212,8 @@ func (b *board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
 
 func (b *board) Flatten() []fyne.CanvasObject {
 	var objects []fyne.CanvasObject
-	// Add objects in reverse order.
-	for y := b.Height - 1; y >= 0; y-- {
-		for x := b.Width - 1; x >= 0; x-- {
+	for y := 0; y < b.Height; y++ {
+		for x := 0; x < b.Width; x++ {
 			objects = append(objects, b.Tiles[y][x])
 		}
 	}
