@@ -154,7 +154,7 @@ func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 				castingTime := o.(*fyne.Container).Objects[5].(*widget.Label)
 
 				if face, ok := data.GetFace(int(spell.Face)); ok {
-					icon.Resource = &face
+					icon.Resource = face
 				} else {
 					icon.Resource = data.GetResource("blank.png")
 				}
@@ -205,7 +205,7 @@ func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 		skill := mgr.skillsManager.Skill(uint16(skillID))
 		skillTabs = append(skillTabs, container.NewTabItem("", makeListForSpells(mgr.getSpellsBySkill(skillID))))
 		if face, ok := data.GetFace(int(skill.Face)); ok {
-			skillTabs[len(skillTabs)-1].Icon = &face
+			skillTabs[len(skillTabs)-1].Icon = face
 		}
 	}
 

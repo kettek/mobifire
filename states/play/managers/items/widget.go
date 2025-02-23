@@ -154,7 +154,7 @@ func (iw *InventoryWidget) updateEntry(entry *fyne.Container, item *Item) {
 	weightLabel := entry.Objects[3].(*widget.Label)
 
 	if face, ok := data.GetFace(int(item.Face)); ok {
-		img.Resource = &face
+		img.Resource = face
 		img.Refresh()
 	}
 

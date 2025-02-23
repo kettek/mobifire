@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"github.com/kettek/mobifire/data"
@@ -17,6 +18,8 @@ type Manager struct {
 	handler *messages.MessageHandler
 
 	mb *multiBoard
+
+	localTicker bool
 
 	pendingImages []boardPendingImage
 }
@@ -113,9 +116,9 @@ func (mm *Manager) Init() {
 				switch d := c.(type) {
 				case messages.MessageMap2CoordDataDarkness:
 					mm.mb.SetDarkness(m.X, m.Y, uint8(d.Darkness))
-					// TODO
 				case messages.MessageMap2CoordDataAnim:
-					// TODO
+					anim := data.GetAnim(int(d.Anim))
+					mm.mb.SetAnim(m.X, m.Y, int(d.Layer), anim, d.Flags, d.Speed)
 				case messages.MessageMap2CoordDataClear:
 					mm.mb.SetCells(m.X, m.Y, nil)
 				case messages.MessageMap2CoordDataClearLayer:
@@ -130,7 +133,7 @@ func (mm *Manager) Init() {
 						mm.pendingImages = append(mm.pendingImages, boardPendingImage{X: m.X, Y: m.Y, Z: int(d.Layer), Num: int16(d.FaceNum)})
 						continue
 					}
-					mm.mb.SetCell(m.X, m.Y, int(d.Layer), &faceImage)
+					mm.mb.SetCell(m.X, m.Y, int(d.Layer), faceImage)
 				}
 			}
 		}
@@ -139,6 +142,24 @@ func (mm *Manager) Init() {
 	mm.handler.On(&messages.MessageNewMap{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		mm.mb.Clear()
 	})
+
+	// Manual ticker.
+	if mm.localTicker {
+		go func() {
+			t := time.NewTicker(time.Microsecond * 120000)
+			tick := uint32(0)
+			for {
+				<-t.C
+				mm.mb.Tick(tick)
+				tick++
+			}
+		}()
+	} else {
+		tick := messages.MessageTick(0)
+		mm.handler.On(&tick, nil, func(m messages.Message, mf *messages.MessageFailure) {
+			mm.mb.Tick(uint32(*(m.(*messages.MessageTick))))
+		})
+	}
 }
 
 func (mm *Manager) CanvasObject() fyne.CanvasObject {

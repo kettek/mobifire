@@ -211,7 +211,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 					},
 				}
 				if img, ok := data.GetFace(int(item.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				setAction(action)
 				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
@@ -229,7 +229,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 				}
 
 				if img, ok := data.GetFace(int(item.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				setAction(action)
 				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
@@ -246,7 +246,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 					},
 				}
 				if img, ok := data.GetFace(int(item.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				setAction(action)
 				m.itemsManager.CloseInventory(m.itemsManager.GetPlayerTag())
@@ -266,7 +266,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 					},
 				}
 				if img, ok := data.GetFace(int(spell.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				if spell.Usage > 0 {
 					entryWidget := widget.NewEntry()
@@ -299,7 +299,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 					},
 				}
 				if img, ok := data.GetFace(int(spell.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				// TODO: Check if readied spells can have parameters... I presume they can?
 				if spell.Usage > 0 {
@@ -337,7 +337,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 				}
 				skill := m.skillsManager.Skill(uint16(id))
 				if img, ok := data.GetFace(int(skill.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				setAction(action)
 			})
@@ -354,7 +354,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 				}
 				skill := m.skillsManager.Skill(uint16(id))
 				if img, ok := data.GetFace(int(skill.Face)); ok {
-					action.Image = &img
+					action.Image = img
 				}
 				setAction(action)
 			})

@@ -1,6 +1,10 @@
 package data
 
 import (
+	"bytes"
+	"image"
+	_ "image/png"
+
 	"github.com/kettek/termfire/messages"
 )
 
@@ -8,7 +12,8 @@ type FaceSet struct {
 	Set    int
 	Width  int
 	Height int
-	Faces  map[int]FaceImage
+	Anims  map[int]*Anim
+	Faces  map[int]*FaceImage
 	Names  map[string]int
 }
 
@@ -19,23 +24,25 @@ func AddFaceSet(set int, width, height int) {
 		Set:    set,
 		Width:  width,
 		Height: height,
-		Faces:  make(map[int]FaceImage),
+		Anims:  make(map[int]*Anim),
+		Faces:  make(map[int]*FaceImage),
 		Names:  make(map[string]int),
 	}
 }
 
-func GetFaceSet(set int, num int) (FaceImage, bool) {
+func GetFaceSet(set int, num int) (*FaceImage, bool) {
 	faceSet, ok := faceSets[set]
 	if !ok {
-		return FaceImage{}, false
+		return nil, false
 	}
 	if num < 0 || num >= len(faceSet.Faces) {
-		return FaceImage{}, false
+		return nil, false
 	}
 	return faceSet.Faces[num], true
 }
 
-var faces = make(map[int]FaceImage)
+var anims = make(map[int]*Anim)
+var faces = make(map[int]*FaceImage)
 var names = make(map[string]int)
 
 var currentFaceSet int
@@ -46,6 +53,7 @@ func SetCurrentFaceSet(set int) {
 	}
 	faces = faceSets[set].Faces
 	names = faceSets[set].Names
+	anims = faceSets[set].Anims
 	currentFaceSet = set
 }
 
@@ -60,6 +68,7 @@ type FaceImage struct {
 	Width    int
 	Height   int
 	Data     []byte
+	Image    image.Image
 	name     string
 	Checksum int32
 	pending  bool
@@ -76,7 +85,7 @@ func (f *FaceImage) Content() []byte {
 }
 
 // GetFace returns a face from the face map.
-func GetFace(num int) (FaceImage, bool) {
+func GetFace(num int) (*FaceImage, bool) {
 	face, ok := faces[num]
 	return face, ok
 }
@@ -87,7 +96,7 @@ func AddFace(face messages.MessageFace2) bool {
 	if ok {
 		return true
 	}
-	faces[int(face.Num)] = FaceImage{
+	faces[int(face.Num)] = &FaceImage{
 		Num:      uint16(face.Num),
 		Set:      int8(face.SetNum),
 		name:     face.Name,
@@ -99,29 +108,55 @@ func AddFace(face messages.MessageFace2) bool {
 }
 
 // AddFaceImage adds an image to the face map.
-func AddFaceImage(image messages.MessageImage2) {
-	face, ok := faces[int(image.Face)]
+func AddFaceImage(msg messages.MessageImage2) {
+	face, ok := faces[int(msg.Face)]
+	b := bytes.NewReader(msg.Data)
+	img, _, err := image.Decode(b)
+	if err != nil {
+		panic(err)
+	}
 	if !ok {
-		faces[int(image.Face)] = FaceImage{
-			Num:     uint16(image.Face),
-			Set:     image.Set,
-			Width:   image.Width,
-			Height:  image.Height,
-			Data:    image.Data,
+		faces[int(msg.Face)] = &FaceImage{
+			Num:     uint16(msg.Face),
+			Set:     msg.Set,
+			Width:   msg.Width,
+			Height:  msg.Height,
+			Data:    msg.Data,
+			Image:   img,
 			pending: false,
 		}
-		names[face.name] = int(image.Face)
 		return
 	}
-	faces[int(image.Face)] = FaceImage{
-		Num:      uint16(image.Face),
-		Set:      image.Set,
-		Width:    image.Width,
-		Height:   image.Height,
-		Data:     image.Data,
+	faces[int(msg.Face)] = &FaceImage{
+		Num:      uint16(msg.Face),
+		Set:      msg.Set,
+		Width:    msg.Width,
+		Height:   msg.Height,
+		Data:     msg.Data,
+		Image:    img,
 		name:     face.name,
 		Checksum: face.Checksum,
 		pending:  false,
 	}
-	names[face.name] = int(image.Face)
+	names[face.name] = int(msg.Face)
+}
+
+type Anim struct {
+	Num   int
+	Faces []int
+}
+
+func AddAnim(msg messages.MessageAnim) {
+	anim := &Anim{
+		Num:   int(msg.AnimID),
+		Faces: make([]int, len(msg.Faces)),
+	}
+	for i, face := range msg.Faces {
+		anim.Faces[i] = int(face)
+	}
+	anims[int(msg.AnimID)] = anim
+}
+
+func GetAnim(num int) *Anim {
+	return anims[num]
 }

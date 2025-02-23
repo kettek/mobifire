@@ -33,8 +33,13 @@ func (fm *Manager) Init() {
 		data.AddFaceImage(*msg)
 		img, _ := data.GetFace(int(msg.Face))
 		for _, manager := range fm.managers.GetFaceReceivers() {
-			manager.(managers.FaceReceiver).OnFaceLoaded(int16(msg.Face), &img)
+			manager.(managers.FaceReceiver).OnFaceLoaded(int16(msg.Face), img)
 		}
+	})
+
+	fm.handler.On(&messages.MessageAnim{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
+		msg := m.(*messages.MessageAnim)
+		data.AddAnim(*msg)
 	})
 }
 

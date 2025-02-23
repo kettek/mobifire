@@ -209,7 +209,7 @@ func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			skill := m.skills[uint16(m.knownSkillsSlice[i])]
 			if face, ok := data.GetFace(int(skill.Face)); ok {
-				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = &face
+				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = face
 			} else {
 				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = data.GetResource("blank.png")
 			}
@@ -249,7 +249,7 @@ func (m *Manager) ShowSkillsList() {
 			o.(*fyne.Container).Layout.(*layouts.FullSkillEntry).Perc = float32(m.ExpToNextLevelPercentage(uint16(m.knownSkillsSlice[i])))
 			skill := m.Skill(uint16(m.knownSkillsSlice[i]))
 			if face, ok := data.GetFace(int(skill.Face)); ok {
-				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = &face
+				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = face
 			} else {
 				o.(*fyne.Container).Objects[0].(*canvas.Image).Resource = data.GetResource("blank.png")
 			}

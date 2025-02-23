@@ -3,6 +3,7 @@ package board
 import (
 	"image/color"
 	"math"
+	"math/rand"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -103,6 +104,17 @@ func (b *multiBoard) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
+func (b *multiBoard) Tick(tick uint32) {
+	for _, board := range b.boards {
+		board.Tick(tick)
+	}
+}
+
+func (b *multiBoard) SetAnim(x, y, z int, anim *data.Anim, flags int8, speed int8) {
+	b.boards[z].SetAnim(x, y, anim, flags, speed)
+	b.container.Refresh()
+}
+
 func (b *multiBoard) SetCell(x, y, z int, face *data.FaceImage) {
 	b.boards[z].SetFace(x, y, face)
 	b.container.Refresh()
@@ -186,6 +198,7 @@ func (b *multiBoard) Shift(dx, dy int) {
 
 type board struct {
 	Container  *fyne.Container
+	lastTick   uint64
 	Tiles      [][]*tile
 	Width      int
 	Height     int
@@ -222,6 +235,12 @@ type darknessUpdate struct {
 type cellUpdate struct {
 	x, y int
 	Face *data.FaceImage
+	// FIXME: Redo all this.
+	Anim    *data.Anim
+	Frame   int
+	Speed   int8
+	Counter int
+	Flags   int8
 }
 
 func (b *board) Shift(dx, dy int) {
@@ -233,15 +252,53 @@ func (b *board) Shift(dx, dy int) {
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
 			if x+dx < 0 || x+dx >= b.Width || y+dy < 0 || y+dy >= b.Height {
-				updates = append(updates, cellUpdate{x, y, nil})
+				updates = append(updates, cellUpdate{x, y, nil, nil, 0, 0, 0, 0})
 			} else {
-				updates = append(updates, cellUpdate{x, y, b.Tiles[y+dy][x+dx].Face})
+				tile := b.Tiles[y+dy][x+dx]
+				updates = append(updates, cellUpdate{x, y, tile.Face, tile.Anim, tile.Frame, tile.Speed, tile.Counter, tile.Flags})
 			}
 		}
 	}
 
 	for _, update := range updates {
+		t := b.Tiles[update.y][update.x]
+		t.Anim = update.Anim
+		t.Frame = update.Frame
+		t.Speed = update.Speed
+		t.Counter = update.Counter
+		t.Flags = update.Flags
 		b.SetFace(update.x, update.y, update.Face)
+	}
+}
+
+func (b *board) Tick(t uint32) {
+	delta := uint64(t) - b.lastTick
+	b.lastTick = uint64(t)
+	// FIXME: This is unnecessarily heavy, use some sort of cached animated coords.
+	for y, row := range b.Tiles {
+		for x, t := range row {
+			if t.Anim == nil {
+				continue
+			}
+			t.Counter += int(delta)
+			if t.Flags == 1 { // Randomize
+				if t.Counter >= int(t.Speed) {
+					t.Counter = 0
+					t.Frame = rand.Intn(len(t.Anim.Faces))
+				}
+			} else {
+				for t.Counter >= int(t.Speed) {
+					t.Counter -= int(t.Speed)
+					t.Frame++
+					if t.Frame >= len(t.Anim.Faces) {
+						t.Frame = 0
+					}
+				}
+			}
+			if face, ok := data.GetFace(t.Anim.Faces[t.Frame]); ok {
+				b.SetFace(x, y, face)
+			}
+		}
 	}
 }
 
@@ -251,7 +308,20 @@ func (b *board) SetFace(x, y int, img *data.FaceImage) {
 		b.Tiles[y][x].SetResource(img)
 		b.Tiles[y][x].Show()
 	} else {
+		b.Tiles[y][x].Anim = nil // Clear anim if face is nil, as this _should_ signify a clear.
 		b.Tiles[y][x].Hide()
+	}
+}
+
+func (b *board) SetAnim(x, y int, anim *data.Anim, flags int8, speed int8) {
+	b.Tiles[y][x].Anim = anim
+	b.Tiles[y][x].Speed = speed
+	b.Tiles[y][x].Flags = flags
+	// I guess set the face if we can.
+	if anim != nil {
+		if face, ok := data.GetFace(anim.Faces[0]); ok {
+			b.SetFace(x, y, face)
+		}
 	}
 }
 
@@ -301,7 +371,12 @@ func (b *board) Clear() {
 
 type tile struct {
 	widget.Icon
-	Face *data.FaceImage
+	Face    *data.FaceImage
+	Anim    *data.Anim
+	Frame   int
+	Speed   int8
+	Counter int
+	Flags   int8
 }
 
 // NewTile creates a new tile of the given type
