@@ -101,6 +101,10 @@ func (mm *Manager) Init() {
 		msg := m.(*messages.MessageMap2)
 
 		for _, m := range msg.Coords {
+			if m.Type == messages.MessageMap2CoordTypeScrollInformation {
+				mm.mb.Shift(int(m.X), int(m.Y))
+			}
+
 			if len(m.Data) == 0 {
 				// TODO ???
 				continue

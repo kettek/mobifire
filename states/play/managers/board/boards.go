@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/kettek/mobifire/data"
 )
 
 type boardPendingImage struct {
@@ -44,7 +45,7 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
 
 		for y := 0; y < h; y++ {
 			for x := 0; x < w; x++ {
-				board.SetImage(x, y, nil)
+				board.SetFace(x, y, nil)
 			}
 		}
 	}
@@ -70,14 +71,14 @@ func (b *multiBoard) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return b.fyneLayout.MinSize(objects)
 }
 
-func (b *multiBoard) SetCell(x, y, z int, img fyne.Resource) {
-	b.boards[z].SetImage(x, y, img)
+func (b *multiBoard) SetCell(x, y, z int, face *data.FaceImage) {
+	b.boards[z].SetFace(x, y, face)
 	b.container.Refresh()
 }
 
-func (b *multiBoard) SetCells(x, y int, img fyne.Resource) {
+func (b *multiBoard) SetCells(x, y int, face *data.FaceImage) {
 	for _, board := range b.boards {
-		board.SetImage(x, y, img)
+		board.SetFace(x, y, face)
 	}
 	b.container.Refresh()
 }
@@ -110,6 +111,12 @@ func (b *multiBoard) SetBoardSize(rows, cols int) {
 	b.container.Refresh()
 }
 
+func (b *multiBoard) Shift(dx, dy int) {
+	for _, board := range b.boards {
+		board.Shift(dx, dy)
+	}
+}
+
 type board struct {
 	Container  *fyne.Container
 	Tiles      [][]*tile
@@ -140,22 +147,41 @@ func newBoard(w, h, cellWidth, cellHeight int) *board {
 	return b
 }
 
-func (b *board) Shift(dx, dy int) {
-	// TOOD: ... something... I think we need to make board a completely custom widget that handles all image drawing...
+type cellUpdate struct {
+	x, y     int
+	Face     *data.FaceImage
+	Darkness uint8
 }
 
-func (b *board) SetImage(x, y int, img fyne.Resource) {
-	if img == nil {
-		b.SetHidden(x, y, true)
+func (b *board) Shift(dx, dy int) {
+	if dx == 0 && dy == 0 {
 		return
 	}
-	b.Tiles[y][x].SetResource(img)
-	// Automatically unhide.
-	b.SetHidden(x, y, false)
+	var updates []cellUpdate
+
+	for y := 0; y < b.Height; y++ {
+		for x := 0; x < b.Width; x++ {
+			if x+dx < 0 || x+dx >= b.Width || y+dy < 0 || y+dy >= b.Height {
+				updates = append(updates, cellUpdate{x, y, nil, 0})
+			} else {
+				updates = append(updates, cellUpdate{x, y, b.Tiles[y+dy][x+dx].Face, 0})
+			}
+		}
+	}
+
+	for _, update := range updates {
+		b.SetFace(update.x, update.y, update.Face)
+	}
 }
 
-func (b *board) SetHidden(x, y int, hide bool) {
-	b.Tiles[y][x].Hidden = hide
+func (b *board) SetFace(x, y int, img *data.FaceImage) {
+	b.Tiles[y][x].Face = img
+	if img != nil {
+		b.Tiles[y][x].SetResource(img)
+		b.Tiles[y][x].Show()
+	} else {
+		b.Tiles[y][x].Hide()
+	}
 }
 
 func (b *board) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -163,25 +189,33 @@ func (b *board) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (b *board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
-	pos := fyne.NewPos(0, 0)
-	for i, o := range objects {
-		o.Resize(fyne.NewSize(float32(b.CellWidth), float32(b.CellHeight)))
-		o.Move(pos)
-
-		if i%b.Width == b.Width-1 {
-			_, h := pos.Components()
-			pos = fyne.NewPos(0, h).Add(fyne.NewPos(0, float32(b.CellHeight)))
-		} else {
-			pos = pos.Add(fyne.NewPos(float32(b.CellWidth), 0))
+	for y := b.Height - 1; y >= 0; y-- {
+		for x := b.Width - 1; x >= 0; x-- {
+			o := b.Tiles[y][x]
+			px := float32(x * b.CellWidth)
+			py := float32(y * b.CellHeight)
+			if o.Face != nil {
+				o.Resize(fyne.NewSize(float32(o.Face.Width), float32(o.Face.Height)))
+				if o.Face.Width > b.CellWidth {
+					px -= float32(o.Face.Width) - float32(b.CellWidth)
+				}
+				if o.Face.Height > b.CellHeight {
+					py -= float32(o.Face.Height) - float32(b.CellHeight)
+				}
+			} else {
+				o.Resize(fyne.NewSize(float32(b.CellWidth), float32(b.CellHeight)))
+			}
+			o.Move(fyne.NewPos(px, py))
 		}
 	}
 }
 
 func (b *board) Flatten() []fyne.CanvasObject {
 	var objects []fyne.CanvasObject
-	for _, row := range b.Tiles {
-		for _, tile := range row {
-			objects = append(objects, tile)
+	// Add objects in reverse order.
+	for y := b.Height - 1; y >= 0; y-- {
+		for x := b.Width - 1; x >= 0; x-- {
+			objects = append(objects, b.Tiles[y][x])
 		}
 	}
 	return objects
@@ -190,13 +224,14 @@ func (b *board) Flatten() []fyne.CanvasObject {
 func (b *board) Clear() {
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
-			b.SetImage(x, y, nil)
+			b.SetFace(x, y, nil)
 		}
 	}
 }
 
 type tile struct {
 	widget.Icon
+	Face *data.FaceImage
 }
 
 // NewTile creates a new tile of the given type
