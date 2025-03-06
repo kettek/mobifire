@@ -26,6 +26,7 @@ type multiBoard struct {
 	boards                []*board
 	darkness              [][]uint8
 	darknessOverlay       *canvas.Raster
+	scale                 float32
 	lastWidth, lastHeight float32
 	realWidth, realHeight float32
 	cellWidth, cellHeight int
@@ -33,10 +34,11 @@ type multiBoard struct {
 	onSizeChanged         func(rows, cols int)
 }
 
-func newMultiBoard(w, h, count int, cellWidth int, cellHeight int) *multiBoard {
+func newMultiBoard(w, h, count int, cellWidth int, cellHeight int, scale float32) *multiBoard {
 	b := &multiBoard{
 		cellWidth:  cellWidth,
 		cellHeight: cellHeight,
+		scale: scale,
 	}
 
 	var boardContainers []fyne.CanvasObject

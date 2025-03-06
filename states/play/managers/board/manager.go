@@ -66,7 +66,7 @@ func (mm *Manager) PreInit() {
 func (mm *Manager) Init() {
 	// Multiboard seutp.
 	faceset := data.CurrentFaceSet()
-	mm.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height)
+	mm.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height, mm.window.Canvas().Scale())
 	mm.mb.onSizeChanged = func(rows, cols int) {
 		mm.conn.Send(&messages.MessageSetup{
 			MapSize: struct {
