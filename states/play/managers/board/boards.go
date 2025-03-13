@@ -38,7 +38,7 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int, scale float32
 	b := &multiBoard{
 		cellWidth:  cellWidth,
 		cellHeight: cellHeight,
-		scale: scale,
+		scale:      scale,
 	}
 
 	var boardContainers []fyne.CanvasObject
@@ -77,6 +77,50 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int, scale float32
 		return clr
 	})
 
+	// A lil rasterizer test...
+	/*raster := canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
+		cellX := int(float32(x) / (float32(cellWidth) * scale))
+		cellY := int(float32(y) / (float32(cellHeight) * scale))
+
+		if cellX < 0 || cellX >= b.boards[0].Width || cellY < 0 || cellY >= b.boards[0].Height {
+			return color.Black
+		}
+
+		clr := color.NRGBA{0, 0, 0, 0}
+
+		//darkness := b.darkness[cellY][cellX]
+
+		// Draw from top-down so we can skip checks if pixel alpha is found.
+		for i := len(b.boards) - 1; i >= 0; i-- {
+			board := b.boards[i]
+			if cellX >= 0 && cellX < board.Width && cellY >= 0 && cellY < board.Height {
+				tile := board.Tiles[cellY][cellX]
+				if tile.Face != nil {
+					faceX := int(float32(x)/scale) - cellX*cellWidth
+					faceY := int(float32(y)/scale) - cellY*cellHeight
+					if faceX >= 0 && faceX < tile.Face.Width && faceY >= 0 && faceY < tile.Face.Height {
+						bclr := tile.Face.Image.At(faceX, faceY)
+						r, g, b, a := bclr.RGBA()
+						if a > 0 {
+							clr.R = uint8(r >> 8)
+							clr.G = uint8(g >> 8)
+							clr.B = uint8(b >> 8)
+							clr.A = uint8(a >> 8)
+							break
+						}
+					}
+				} else {
+					clr.A = 0
+				}
+			}
+		}
+
+			clr.A = darkness
+
+		return clr
+	})*/
+
+	//b.container = container.New(b, raster)
 	b.container = container.New(b, boardContainers...)
 
 	return b
