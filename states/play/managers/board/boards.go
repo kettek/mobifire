@@ -42,18 +42,18 @@ func newMultiBoard(w, h, count int, cellWidth int, cellHeight int, scale float32
 	}
 
 	var boardContainers []fyne.CanvasObject
-	for i := 0; i < count; i++ {
+	for range count {
 		board := newBoard(w, h, cellWidth, cellHeight)
 		boardContainers = append(boardContainers, board.Container)
 		b.boards = append(b.boards, board)
 
-		for y := 0; y < h; y++ {
-			for x := 0; x < w; x++ {
+		for y := range h {
+			for x := range w {
 				board.SetFace(x, y, nil)
 			}
 		}
 	}
-	for y := 0; y < h; y++ {
+	for range h {
 		b.darkness = append(b.darkness, make([]uint8, w))
 	}
 
@@ -199,12 +199,12 @@ func CalculateBoardSize(size fyne.Size, cellWidth, cellHeight int) (int, int) {
 func (b *multiBoard) SetBoardSize(rows, cols int) {
 	// We can just fully re-create our boards since a new map is sent when map size changes.
 	b.container.RemoveAll()
-	for i := 0; i < len(b.boards); i++ {
+	for i := range len(b.boards) {
 		b.boards[i] = newBoard(rows, cols, b.cellWidth, b.cellHeight)
 		b.container.Add(b.boards[i].Container)
 	}
 	b.darkness = nil
-	for y := 0; y < cols; y++ {
+	for range cols {
 		b.darkness = append(b.darkness, make([]uint8, rows))
 	}
 
@@ -226,8 +226,8 @@ func (b *multiBoard) Shift(dx, dy int) {
 	}
 	var updates []darknessUpdate
 
-	for y := 0; y < b.boards[0].Height; y++ {
-		for x := 0; x < b.boards[0].Width; x++ {
+	for y := range b.boards[0].Height {
+		for x := range b.boards[0].Width {
 			if x+dx < 0 || x+dx >= b.boards[0].Width || y+dy < 0 || y+dy >= b.boards[0].Height {
 				updates = append(updates, darknessUpdate{x, y, 0})
 			} else {
@@ -260,9 +260,9 @@ func newBoard(w, h, cellWidth, cellHeight int) *board {
 		CellHeight: cellHeight,
 	}
 
-	for i := 0; i < h; i++ {
+	for range h {
 		row := make([]*tile, w)
-		for j := 0; j < w; j++ {
+		for j := range w {
 			row[j] = newTile()
 		}
 		b.Tiles = append(b.Tiles, row)
@@ -295,8 +295,8 @@ func (b *board) Shift(dx, dy int) {
 	}
 	var updates []cellUpdate
 
-	for y := 0; y < b.Height; y++ {
-		for x := 0; x < b.Width; x++ {
+	for y := range b.Height {
+		for x := range b.Width {
 			if x+dx < 0 || x+dx >= b.Width || y+dy < 0 || y+dy >= b.Height {
 				updates = append(updates, cellUpdate{x, y, nil, nil, 0, 0, 0, 0})
 			} else {
@@ -399,8 +399,8 @@ func (b *board) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
 
 func (b *board) Flatten() []fyne.CanvasObject {
 	var objects []fyne.CanvasObject
-	for y := 0; y < b.Height; y++ {
-		for x := 0; x < b.Width; x++ {
+	for y := range b.Height {
+		for x := range b.Width {
 			objects = append(objects, b.Tiles[y][x])
 		}
 	}
@@ -408,8 +408,8 @@ func (b *board) Flatten() []fyne.CanvasObject {
 }
 
 func (b *board) Clear() {
-	for y := 0; y < b.Height; y++ {
-		for x := 0; x < b.Width; x++ {
+	for y := range b.Height {
+		for x := range b.Width {
 			b.SetFace(x, y, nil)
 		}
 	}
