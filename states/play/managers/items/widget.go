@@ -87,8 +87,7 @@ func newInventoryWidget(inv *Inventory, window fyne.Window, conn *net.Connection
 	iw.toolbarActions[actionDropSome] = widget.NewToolbarAction(data.GetResource("icon_dropsome.png"), func() {
 		item := iw.inv.Items[iw.selectedIndex]
 
-		var countEntry *widget.Entry
-		countEntry = widget.NewEntry()
+		countEntry := widget.NewEntry()
 		if item.Nrof > 1 {
 			countEntry.SetText(fmt.Sprintf("%d", item.Nrof/2))
 		} else {

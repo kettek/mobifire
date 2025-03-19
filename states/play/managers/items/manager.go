@@ -107,6 +107,7 @@ func (mgr *Manager) removeInventory(tag int32) {
 	}
 }
 
+// ShowInventory shows an inventory by its tag.
 func (mgr *Manager) ShowInventory(tag int32, onSelect func(item *Item) bool) {
 	for _, inv := range mgr.inventories {
 		if inv.Item.Tag == tag {
@@ -117,6 +118,7 @@ func (mgr *Manager) ShowInventory(tag int32, onSelect func(item *Item) bool) {
 	}
 }
 
+// ShowLimitedInventory shows an inventory with limited options.
 func (mgr *Manager) ShowLimitedInventory(tag int32, onSelect func(item *Item) bool) {
 	for _, inv := range mgr.inventories {
 		if inv.Item.Tag == tag {
@@ -127,6 +129,7 @@ func (mgr *Manager) ShowLimitedInventory(tag int32, onSelect func(item *Item) bo
 	}
 }
 
+// CloseInventory closes an inventory by its tag.
 func (mgr *Manager) CloseInventory(tag int32) {
 	for _, inv := range mgr.inventories {
 		if inv.Item.Tag == tag {
@@ -156,6 +159,7 @@ func (mgr *Manager) GetItemByName(name string) *Item {
 	return nil
 }
 
+// GetPlayerTag returns the tag of the player.
 func (mgr *Manager) GetPlayerTag() int32 {
 	return mgr.playerTag
 }

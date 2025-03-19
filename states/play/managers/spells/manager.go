@@ -17,8 +17,10 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// Spell represents a spell in the game.
 type Spell = messages.Spell
 
+// Manager manages spells in the game.
 type Manager struct {
 	window        fyne.Window
 	handler       *messages.MessageHandler
@@ -28,18 +30,22 @@ type Manager struct {
 	popup         *cfwidgets.PopUp
 }
 
+// NewManager creates a new spell manager.
 func NewManager() *Manager {
 	return &Manager{}
 }
 
+// SetWindow sets the window for the manager.
 func (mgr *Manager) SetWindow(window fyne.Window) {
 	mgr.window = window
 }
 
+// SetHandler sets the message handler for the manager.
 func (mgr *Manager) SetHandler(handler *messages.MessageHandler) {
 	mgr.handler = handler
 }
 
+// SetManagers sets the managers for the manager.
 func (mgr *Manager) SetManagers(managers *managers.Managers) {
 	for _, manager := range *managers {
 		if sm, ok := manager.(*skills.Manager); ok {
@@ -48,12 +54,11 @@ func (mgr *Manager) SetManagers(managers *managers.Managers) {
 	}
 }
 
+// Init sets up handlers for adding, updating, and deleting spells.
 func (mgr *Manager) Init() {
 	mgr.handler.On(&messages.MessageAddSpell{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		msg := m.(*messages.MessageAddSpell)
-		for _, spell := range msg.Spells {
-			mgr.spells = append(mgr.spells, spell)
-		}
+		mgr.spells = append(mgr.spells, msg.Spells...)
 		mgr.sortSpells()
 		mgr.getSkills()
 	})
@@ -130,6 +135,7 @@ func (mgr *Manager) getSpellsBySkill(skill uint8) []Spell {
 	return spells
 }
 
+// ShowSpellsList shows a list of spells.
 func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 	info := widget.NewRichTextWithText("...")
 	info.Wrapping = fyne.TextWrapWord
@@ -227,12 +233,14 @@ func (mgr *Manager) ShowSpellsList(onSelect func(spell Spell) bool) {
 	mgr.popup.ShowCentered(mgr.window.Canvas())
 }
 
+// CloseSpellsList closes the spells list popup.
 func (mgr *Manager) CloseSpellsList() {
 	if mgr.popup != nil {
 		mgr.popup.Hide()
 	}
 }
 
+// GetSpellByName returns a spell by its name.
 func (mgr *Manager) GetSpellByName(name string) *Spell {
 	for _, spell := range mgr.spells {
 		if spell.Name == name {

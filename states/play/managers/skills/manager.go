@@ -31,8 +31,10 @@ type Manager struct {
 	sortAsc          bool
 }
 
+// SortMode defines how the skills list should be sorted.
 type SortMode int
 
+// Sort modes for skills.
 const (
 	SortByLevel SortMode = iota
 	SortByExp
@@ -45,22 +47,27 @@ type Skill struct {
 	messages.SkillExtraInfo
 }
 
+// NewManager creates a new skill manager.
 func NewManager() *Manager {
 	return &Manager{}
 }
 
+// SetWindow sets the window for the manager.
 func (s *Manager) SetWindow(window fyne.Window) {
 	s.window = window
 }
 
+// SetConnection sets the connection for the manager.
 func (s *Manager) SetConnection(conn *net.Connection) {
 	s.conn = conn
 }
 
+// SetHandler sets the message handler for the manager.
 func (s *Manager) SetHandler(handler *messages.MessageHandler) {
 	s.handler = handler
 }
 
+// Init sets up message handling for skills as well as sending the initial requests for skills and exp.
 func (s *Manager) Init() {
 	s.skills = make(map[uint16]Skill)
 	s.knownSkills = make(map[uint16]messages.MessageStatSkill)
@@ -121,10 +128,12 @@ func (s *Manager) Init() {
 	})
 }
 
+// Skill returns a skill by its number.
 func (m *Manager) Skill(num uint16) Skill {
 	return m.skills[num]
 }
 
+// ExpToNextLevel returns the amount of exp needed to reach the next level for a given skill.
 func (m *Manager) ExpToNextLevel(skill uint16) uint64 {
 	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
 		return 0
@@ -133,6 +142,7 @@ func (m *Manager) ExpToNextLevel(skill uint16) uint64 {
 	return exp - uint64(m.knownSkills[skill].Exp)
 }
 
+// ExpToNextLevelPercentage returns the exp to next level as a percentage for a given skill.
 func (m *Manager) ExpToNextLevelPercentage(skill uint16) float64 {
 	if m.knownSkills[skill].Level >= int8(len(m.exp)) {
 		return 0
@@ -141,6 +151,7 @@ func (m *Manager) ExpToNextLevelPercentage(skill uint16) float64 {
 	return float64(m.knownSkills[skill].Exp) / float64(exp)
 }
 
+// KnownSkillsSlice returns a slice of known skills sorted by the current sort mode.
 func (m *Manager) KnownSkillsSlice() []uint8 {
 	var skills []uint8
 	for _, skill := range m.knownSkills {
@@ -197,6 +208,7 @@ func (m *Manager) sortKnownSkills() {
 	}
 }
 
+// ShowSimpleSkillsList shows a simple list of skills with their icons and names.
 func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 	var popup *cfwidgets.PopUp
 	list := widget.NewList(
@@ -230,6 +242,7 @@ func (m *Manager) ShowSimpleSkillsList(cb func(id int)) {
 	popup.ShowCentered(m.window.Canvas())
 }
 
+// ShowSkillsList shows a detailed list of skills.
 func (m *Manager) ShowSkillsList() {
 	var popup *cfwidgets.PopUp
 

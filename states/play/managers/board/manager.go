@@ -12,6 +12,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// Manager manages the game board and handles incoming messages to update the board state.
 type Manager struct {
 	window  fyne.Window
 	conn    *net.Connection
@@ -24,22 +25,27 @@ type Manager struct {
 	pendingImages []boardPendingImage
 }
 
+// NewManager creates a new board manager.
 func NewManager() *Manager {
 	return &Manager{}
 }
 
+// SetConnection sets the connection for the manager.
 func (mm *Manager) SetConnection(conn *net.Connection) {
 	mm.conn = conn
 }
 
+// SetHandler sets the message handler for the manager.
 func (mm *Manager) SetHandler(handler *messages.MessageHandler) {
 	mm.handler = handler
 }
 
+// SetWindow sets the window for the manager.
 func (mm *Manager) SetWindow(window fyne.Window) {
 	mm.window = window
 }
 
+// OnFaceLoaded handles the loading of a face image and updates the board accordingly.
 func (mm *Manager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 	for i := len(mm.pendingImages) - 1; i >= 0; i-- {
 		if mm.pendingImages[i].Num == faceID {
@@ -49,6 +55,7 @@ func (mm *Manager) OnFaceLoaded(faceID int16, faceImage *data.FaceImage) {
 	}
 }
 
+// PreInit sets up the board and sends a setup message for map size.
 func (mm *Manager) PreInit() {
 	// Request a board size of the proper dimensions we want.
 	w, h := CalculateBoardSize(mm.window.Canvas().Size(), data.CurrentFaceSet().Width, data.CurrentFaceSet().Height)
@@ -63,8 +70,9 @@ func (mm *Manager) PreInit() {
 	})
 }
 
+// Init initializes the board manager and sets up message handling for the board.
 func (mm *Manager) Init() {
-	// Multiboard seutp.
+	// Multiboard setup.
 	faceset := data.CurrentFaceSet()
 	mm.mb = newMultiBoard(11, 11, 10, faceset.Width, faceset.Height, mm.window.Canvas().Scale())
 	mm.mb.onSizeChanged = func(rows, cols int) {
@@ -162,6 +170,7 @@ func (mm *Manager) Init() {
 	}
 }
 
+// CanvasObject returns the canvas object for the board manager.
 func (mm *Manager) CanvasObject() fyne.CanvasObject {
 	return mm.mb.container
 }

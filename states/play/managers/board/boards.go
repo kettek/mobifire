@@ -19,8 +19,6 @@ type boardPendingImage struct {
 	Num int16
 }
 
-type fyneLayout = fyne.Layout
-
 type multiBoard struct {
 	container             *fyne.Container
 	boards                []*board

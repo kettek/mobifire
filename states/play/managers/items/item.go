@@ -2,11 +2,13 @@ package items
 
 import "github.com/kettek/termfire/messages"
 
+// Item is a wrapper around ItemObject but with extra examine info.
 type Item struct {
 	messages.ItemObject
 	examineInfo string
 }
 
+// Update updates the item to match the update item message.
 func (item *Item) Update(msg *messages.MessageUpdateItem) {
 	for _, mf := range msg.Fields {
 		switch f := mf.(type) {
