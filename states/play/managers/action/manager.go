@@ -27,14 +27,17 @@ type Manager struct {
 	lastDir       int8 // Last direction the player issued a movement in.
 }
 
+// NewManager creates a new action manager.
 func NewManager() *Manager {
 	return &Manager{}
 }
 
+// Init initializes the action manager.
 func (m *Manager) Init() {
 	m.loadActions()
 }
 
+// loadActions loads the actions from the app preferences.
 func (m *Manager) loadActions() error {
 	m.entries = nil
 	entryStrings := m.app.Preferences().StringList("actions")
@@ -50,6 +53,7 @@ func (m *Manager) loadActions() error {
 	return nil
 }
 
+// saveActions saves the actions to the app preferences.
 func (m *Manager) saveActions() error {
 	entryStrings := make([]string, len(m.entries))
 	for i, entry := range m.entries {
@@ -64,10 +68,12 @@ func (m *Manager) saveActions() error {
 	return nil
 }
 
+// SetApp sets the app for the action manager.
 func (m *Manager) SetApp(app fyne.App) {
 	m.app = app
 }
 
+// SetAction sets the action for the given index.
 func (m *Manager) SetAction(i int, entry Entry) {
 	// Grow as needed.
 	if i >= len(m.entries) {
@@ -87,12 +93,14 @@ func (m *Manager) SetAction(i int, entry Entry) {
 	m.saveActions()
 }
 
+// ClearAction clears the action for the given index.
 func (m *Manager) ClearAction(i int) {
 	m.SetAction(i, Entry{
 		Image: data.GetResource("icon_action_blank.png"),
 	})
 }
 
+// Action returns the action for the given index.
 func (m *Manager) Action(i int) *Entry {
 	if i < 0 || i >= len(m.entries) {
 		return nil
@@ -100,6 +108,7 @@ func (m *Manager) Action(i int) *Entry {
 	return &m.entries[i]
 }
 
+// TriggerAction triggers the action for the given index.
 func (m *Manager) TriggerAction(i int) {
 	if i < 0 || i >= len(m.entries) {
 		return
@@ -108,6 +117,7 @@ func (m *Manager) TriggerAction(i int) {
 	entry.Trigger(m)
 }
 
+// SetManagers sets the managers for the action manager.
 func (m *Manager) SetManagers(managers *managers.Managers) {
 	for _, manager := range *managers {
 		if manager, ok := manager.(*skills.Manager); ok {
@@ -122,14 +132,17 @@ func (m *Manager) SetManagers(managers *managers.Managers) {
 	}
 }
 
+// SetConnection sets the connection for the action manager.
 func (m *Manager) SetConnection(conn *net.Connection) {
 	m.conn = conn
 }
 
+// SetWindow sets the window for the action manager.
 func (m *Manager) SetWindow(window fyne.Window) {
 	m.window = window
 }
 
+// AcquireButton acquires a button for the given index, creating it if it does not exist.
 func (m *Manager) AcquireButton(index int) *cfwidgets.AssignableButton {
 	entry := m.Action(index)
 	if entry == nil {
@@ -411,6 +424,7 @@ func (m *Manager) getActionMenuItems(setAction func(Entry)) []*fyne.MenuItem {
 	return []*fyne.MenuItem{itemsMenu, spellsMenu, skillsMenu, commandsMenu}
 }
 
+// SetDirectionFromString sets the last direction from a string.
 func (m *Manager) SetDirectionFromString(str string) {
 	switch str {
 	case "northwest":
@@ -432,6 +446,7 @@ func (m *Manager) SetDirectionFromString(str string) {
 	}
 }
 
+// GetStringFromDirection returns the last direction as a string.
 func (m *Manager) GetStringFromDirection() string {
 	switch m.lastDir {
 	case 1:

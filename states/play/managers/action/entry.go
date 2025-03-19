@@ -11,6 +11,7 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// EntryApplyKind represents an action to equip, unequip, or fire an object.
 type EntryApplyKind struct {
 	ObjectName      string // The name of the object. This is used to do a lookup.
 	objectTag       int32  // The ID of the object. This is cached and used when possible. If the ObjectTag does not exist, the Name will be used to do a lookup.
@@ -19,12 +20,14 @@ type EntryApplyKind struct {
 	exists          bool // This is set to true once the action has been triggered and the object tag is known to exist.
 }
 
+// EntrySkillKind represents an action to use or ready a skill.
 type EntrySkillKind struct {
 	Skill int32
 	Name  string
 	Ready bool // Whether to ready or use the skill
 }
 
+// EntrySpellKind represents an action to cast or invoke a spell.
 type EntrySpellKind struct {
 	Spell  int32
 	Name   string
@@ -33,18 +36,22 @@ type EntrySpellKind struct {
 	exists bool   // This is set to true once the action has been triggered and the spell tag is known to exist.
 }
 
+// EntryCommandKind represents an action to execute a command.
 type EntryCommandKind struct {
 	Command string
 	Repeat  int
 }
 
+// EntryStepForwardKind represents an action to step the player forward.
 type EntryStepForwardKind struct {
 }
 
+// EntryFaceKind represents an action to face a direction.
 type EntryFaceKind struct {
 	Dir string
 }
 
+// Entry represents an action entry in the action manager.
 type Entry struct {
 	Image  fyne.Resource
 	widget *cfwidgets.AssignableButton
@@ -52,6 +59,7 @@ type Entry struct {
 	Next   *Entry `json:",omitempty"`
 }
 
+// TypeString returns a string representation of the entry type.
 func (e Entry) TypeString() string {
 	str := ""
 	switch k := e.Kind.(type) {
@@ -91,6 +99,7 @@ func (e Entry) TypeString() string {
 	return str
 }
 
+// NewEntryFromString creates a new Entry from a JSON string.
 func NewEntryFromString(data string) *Entry {
 	var entry Entry
 	json.Unmarshal([]byte(data), &entry)
@@ -108,6 +117,7 @@ type entryWrapper struct {
 	Next  json.RawMessage
 }
 
+// MarshalJSON marshals the entry to JSON.
 func (e *Entry) MarshalJSON() ([]byte, error) {
 	var kind string
 	var value []byte
@@ -162,6 +172,7 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(wrapper)
 }
 
+// Unmarshal unmarshals the entry from JSON.
 func (e *Entry) Unmarshal(index int, b []byte) error {
 	var wrapper entryWrapper
 	if err := json.Unmarshal(b, &wrapper); err != nil {
@@ -225,6 +236,7 @@ func (e *Entry) Unmarshal(index int, b []byte) error {
 	return nil
 }
 
+// Trigger triggers the entry action.
 func (e Entry) Trigger(m *Manager) {
 	switch k := e.Kind.(type) {
 	case EntryApplyKind:
