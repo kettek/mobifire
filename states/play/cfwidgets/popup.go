@@ -5,12 +5,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// PopUp is a widget that can be shown centered on the screen and dismissed by tapping outside of it.
 type PopUp struct {
 	*widget.PopUp
 	onHide       func()
 	overlayShown bool
 }
 
+// ShowCentered shows the popup centered on the given canvas.
 func (p *PopUp) ShowCentered(canvas fyne.Canvas) {
 	ps := p.MinSize()
 	ws := canvas.Size()
@@ -19,6 +21,7 @@ func (p *PopUp) ShowCentered(canvas fyne.Canvas) {
 	p.ShowAtPosition(fyne.NewPos(x, y))
 }
 
+// Show shows the popup.
 func (p *PopUp) Show() {
 	if !p.overlayShown {
 		p.Canvas.Overlays().Add(p)
@@ -28,6 +31,7 @@ func (p *PopUp) Show() {
 	p.BaseWidget.Show()
 }
 
+// Hide hides the popup.
 func (p *PopUp) Hide() {
 	if p.onHide != nil {
 		p.onHide()
@@ -39,6 +43,7 @@ func (p *PopUp) Hide() {
 	p.PopUp.Hide()
 }
 
+// NewPopUp creates a new PopUp widget with the given content and canvas.
 func NewPopUp(content fyne.CanvasObject, canvas fyne.Canvas) *PopUp {
 	p := &PopUp{
 		PopUp: widget.NewPopUp(content, canvas),
