@@ -129,6 +129,14 @@ func (mgr *Manager) ShowLimitedInventory(tag int32, onSelect func(item *Item) bo
 	}
 }
 
+func (mgr *Manager) GetInventoryPanel(tag int32) *InventoryPanel {
+	inv, _ := mgr.ensureInventory(tag)
+	if inv.panel == nil {
+		inv.panel = newInventoryPanel(inv, mgr.window, mgr.conn)
+	}
+	return inv.panel
+}
+
 // CloseInventory closes an inventory by its tag.
 func (mgr *Manager) CloseInventory(tag int32) {
 	for _, inv := range mgr.inventories {

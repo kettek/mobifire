@@ -17,6 +17,7 @@ type Inventory struct {
 
 	pendingExamineTag int32
 	widget            *InventoryWidget
+	panel             *InventoryPanel
 
 	// I really didn't want to have this field, but whatever, it makes nested calls easier.
 	conn *net.Connection
@@ -105,6 +106,9 @@ func (inv *Inventory) handleItem2(msg *messages.MessageItem2) {
 	if inv.widget != nil {
 		inv.widget.itemList.Refresh()
 	}
+	if inv.panel != nil {
+		inv.panel.itemList.Refresh()
+	}
 }
 
 func (inv *Inventory) handleDeleteInventory(_ *messages.MessageDeleteInventory) {
@@ -112,6 +116,9 @@ func (inv *Inventory) handleDeleteInventory(_ *messages.MessageDeleteInventory) 
 	// Update UI
 	if inv.widget != nil {
 		inv.widget.itemList.Refresh()
+	}
+	if inv.panel != nil {
+		inv.panel.itemList.Refresh()
 	}
 }
 
@@ -138,6 +145,9 @@ func (inv *Inventory) handleUpdateItem(msg *messages.MessageUpdateItem) {
 		if inv.widget != nil {
 			inv.widget.itemList.Refresh()
 		}
+		if inv.panel != nil {
+			inv.panel.itemList.Refresh()
+		}
 	}
 }
 
@@ -152,6 +162,9 @@ func (inv *Inventory) handleDeleteItem(msg *messages.MessageDeleteItem) {
 		// Update UI
 		if inv.widget != nil {
 			inv.widget.itemList.Refresh()
+		}
+		if inv.panel != nil {
+			inv.panel.itemList.Refresh()
 		}
 	}
 }
