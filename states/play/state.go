@@ -84,6 +84,12 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	s.managers.Init()
 
+	actionManager := s.managers.GetByType(&action.Manager{}).(*action.Manager)
+	boardManager := s.managers.GetByType(&board.Manager{}).(*board.Manager)
+	itemsManager := s.managers.GetByType(&items.Manager{}).(*items.Manager)
+	skillsManager := s.managers.GetByType(&skills.Manager{}).(*skills.Manager)
+	spellsManager := s.managers.GetByType(&spells.Manager{}).(*spells.Manager)
+
 	// Setup commands to show in the commands list.
 	s.commandsManager.commands = []command{
 		{
@@ -298,19 +304,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			toolbarApplyAction,
 			toolbarGetAction,
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				im := s.managers.GetByType(&items.Manager{}).(*items.Manager)
-				im.ShowInventory(s.playerTag, func(item *items.Item) bool {
+				itemsManager.ShowInventory(s.playerTag, func(item *items.Item) bool {
 					return false
 				})
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				sm := s.managers.GetByType(&skills.Manager{}).(*skills.Manager)
-				sm.ShowSkillsList()
+				skillsManager.ShowSkillsList()
 				fmt.Println("Toolbar action 5")
 			}),
 			widget.NewToolbarAction(data.GetResource("icon_inventory.png"), func() {
-				sm := s.managers.GetByType(&spells.Manager{}).(*spells.Manager)
-				sm.ShowSpellsList(nil)
+				spellsManager.ShowSpellsList(nil)
 				fmt.Println("Toolbar action 6")
 			}),
 		)
@@ -324,33 +327,31 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	thumbPad := &thumbpadWidget{}
 	thumbPad.onCommand = func(cmd string) {
 		s.conn.SendCommand(cmd, 0)
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).SetDirectionFromString(cmd)
+		actionManager.SetDirectionFromString(cmd)
 	}
 	thumbPadContainer := container.New(layout.NewStackLayout(), thumbPad)
 
 	leftAreaToolbarTop := container.NewThemeOverride(container.New(layout.NewGridLayout(4),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(0),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(1),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(2),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(3),
+		actionManager.AcquireButton(0),
+		actionManager.AcquireButton(1),
+		actionManager.AcquireButton(2),
+		actionManager.AcquireButton(3),
 	), sizedTheme)
 	leftAreaToolbarBot := container.NewThemeOverride(container.New(layout.NewGridLayout(4),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(4),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(5),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(6),
-		s.managers.GetByType(&action.Manager{}).(*action.Manager).AcquireButton(7),
+		actionManager.AcquireButton(4),
+		actionManager.AcquireButton(5),
+		actionManager.AcquireButton(6),
+		actionManager.AcquireButton(7),
 	), sizedTheme)
 
 	leftArea := container.New(&layouts.Left{}, leftAreaToolbarTop, thumbPadContainer, leftAreaToolbarBot)
 
-	board := s.managers.GetByType(&board.Manager{}).(*board.Manager).CanvasObject()
-
 	s.container = container.New(&layouts.Game{
-		Board:    board,
+		Board:    boardManager.CanvasObject(),
 		Messages: messagesList,
 		Left:     leftArea,
 		Right:    toolbars,
-	}, board, container.NewStack(messagesListBackground, container.NewThemeOverride(messagesList, sizedTheme)), leftArea, toolbars)
+	}, boardManager.CanvasObject(), container.NewStack(messagesListBackground, container.NewThemeOverride(messagesList, sizedTheme)), leftArea, toolbars)
 
 	//s.container = container.New(layout.NewCenterLayout(), vcontainer)
 
