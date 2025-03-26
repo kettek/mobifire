@@ -17,9 +17,9 @@ import (
 )
 
 var metaservers = []string{
-	"http://crossfire.real-time.com/metaserver2/meta_client.php",
+	"https://crossfire.real-time.com/metaserver2/meta_client.php",
 	"http://metaserver.eu.cross-fire.org/meta_client.php",
-	"http://metaserver.us.cross-fire.org/meta_client.php",
+	"https://metaserver.us.cross-fire.org/meta_client.php",
 }
 
 // State provides a list of servers the user can join.
