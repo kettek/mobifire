@@ -347,6 +347,9 @@ func (b *board) Tick(t uint32) {
 }
 
 func (b *board) SetFace(x, y int, img *data.FaceImage) {
+	if len(b.Tiles) <= y || len(b.Tiles[y]) <= x {
+		return
+	}
 	b.Tiles[y][x].Face = img
 	if img != nil {
 		b.Tiles[y][x].SetResource(img)
