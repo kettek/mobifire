@@ -1,15 +1,10 @@
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"github.com/kettek/mobifire/states"
-	"github.com/kettek/mobifire/states/metaserver"
 )
 
 type Game struct {
-	app        fyne.App
-	window     fyne.Window
 	firstState states.State // Used to ensure Server state is returned to.
 	priorState states.State // Absolute bogus handle to just bounce back to last state.
 	state      states.State
@@ -40,37 +35,9 @@ func (g *Game) SetNext(state states.State) {
 			}
 		}
 
-		// Set window if interface conforms.
-		if s, ok := state.(states.StateWithWindow); ok {
-			s.SetWindow(g.window)
-		}
-
-		// Set app if interface conforms.
-		if a, ok := state.(states.StateWithApp); ok {
-			a.SetApp(g.app)
-		}
-
 		g.priorState = priorState
 		g.leaveCb = state.Enter(g.SetNext)
-		g.window.SetContent(state.Container())
 	} else if g.firstState != nil { // Bump back to first state if we can! This should be guaranteed to be the metaserver.
 		g.leaveCb = g.firstState.Enter(g.SetNext)
-		g.window.SetContent(g.firstState.Container())
 	}
-}
-
-func NewGame() *Game {
-	g := &Game{
-		app: app.NewWithID("net.kettek.mobifire"),
-	}
-	g.window = g.app.NewWindow("Crossfire Mobile")
-	g.window.Resize(fyne.NewSize(800, 360))
-	//g.window.SetFixedSize(true)
-
-	// Set our initial state...
-	g.SetNext(&metaserver.State{})
-
-	g.window.ShowAndRun()
-
-	return g
 }

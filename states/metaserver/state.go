@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"fyne.io/fyne/v2"
+	"fyne.io/fyne"
+	"fyne.io/fyne/layout"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/widget"
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/join"
+	"github.com/kettek/rebui"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/messages"
 )
@@ -24,10 +26,17 @@ var metaservers = []string{
 
 // State provides a list of servers the user can join.
 type State struct {
-	next       func(states.State)
-	container  *fyne.Container
-	serverList *fyne.Container
-	app        fyne.App
+	next   func(states.State)
+	layout rebui.Layout
+}
+
+func (s *State) Update() error {
+	s.layout.Update()
+	return nil
+}
+
+func (s *State) Draw(screen *ebiten.Image) {
+	s.layout.Draw(screen)
 }
 
 // Enter sets up the base UI containers and loads the server list.

@@ -1,0 +1,23 @@
+package main
+
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"github.com/kettek/mobifire/states/metaserver"
+)
+
+func NewGame() *Game {
+	g := &Game{
+		app: app.NewWithID("net.kettek.mobifire"),
+	}
+	g.window = g.app.NewWindow("Crossfire Mobile")
+	g.window.Resize(fyne.NewSize(800, 360))
+	//g.window.SetFixedSize(true)
+
+	// Set our initial state...
+	g.SetNext(&metaserver.State{})
+
+	g.window.ShowAndRun()
+
+	return g
+}
