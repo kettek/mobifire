@@ -96,12 +96,14 @@ func AddFace(face messages.MessageFace2) bool {
 	if ok {
 		return true
 	}
+	data := GetResource("missing.png")
 	faces[int(face.Num)] = &FaceImage{
 		Num:      uint16(face.Num),
 		Set:      int8(face.SetNum),
 		name:     face.Name,
 		Checksum: face.Checksum,
 		pending:  true,
+		Data:     data.Content(),
 	}
 	names[face.Name] = int(face.Num)
 	return false
