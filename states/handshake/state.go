@@ -2,10 +2,13 @@ package handshake
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/login"
+	"github.com/kettek/rebui"
+	"github.com/kettek/rebui/widgets"
 
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
@@ -17,6 +20,7 @@ type State struct {
 	Hostname string
 	Port     int
 	conn     *net.Connection
+	layout   rebui.Layout
 }
 
 // NewState creates a new state from a given connection.
@@ -30,6 +34,21 @@ func NewState(conn *net.Connection) *State {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
 
+	node := s.layout.AddNode(rebui.Node{
+		Type:            "Text",
+		Text:            "connecting...",
+		TextWrap:        rebui.WrapWord,
+		VerticalAlign:   rebui.AlignMiddle,
+		HorizontalAlign: rebui.AlignCenter,
+		Width:           "100%",
+		Height:          "100%",
+		X:               "50%",
+		Y:               "50%",
+		OriginX:         "-50%",
+		OriginY:         "-50%",
+	})
+	widget := node.Widget.(*widgets.Text)
+
 	// Setup receive just sends to actual login.
 	s.Once(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		fmt.Println("got setup message!", m.(*messages.MessageSetup), failure)
@@ -40,19 +59,15 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.Once(&messages.MessageVersion{}, &messages.MessageVersion{}, func(m messages.Message, failure *messages.MessageFailure) {
 		msg, ok := m.(*messages.MessageVersion)
 		if !ok {
-			fmt.Println("not a version message...")
-			next(nil)
+			s.Bail(widget, "expected a version message", next)
 			return
 		}
 		if msg.SVVersion != "1030" {
-			fmt.Println("Server version is not 1030")
-			next(nil)
+			s.Bail(widget, "expected a server version 1030", next)
 			return
 		}
-		fmt.Println("got version!", msg)
 		if err := s.conn.Send(&messages.MessageVersion{CLVersion: "1030", SVName: "mobilefire"}); err != nil {
-			fmt.Println("Failed to send version message:", err)
-			next(nil)
+			s.Bail(widget, "we failed to send version message:\n"+err.Error(), next)
 			return
 		}
 		// FIXME: This isn't optimized, as I'm working relative to termfire.
@@ -82,11 +97,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				Value uint8
 			}{Use: true, Value: 1},
 		}); err != nil {
-			fmt.Println("Failed to send setup message:", err)
-			next(nil)
+			s.Bail(widget, "we failed to send setup message:\n"+err.Error(), next)
 			return
 		}
-		fmt.Println("...ok?")
 	})
 
 	// TODO: Show handshaking label.
@@ -94,10 +107,23 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
+func (s *State) Bail(widget *widgets.Text, msg string, next func(states.State)) {
+	widget.AssignText(msg)
+	fmt.Println("wut")
+
+	time.AfterFunc(3*time.Second, func() {
+		fmt.Println("dang")
+		next(nil)
+		fmt.Println("ree")
+	})
+}
+
 func (s *State) Update() error {
+	s.layout.Update()
 	return nil
 }
 
 func (s *State) Draw(screen *ebiten.Image) {
+	s.layout.Draw(screen)
 	// TODO
 }

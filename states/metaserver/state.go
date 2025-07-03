@@ -104,16 +104,13 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	s.refreshMetaservers()
 
-	return nil
+	return func() {
+		s.layout = rebui.Layout{}
+	}
 }
 
 // refreshMetaservers iterates thru metaservers and generates non-duplicate servers.
 func (s *State) refreshMetaservers() {
-	// Delete server entries.
-	for _, node := range s.itemNodes {
-		s.layout.RemoveNode(node)
-	}
-	s.itemNodes = nil
 
 	// Generate server entries from the metaservers.
 	var serverEntries messages.ServerEntries
