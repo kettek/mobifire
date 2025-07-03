@@ -1,6 +1,7 @@
-package main
+package game
 
 import (
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/states"
 )
 
@@ -40,4 +41,16 @@ func (g *Game) SetNext(state states.State) {
 	} else if g.firstState != nil { // Bump back to first state if we can! This should be guaranteed to be the metaserver.
 		g.leaveCb = g.firstState.Enter(g.SetNext)
 	}
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	g.state.Draw(screen)
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return outsideWidth, outsideHeight
+}
+
+func (g *Game) Update() error {
+	return g.state.Update()
 }

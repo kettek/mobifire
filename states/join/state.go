@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/handshake"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
 )
@@ -18,21 +15,19 @@ import (
 // State provides an initial joining to a server.
 type State struct {
 	messages.MessageHandler
-	container *fyne.Container
-	Hostname  string
-	Port      int
-	conn      *net.Connection
+	Hostname string
+	Port     int
+	conn     *net.Connection
 }
 
 // Enter attempts a connection to the server and either continues to handshake state or shows an error and returns to the metaserver.
 func (s *State) Enter(next func(states.State)) (leave func()) {
-	label := widget.NewLabel("Joining " + s.Hostname + ":" + fmt.Sprint(s.Port) + "...")
+	// Show joining info/label.
 
 	serverName := s.Hostname
 	if s.Port != 0 {
 		serverName += ":" + fmt.Sprint(s.Port)
 	}
-	s.container = container.New(layout.NewCenterLayout(), label)
 
 	s.conn = &net.Connection{}
 	// Set an OnLoss handler to boot back to the top state on failure... probably should show an error...
@@ -42,12 +37,13 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	go func() {
 		if err := s.conn.Join(serverName); err != nil {
-			label.SetText("Failed to join " + serverName + ": " + err.Error())
+			// TODO: Show error label.
 			time.AfterFunc(3*time.Second, func() {
 				next(nil)
 			})
 		} else {
 			s.conn.SetMessageHandler(nil) // Set to nil to ensure any messages are queued.
+			// TODO: Bump to handshaking.
 			next(handshake.NewState(s.conn))
 		}
 	}()
@@ -55,7 +51,10 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	return nil
 }
 
-// Container returns the container.
-func (s *State) Container() *fyne.Container {
-	return s.container
+func (s *State) Update() error {
+	return nil
+}
+
+func (s *State) Draw(screen *ebiten.Image) {
+	// TODO
 }

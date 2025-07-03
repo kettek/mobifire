@@ -12,10 +12,11 @@ func main() {
 		exe = ".exe"
 	}
 
-	runArgs := append([]interface{}{}, "./mobifire"+exe)
+	runArgs := append([]interface{}{}, "./deskfire"+exe)
+	//runArgs2 := append([]interface{}{}, "./mobifire"+exe)
 
 	Task("build").
-		Exec("go", "build", "./cmd/mobifire")
+		Exec("go", "build", "./cmd/deskfire")
 
 	Task("run").
 		Exec(runArgs...)
@@ -26,7 +27,7 @@ func main() {
 		Run("build").
 		Run("run")
 
-	Task("build-mobile").
+	/*Task("build-mobile").
 		Chdir("cmd/mobifire").
 		Exec("fyne", "package", "-os", "android", "-appID", "net.kettek.mobifire", "-icon", "icon.png")
 
@@ -38,12 +39,12 @@ func main() {
 		Chdir("cmd/mobifire").
 		Exec("adb", "install", "./mobifire.apk")
 
-	Task("watch-mobile").
-		Watch("states/**/*.go", "net/**/*.go").
-		Run("build-mobile").
-		Run("install-mobile").
-		Run("run-mobile").
-		Sleep("1y")
+	Task("watch-mobile").*/
+	//Watch("states/**/*.go", "net/**/*.go").
+	//Run("build-mobile").
+	//Run("install-mobile").
+	//Run("run-mobile").
+	//Sleep("1y")
 
 	Go()
 }

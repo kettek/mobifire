@@ -1,31 +1,20 @@
 package chars
 
 import (
-	"fmt"
-
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
-	"github.com/kettek/mobifire/states/play"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
 )
 
 // State provides the character selection and creation screen.
 type State struct {
-	window fyne.Window
 	messages.MessageHandler
-	container     *fyne.Container
-	conn          *net.Connection
-	characterList *fyne.Container
-	characters    []messages.Character
-	faces         []messages.MessageFace2
+	conn       *net.Connection
+	characters []messages.Character
+	faces      []messages.MessageFace2
 }
 
 // NewState provides a new State from a connection, Character, and Face messages.
@@ -58,22 +47,17 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	})
 
 	// Selection
-	s.characterList = container.New(layout.NewVBoxLayout())
+	// TODO: Make character list element.
 	s.refreshCharacters(s.characters, next)
 
 	// Creation
-	creationContainer := s.setupCreation()
+	//creationContainer := s.setupCreation()
 
 	// Tabs
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Create", creationContainer),
-		container.NewTabItem("Select", container.NewVScroll(s.characterList)),
-	)
+	// TODO: Make tabs to switch between character creation and selection.
 	if len(s.characters) > 1 {
-		tabs.SelectIndex(1)
+		//tabs.SelectIndex(1)
 	}
-
-	s.container = container.NewBorder(nil, nil, nil, nil, tabs)
 
 	//s.container = container.New(layout.NewVBoxLayout(), characterList)
 
@@ -81,72 +65,37 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 }
 
 func (s *State) refreshCharacters(characters []messages.Character, next func(states.State)) {
-	s.characterList.RemoveAll()
+	// TODO: Clear character list.
 
 	for _, character := range characters {
 		if character.Name == "" {
 			// Skip the weird bogus empty char.
 			continue
 		}
-		content := container.New(layout.NewHBoxLayout(), widget.NewLabel(character.Map), widget.NewButton("Play", func() {
-			next(play.NewState(s.conn, character.Name))
-		}))
-		card := widget.NewCard(character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class), content)
-		s.characterList.Add(card)
+		// TODO: Add button to:
+		//next(play.NewState(s.conn, character.Name))
+		// TODO: Show selectable cards with  character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class)
+		// TODO: Add the c ard to the character list.
 	}
 
 }
 
-func (s *State) setupCreation() fyne.CanvasObject {
+func (s *State) setupCreation() {
+	// TODO: Setup the UI for character creation.
 	// Race
 	var races []messages.MessageReplyInfoDataRaceInfo
 
-	var racesCombo *widget.Select
-	var raceDescription *widget.Label
+	// TOOD: This will be a combo that updates a race description from races[index].Description
 
-	racesCombo = widget.NewSelect([]string{}, func(r string) {
-		// Update the race info!
-		raceDescription.SetText(races[racesCombo.SelectedIndex()].Description)
-	})
-
-	raceDescription = widget.NewLabel("")
-	raceDescription.Wrapping = fyne.TextWrapWord
-
-	raceContainer := container.NewBorder(racesCombo, nil, nil, nil, container.NewVScroll(raceDescription))
-
+	// TODO: Same as above for class.
 	// Class
 	var classes []messages.MessageReplyInfoDataClassInfo
 
-	var classCombo *widget.Select
-	var classDescription *widget.Label
-
-	classCombo = widget.NewSelect([]string{}, func(r string) {
-		classDescription.SetText(classes[classCombo.SelectedIndex()].Description)
-	})
-
-	classDescription = widget.NewLabel("")
-	classDescription.Wrapping = fyne.TextWrapWord
-
-	classContainer := container.NewBorder(classCombo, nil, nil, nil, container.NewVScroll(classDescription))
-
+	// TODO: Name and stat selection elements.
 	// Name + Stats
-	var nameEntry *widget.Entry
-	var statsLabel *widget.Label
 	// TODO: Some sort of list of stats... we need to also get this from request_info.
 
-	nameEntry = widget.NewEntry()
-	nameEntry.PlaceHolder = "Name"
-
-	statsLabel = widget.NewLabel("Stats go here")
-
-	statsContainer := container.NewVScroll(container.New(layout.NewVBoxLayout(), nameEntry, statsLabel))
-
-	// Tabs
-
-	creationTabs := container.NewAppTabs()
-	creationTabs.Append(container.NewTabItem("Race", raceContainer))
-	creationTabs.Append(container.NewTabItem("Class", classContainer))
-	creationTabs.Append(container.NewTabItem("Stats & Name", statsContainer))
+	// TODO: The above we could put in tabs at the toppe.
 
 	// Handle stuff
 
@@ -155,8 +104,7 @@ func (s *State) setupCreation() fyne.CanvasObject {
 		switch d := msg.Data.(type) {
 		case messages.MessageReplyInfoDataRaceList:
 			races = nil
-			racesCombo.Options = []string(d)
-			racesCombo.Refresh()
+			// TODO: Refresh races combo.
 			// It feels excessive, but we do want to have the race info, so I guess we just spam for each. (We'll replace the given options with their matching one)
 			for _, r := range d {
 				s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRaceInfo(r)})
@@ -168,18 +116,17 @@ func (s *State) setupCreation() fyne.CanvasObject {
 		case messages.MessageReplyInfoDataRaceInfo:
 			for i, r := range races {
 				if r.Arch == d.Arch {
-					caser := cases.Title(language.English)
+					//caser := cases.Title(language.English)
+					// TODO: Make the race selection nicer with caser.String(d.Name)
 					// Eh... let's capitalize each starting letter in Name.
-					racesCombo.Options[i] = caser.String(d.Name)
 					races[i] = d // Store the full race as well.
 					break
 				}
 			}
-			racesCombo.Refresh()
+			// TODO: Refresh combo.
 		case messages.MessageReplyInfoDataClassList:
 			classes = nil
-			classCombo.Options = []string(d)
-			classCombo.Refresh()
+			// TODO: Refresh class combo.
 			// Do the same as for races.
 			for _, c := range d {
 				s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoClassInfo(c)})
@@ -190,13 +137,13 @@ func (s *State) setupCreation() fyne.CanvasObject {
 		case messages.MessageReplyInfoDataClassInfo:
 			for i, c := range classes {
 				if c.Arch == d.Arch {
-					caser := cases.Title(language.English)
-					classCombo.Options[i] = caser.String(d.Name)
+					//caser := cases.Title(language.English)
+					// Use caser as well.
 					classes[i] = d
 					break
 				}
 			}
-			classCombo.Refresh()
+			// TODO: Refresh class combo.
 		}
 	})
 
@@ -204,16 +151,14 @@ func (s *State) setupCreation() fyne.CanvasObject {
 	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoRaceList{}})
 	s.conn.Send(&messages.MessageRequestInfo{Data: messages.MessageRequestInfoClassList{}})
 
-	return creationTabs
-	//return container.NewVScroll(container.New(layout.NewVBoxLayout(), racesCombo, raceDescription))
+	// TODO: Return somethin'
+	return
 }
 
-// SetWindow sets the window for dialog functions.
-func (s *State) SetWindow(window fyne.Window) {
-	s.window = window
+func (s *State) Update() error {
+	return nil
 }
 
-// Container returns the container.
-func (s *State) Container() *fyne.Container {
-	return s.container
+func (s *State) Draw(screen *ebiten.Image) {
+	// TODO
 }

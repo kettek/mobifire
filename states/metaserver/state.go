@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/join"
 	"github.com/kettek/rebui"
+	_ "github.com/kettek/rebui/defaults/font"
+	"github.com/kettek/rebui/widgets"
+	_ "github.com/kettek/rebui/widgets"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/messages"
 )
@@ -26,8 +27,11 @@ var metaservers = []string{
 
 // State provides a list of servers the user can join.
 type State struct {
-	next   func(states.State)
-	layout rebui.Layout
+	next        func(states.State)
+	layout      rebui.Layout
+	itemNodes   []*rebui.Node
+	addressNode *rebui.Node
+	joinNode    *rebui.Node
 }
 
 func (s *State) Update() error {
@@ -43,24 +47,61 @@ func (s *State) Draw(screen *ebiten.Image) {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.next = next
 
-	// TODO: Make button rejoin last joined.
-	button := widget.NewButton("rejoin "+s.app.Preferences().StringWithFallback("lastServer", ""), func() {
-		host := s.app.Preferences().StringWithFallback("lastServer", "")
-		port := s.app.Preferences().IntWithFallback("lastPort", 13327)
-		s.next(&join.State{
-			Hostname: host,
-			Port:     port,
-		})
+	address := "localhost:13327" // TODO: Replace with a loaded address.
+
+	// Setup UI
+	s.addressNode = s.layout.AddNode(rebui.Node{
+		Type:          "TextInput",
+		ID:            "address",
+		Text:          address,
+		Y:             "100%",
+		OriginY:       "-120%",
+		X:             "1%",
+		Width:         "69%",
+		Height:        "10%",
+		FocusIndex:    1,
+		VerticalAlign: rebui.AlignMiddle,
 	})
-	if s.app.Preferences().StringWithFallback("lastServer", "") == "" {
-		button.Disable()
+	s.addressNode.Widget.(*widgets.TextInput).OnChange = func(text string) {
+		address = text
+	}
+	s.joinNode = s.layout.AddNode(rebui.Node{
+		Type:            "Button",
+		Y:               "at address",
+		X:               "71%",
+		Width:           "28%",
+		Height:          "10%",
+		Text:            "Join",
+		FocusIndex:      1,
+		VerticalAlign:   rebui.AlignMiddle,
+		HorizontalAlign: rebui.AlignCenter,
+	})
+	s.joinNode.OnPointerPressed = func(rebui.EventPointerPressed) {
+		var hostname string
+		var port int64
+
+		if address == "" {
+			fmt.Println("Please enter a valid address.")
+			return
+		}
+
+		parts := strings.Split(address, ":")
+		if len(parts) != 2 {
+			fmt.Println("Invalid address format. Please use 'hostname:port'.")
+		}
+		hostname = parts[0]
+		port, err := strconv.ParseInt(parts[1], 10, 32)
+		if err != nil {
+			fmt.Println("Invalid port number. Please enter a valid port.", err)
+			return
+		}
+
+		s.next(&join.State{
+			Hostname: hostname,
+			Port:     int(port),
+		})
 	}
 
-	s.serverList = container.New(layout.NewVBoxLayout())
-
-	s.container = container.NewBorder(nil, button, nil, nil, container.NewVScroll(s.serverList))
-
-	// Load servers on load, obv.
 	s.refreshMetaservers()
 
 	return nil
@@ -68,7 +109,13 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 // refreshMetaservers iterates thru metaservers and generates non-duplicate servers.
 func (s *State) refreshMetaservers() {
-	s.serverList.RemoveAll()
+	// Delete server entries.
+	for _, node := range s.itemNodes {
+		s.layout.RemoveNode(node)
+	}
+	s.itemNodes = nil
+
+	// Generate server entries from the metaservers.
 	var serverEntries messages.ServerEntries
 	for _, m := range metaservers {
 		entries, err := s.requestServers(m)
@@ -90,31 +137,30 @@ func (s *State) refreshMetaservers() {
 		}
 	}
 
-	accordion := widget.NewAccordion()
-	for _, e := range serverEntries {
-		infoText := widget.NewLabel(e.TextComment)
-		infoServer := widget.NewLabel(fmt.Sprintf("Version %s", e.Version))
-		infoLabels := container.New(layout.NewVBoxLayout(), infoText, infoServer)
-
-		joinButton := widget.NewButton("Join", func() {
-			s.app.Preferences().SetString("lastServer", e.Hostname)
-			s.app.Preferences().SetInt("lastPort", e.Port)
-			s.next(&join.State{
-				Hostname: e.Hostname,
-				Port:     e.Port,
-			})
+	// Create the container with the server list.
+	for i, entry := range serverEntries {
+		id := fmt.Sprintf("server-%d", i)
+		y := "2%"
+		if i > 0 {
+			y = fmt.Sprintf("after %s", fmt.Sprintf("server-%d", i-1))
+		}
+		node := s.layout.AddNode(rebui.Node{
+			Type:            "Button",
+			ID:              id,
+			Text:            fmt.Sprintf("%s:%d", entry.Hostname, entry.Port),
+			X:               "1%",
+			Width:           "98%",
+			Height:          "10%",
+			Y:               y,
+			OriginY:         "1",
+			HorizontalAlign: rebui.AlignLeft,
+			VerticalAlign:   rebui.AlignMiddle,
 		})
-
-		c := container.New(layout.NewVBoxLayout(), infoLabels, joinButton)
-		acc := widget.NewAccordionItem(fmt.Sprintf("%s (%d players)", e.Hostname, e.NumPlayers), c)
-		accordion.Append(acc)
+		node.OnPointerPressed = func(rebui.EventPointerPressed) {
+			s.addressNode.Widget.(*widgets.TextInput).AssignText(fmt.Sprintf("%s:%d", entry.Hostname, entry.Port))
+		}
+		s.itemNodes = append(s.itemNodes, node)
 	}
-	s.serverList.Add(accordion)
-}
-
-// Container returns the container.
-func (s *State) Container() *fyne.Container {
-	return s.container
 }
 
 // requestServers requests the servers from the given metaserver with a 5 second timeout.
@@ -139,8 +185,4 @@ func (s *State) requestServers(metaserver string) (messages.ServerEntries, error
 	}
 
 	return serverEntries, nil
-}
-
-func (s *State) SetApp(app fyne.App) {
-	s.app = app
 }

@@ -3,13 +3,10 @@ package handshake
 import (
 	"fmt"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/login"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
 )
@@ -17,10 +14,9 @@ import (
 // State provides a handshake step to connecting to a server.
 type State struct {
 	messages.MessageHandler
-	container *fyne.Container
-	Hostname  string
-	Port      int
-	conn      *net.Connection
+	Hostname string
+	Port     int
+	conn     *net.Connection
 }
 
 // NewState creates a new state from a given connection.
@@ -93,16 +89,15 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		fmt.Println("...ok?")
 	})
 
-	// TODO: timeout? maybe from s.conn?
-
-	label := widget.NewLabel("handshaking...")
-
-	s.container = container.New(layout.NewCenterLayout(), label)
+	// TODO: Show handshaking label.
 
 	return nil
 }
 
-// Container returns the container.
-func (s *State) Container() *fyne.Container {
-	return s.container
+func (s *State) Update() error {
+	return nil
+}
+
+func (s *State) Draw(screen *ebiten.Image) {
+	// TODO
 }

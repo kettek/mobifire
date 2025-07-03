@@ -20,5 +20,12 @@ func (s *statePrior) Enter(next func(State)) (leave func()) {
 	return nil
 }
 
+func (s *statePrior) Draw(screen *ebiten.Image) {
+}
+
+func (s *statePrior) Update() error {
+	return nil
+}
+
 // Prior is used to return back to the previous state.
 var Prior = &statePrior{}
