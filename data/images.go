@@ -2,7 +2,6 @@ package data
 
 import (
 	"embed"
-	"path"
 )
 
 //go:embed images/*.png
@@ -10,7 +9,7 @@ var fs embed.FS
 
 func init() {
 	// Iterate them images.
-	entries, err := fs.ReadDir("images")
+	/*(entries, err := fs.ReadDir("images")
 	if err != nil {
 		panic(err)
 	}
@@ -20,5 +19,5 @@ func init() {
 			panic(err)
 		}
 		addResource(entry.Name(), b)
-	}
+	}*/
 }

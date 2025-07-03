@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/join"
 	"github.com/kettek/rebui"
@@ -32,6 +33,7 @@ type State struct {
 	itemNodes   []*rebui.Node
 	addressNode *rebui.Node
 	joinNode    *rebui.Node
+	entryNode   rebui.Node // This is just a template.
 }
 
 func (s *State) Update() error {
@@ -49,33 +51,21 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	address := "localhost:13327" // TODO: Replace with a loaded address.
 
-	// Setup UI
-	s.addressNode = s.layout.AddNode(rebui.Node{
-		Type:          "TextInput",
-		ID:            "address",
-		Text:          address,
-		Y:             "100%",
-		OriginY:       "-120%",
-		X:             "1%",
-		Width:         "69%",
-		Height:        "10%",
-		FocusIndex:    1,
-		VerticalAlign: rebui.AlignMiddle,
-	})
+	layout, err := data.GetLayout("metaserver")
+	if err != nil {
+		panic(err)
+	}
+	for _, node := range layout.Nodes {
+		s.layout.AddNode(node)
+	}
+
+	s.addressNode = s.layout.GetByID("address")
+	s.addressNode.Widget.(*widgets.TextInput).AssignText(address)
 	s.addressNode.Widget.(*widgets.TextInput).OnChange = func(text string) {
 		address = text
 	}
-	s.joinNode = s.layout.AddNode(rebui.Node{
-		Type:            "Button",
-		Y:               "at address",
-		X:               "71%",
-		Width:           "28%",
-		Height:          "10%",
-		Text:            "Join",
-		FocusIndex:      1,
-		VerticalAlign:   rebui.AlignMiddle,
-		HorizontalAlign: rebui.AlignCenter,
-	})
+
+	s.joinNode = s.layout.GetByID("connect")
 	s.joinNode.OnPointerPressed = func(rebui.EventPointerPressed) {
 		var hostname string
 		var port int64
@@ -101,6 +91,10 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			Port:     int(port),
 		})
 	}
+
+	// Get our template entry node for reference and then remove it from our layout.
+	s.entryNode = *s.layout.GetByID("template__entry")
+	s.layout.RemoveNode(s.layout.GetByID("template__entry"))
 
 	s.refreshMetaservers()
 
@@ -141,18 +135,12 @@ func (s *State) refreshMetaservers() {
 		if i > 0 {
 			y = fmt.Sprintf("after %s", fmt.Sprintf("server-%d", i-1))
 		}
-		node := s.layout.AddNode(rebui.Node{
-			Type:            "Button",
-			ID:              id,
-			Text:            fmt.Sprintf("%s:%d", entry.Hostname, entry.Port),
-			X:               "1%",
-			Width:           "98%",
-			Height:          "10%",
-			Y:               y,
-			OriginY:         "1",
-			HorizontalAlign: rebui.AlignLeft,
-			VerticalAlign:   rebui.AlignMiddle,
-		})
+
+		s.entryNode.ID = id
+		s.entryNode.Text = fmt.Sprintf("%s:%d", entry.Hostname, entry.Port)
+		s.entryNode.Y = y
+
+		node := s.layout.AddNode(s.entryNode)
 		node.OnPointerPressed = func(rebui.EventPointerPressed) {
 			s.addressNode.Widget.(*widgets.TextInput).AssignText(fmt.Sprintf("%s:%d", entry.Hostname, entry.Port))
 		}

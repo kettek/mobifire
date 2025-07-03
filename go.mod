@@ -8,7 +8,7 @@ require (
 	fyne.io/fyne/v2 v2.5.4
 	github.com/hajimehoshi/ebiten/v2 v2.8.7
 	github.com/kettek/gobl v0.4.0
-	github.com/kettek/rebui v0.0.0-20250703214215-a3e2c685d23f
+	github.com/kettek/rebui v0.0.0-20250703234816-e82d1f682d4f
 	github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909
 )
 
@@ -34,4 +34,5 @@ require (
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

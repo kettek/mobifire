@@ -41,6 +41,12 @@ github.com/kettek/rebui v0.0.0-20250702225219-4d121d345b44 h1:PQP5KIh3mMQWe6nPuY
 github.com/kettek/rebui v0.0.0-20250702225219-4d121d345b44/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
 github.com/kettek/rebui v0.0.0-20250703214215-a3e2c685d23f h1:mB+Xc0nYh0y8AIM3VMBskMqXV5bb2t5+OBhG03KRLq0=
 github.com/kettek/rebui v0.0.0-20250703214215-a3e2c685d23f/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
+github.com/kettek/rebui v0.0.0-20250703233927-05b3bcd78c4b h1:K3hBJ8nCdfQHkfa4ThO/RPQrlrrAV7lsIX/uJ92vixc=
+github.com/kettek/rebui v0.0.0-20250703233927-05b3bcd78c4b/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
+github.com/kettek/rebui v0.0.0-20250703234644-966012ab6db6 h1:TZo8azbyBsbXWclnXuUnf5qzIo/p6h7M6ffDTUINE+4=
+github.com/kettek/rebui v0.0.0-20250703234644-966012ab6db6/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
+github.com/kettek/rebui v0.0.0-20250703234816-e82d1f682d4f h1:mBG6y6ZeBm7JKnkkj1tcWEksYYSEk6m+ZiEsvFfICrs=
+github.com/kettek/rebui v0.0.0-20250703234816-e82d1f682d4f/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
 github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909 h1:kE9WvSPdHJyJryIWZv9U7ftpZyaVZWx9bZB4Fk6t+6Q=
 github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/nicksnyder/go-i18n/v2 v2.5.1 h1:IxtPxYsR9Gp60cGXjfuR/llTqV8aYMsC472zD0D1vHk=
