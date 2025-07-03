@@ -8,6 +8,9 @@ import (
 
 func main() {
 	game := &game.Game{}
+	if err := game.Init(); err != nil {
+		panic(err)
+	}
 	game.SetNext(&metaserver.State{})
 
 	ebiten.SetWindowSize(800, 360)

@@ -9,7 +9,15 @@ type Game struct {
 	firstState states.State // Used to ensure Server state is returned to.
 	priorState states.State // Absolute bogus handle to just bounce back to last state.
 	state      states.State
+	nextChan   chan states.State
+	nextState  states.State
 	leaveCb    func()
+}
+
+func (g *Game) setNext(state states.State) {
+	go func() {
+		g.nextChan <- state
+	}()
 }
 
 func (g *Game) SetNext(state states.State) {
@@ -37,9 +45,11 @@ func (g *Game) SetNext(state states.State) {
 		}
 
 		g.priorState = priorState
-		g.leaveCb = state.Enter(g.SetNext)
+		g.leaveCb = state.Enter(g.setNext)
 	} else if g.firstState != nil { // Bump back to first state if we can! This should be guaranteed to be the metaserver.
-		g.leaveCb = g.firstState.Enter(g.SetNext)
+		g.priorState = priorState
+		g.leaveCb = g.firstState.Enter(g.setNext)
+		g.state = g.firstState
 	}
 }
 
@@ -52,5 +62,21 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *Game) Update() error {
-	return g.state.Update()
+	if g.state == nil {
+		return nil
+	}
+	if err := g.state.Update(); err != nil {
+		return err
+	}
+	select {
+	case state := <-g.nextChan:
+		g.SetNext(state)
+	default:
+	}
+	return nil
+}
+
+func (g *Game) Init() error {
+	g.nextChan = make(chan states.State)
+	return nil
 }
