@@ -8,6 +8,8 @@ import (
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/chars"
+	"github.com/kettek/rebui"
+	"github.com/kettek/rebui/widgets"
 
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
@@ -16,8 +18,13 @@ import (
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
-	conn  *net.Connection
-	faces []messages.MessageFace2
+	conn      *net.Connection
+	faces     []messages.MessageFace2
+	layout    rebui.Layout
+	userNode  *rebui.Node
+	passNode  *rebui.Node
+	loginNode *rebui.Node
+	rulesNode *rebui.Node
 }
 
 // NewState returns a State from the given connection.
@@ -30,6 +37,22 @@ func NewState(conn *net.Connection) *State {
 // Enter sets up all the necessary logic for logging in.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
+
+	layout, err := data.GetLayout("login")
+	if err != nil {
+		panic(err)
+	}
+	for _, node := range layout.Nodes {
+		s.layout.AddNode(node)
+	}
+
+	s.userNode = s.layout.GetByID("username")
+
+	s.passNode = s.layout.GetByID("password")
+
+	s.loginNode = s.layout.GetByID("login")
+
+	s.rulesNode = s.layout.GetByID("rules")
 
 	// Variables used for storing username and password.
 	// TODO: Get host and port from last.
@@ -114,6 +137,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			}
 			imageSetCombo.SetSelected(imageSets[0].Name)*/
 		case messages.MessageReplyInfoDataRules:
+			s.rulesNode.Widget.(*widgets.Text).AssignText(string(d))
 			// Update our rules element with the rules text.
 		}
 	})
@@ -138,9 +162,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 }
 
 func (s *State) Update() error {
+	s.layout.Update()
 	return nil
 }
 
 func (s *State) Draw(screen *ebiten.Image) {
+	s.layout.Draw(screen)
 	// TODO
 }

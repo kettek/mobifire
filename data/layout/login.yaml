@@ -1,0 +1,65 @@
+- id: username
+  type: TextInput
+  x: 25%
+  y: 1%
+  width: 25%
+  height: 10%
+  originx: -50%
+  focusindex: 1
+  verticalalign: middle
+- id: username_label
+  type: Label
+  text: Username
+  y: at username
+  x: before username
+  width: 10%
+  height: 10%
+  verticalalign: middle
+  horizontalalign: right
+- id: password
+  type: TextInput
+  y: after username
+  x: 25%
+  width: 25%
+  height: 10%
+  originx: -50%
+  focusindex: 1
+  verticalalign: middle
+- id: password_label
+  type: Label
+  text: Password
+  y: at password
+  x: before password_label
+  width: 10%
+  height: 10%
+  verticalalign: middle
+  horizontalalign: right
+- id: login
+  type: Button
+  text: login
+  y: 99%
+  x: 25%
+  originx: -50%
+  originy: -100%
+  width: 25%
+  height: 10%
+  focusindex: 1
+  verticalalign: middle
+  horizontalalign: center
+- id: rules
+  type: Text
+  textwrap: word
+  x: 50%
+  y: 1%
+  width: 49%
+  height: 98%
+- id: imageset_label
+  type: Label
+  text: Image Set
+  y: after password_label
+  x: at password_label
+  originy: 1%
+  width: 100% of password_label
+  height: 100% of password_label
+  verticalalign: middle
+  horizontalalign: right
