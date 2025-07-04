@@ -22,7 +22,7 @@ func main() {
 		Exec(runArgs...)
 
 	Task("watch").
-		Watch("**/*.go").
+		Watch("**/*.go", "data/layout/*.yaml").
 		Signaler(SigQuit).
 		Run("build").
 		Run("run")
