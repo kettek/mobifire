@@ -50,9 +50,8 @@
   type: Text
   textwrap: word
   x: 50%
-  y: 1%
-  width: 49%
-  height: 98%
+  width: 50%
+  height: 100%
 - id: imageset_label
   type: Label
   text: Image Set
