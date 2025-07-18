@@ -50,7 +50,7 @@ func (s *State) Draw(screen *ebiten.Image) {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.next = next
 
-	address := settings.GetWithFallback[string]("address", "localhost:13327")
+	address := settings.GetWithFallback("address", "localhost:13327")
 
 	layout, err := data.GetLayout("metaserver")
 	if err != nil {
