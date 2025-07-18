@@ -18,9 +18,9 @@ import (
 
 // TODO: Move this to some common pkg.
 type serverSettings struct {
-	Username         string `json:"username,omitempty"`
-	Password         string `json:"password,omitempty"`
-	RememberPassword bool   `json:"rememberPassword,omitempty"`
+	Username         string `yaml:"username,omitempty"`
+	Password         string `yaml:"password,omitempty"`
+	RememberPassword bool   `yaml:"rememberPassword,omitempty"`
 }
 
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
