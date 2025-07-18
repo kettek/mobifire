@@ -64,7 +64,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		} else {
 			s.conn.SetMessageHandler(nil) // Set to nil to ensure any messages are queued.
 			// TODO: Bump to handshaking.
-			next(handshake.NewState(s.conn))
+			next(handshake.NewState(s.conn, s.Hostname))
 		}
 	}()
 

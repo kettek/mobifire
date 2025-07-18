@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/data"
+	"github.com/kettek/mobifire/data/settings"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/chars"
 	"github.com/kettek/rebui"
@@ -15,9 +16,17 @@ import (
 	"github.com/kettek/termfire/messages"
 )
 
+// TODO: Move this to some common pkg.
+type serverSettings struct {
+	Username         string `json:"username,omitempty"`
+	Password         string `json:"password,omitempty"`
+	RememberPassword bool   `json:"rememberPassword,omitempty"`
+}
+
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
+	Hostname  string
 	conn      *net.Connection
 	faces     []messages.MessageFace2
 	layout    rebui.Layout
@@ -25,18 +34,22 @@ type State struct {
 	passNode  *rebui.Node
 	loginNode *rebui.Node
 	rulesNode *rebui.Node
+	settings  serverSettings
 }
 
 // NewState returns a State from the given connection.
-func NewState(conn *net.Connection) *State {
+func NewState(conn *net.Connection, hostname string) *State {
 	return &State{
-		conn: conn,
+		conn:     conn,
+		Hostname: hostname,
 	}
 }
 
 // Enter sets up all the necessary logic for logging in.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
+
+	s.settings = settings.GetWithFallback(s.Hostname, serverSettings{})
 
 	layout, err := data.GetLayout("login")
 	if err != nil {
@@ -47,22 +60,16 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	}
 
 	s.userNode = s.layout.GetByID("username")
+	s.userNode.Widget.(*widgets.TextInput).AssignText(s.settings.Username)
 
 	s.passNode = s.layout.GetByID("password")
+	s.passNode.Widget.(*widgets.TextInput).AssignText(s.settings.Password)
+
+	// TODO: Create remember me and/or remember password checkboxes
 
 	s.loginNode = s.layout.GetByID("login")
 
 	s.rulesNode = s.layout.GetByID("rules")
-
-	// Variables used for storing username and password.
-	// TODO: Get host and port from last.
-	/*host := "localhost"
-	port := 8080
-	key := fmt.Sprintf("%s-%d", host, port)*/
-
-	// TODO: Create username, password, and remember me entries.
-
-	// TODO: Create text for the rules. We will need a widget-textish widget.
 
 	var currentImageSet int
 	var imageSets []messages.MessageReplyInfoDataImageInfoSet

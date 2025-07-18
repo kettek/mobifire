@@ -24,9 +24,10 @@ type State struct {
 }
 
 // NewState creates a new state from a given connection.
-func NewState(conn *net.Connection) *State {
+func NewState(conn *net.Connection, hostname string) *State {
 	return &State{
-		conn: conn,
+		conn:     conn,
+		Hostname: hostname,
 	}
 }
 
@@ -53,7 +54,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.Once(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		fmt.Println("got setup message!", m.(*messages.MessageSetup), failure)
 		// FIXME: Uh... do we have to handle for MessageSetup fail?
-		next(login.NewState(s.conn))
+		next(login.NewState(s.conn, s.Hostname))
 	})
 
 	s.Once(&messages.MessageVersion{}, &messages.MessageVersion{}, func(m messages.Message, failure *messages.MessageFailure) {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/data"
+	"github.com/kettek/mobifire/data/settings"
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/mobifire/states/join"
 	"github.com/kettek/rebui"
@@ -49,7 +50,7 @@ func (s *State) Draw(screen *ebiten.Image) {
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.next = next
 
-	address := "localhost:13327" // TODO: Replace with a loaded address.
+	address := settings.GetWithFallback[string]("address", "localhost:13327")
 
 	layout, err := data.GetLayout("metaserver")
 	if err != nil {
@@ -85,6 +86,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			fmt.Println("Invalid port number. Please enter a valid port.", err)
 			return
 		}
+
+		// Save it!
+		settings.Set("address", address)
 
 		s.next(&join.State{
 			Hostname: hostname,
