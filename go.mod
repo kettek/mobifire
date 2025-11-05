@@ -8,7 +8,7 @@ require (
 	fyne.io/fyne/v2 v2.5.4
 	github.com/hajimehoshi/ebiten/v2 v2.8.7
 	github.com/kettek/gobl v0.4.0
-	github.com/kettek/rebui v0.0.0-20250703234816-e82d1f682d4f
+	github.com/kettek/rebui v0.0.0-20251105071027-799ac9a1d56c
 	github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909
 	gopkg.in/yaml.v3 v3.0.1
 )

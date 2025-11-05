@@ -25,6 +25,7 @@
   originx: -50%
   focusindex: 1
   verticalalign: middle
+  obfuscated: true
 - id: password_label
   type: Label
   text: Password
