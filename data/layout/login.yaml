@@ -35,6 +35,22 @@
   height: 10%
   verticalalign: middle
   horizontalalign: right
+- id: remember_password
+  type: Checkbox
+  x: after password
+  y: at password
+  width: 10%
+  height: 10%
+  verticalalign: middle
+  horizontalalign: center
+- id: remember_username
+  type: Checkbox
+  x: after username
+  y: at username
+  width: 10%
+  height: 10%
+  verticalalign: middle
+  horizontalalign: center
 - id: login
   type: Button
   text: login
@@ -61,3 +77,12 @@
   width: 25%
   height: 10%
   originx: -50%
+- id: carousel_label
+  type: Label
+  text: Image Set
+  y: at carousel
+  x: before carousel
+  width: 10%
+  height: 10%
+  verticalalign: middle
+  horizontalalign: right 

@@ -7,6 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/data/settings"
+	cwidget "github.com/kettek/mobifire/data/widget"
 	"github.com/kettek/mobifire/net"
 	"github.com/kettek/mobifire/states/chars"
 	"github.com/kettek/rebui"
@@ -20,6 +21,7 @@ import (
 type serverSettings struct {
 	Username         string `yaml:"username,omitempty"`
 	Password         string `yaml:"password,omitempty"`
+	RememberUsername bool   `yaml:"rememberUsername,omitempty"`
 	RememberPassword bool   `yaml:"rememberPassword,omitempty"`
 	ImageSet         string `yaml:"imageset,omitempty"`
 }
@@ -72,7 +74,10 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	carouselContent := s.layout.GetByID("carousel__content").Widget.(*widgets.Text)
 	carouselContent.AssignText(s.settings.ImageSet)
 
-	// TODO: Create remember me and/or remember password checkboxes
+	rememberUsername := s.layout.GetByID("remember_username").Widget.(*cwidget.Checkbox)
+	rememberUsername.Set(s.settings.RememberUsername)
+	rememberPassword := s.layout.GetByID("remember_password").Widget.(*cwidget.Checkbox)
+	rememberPassword.Set(s.settings.RememberPassword)
 
 	s.loginNode = s.layout.GetByID("login")
 
