@@ -54,46 +54,10 @@
   width: 50%
   height: 100%
 - id: carousel
-  type: Area
+  type: Template
+  source: carousel
   y: after password
   x: 25%
   width: 25%
   height: 10%
   originx: -50%
-- id: carousel_left
-  type: Button
-  text: "<"
-  y: at carousel
-  x: at carousel
-  width: 25% of carousel
-  height: 100% of carousel
-  verticalalign: middle
-  horizontalalign: center
-- id: carousel_content
-  type: Text
-  text: "uwu"
-  y: at carousel
-  x: after carousel_left
-  width: 50% of carousel
-  height: 100% of carousel
-  verticalalign: middle
-  horizontalalign: center
-- id: carousel_right
-  type: Button
-  text: ">"
-  y: at carousel
-  x: after carousel
-  originx: -100%
-  width: 25% of carousel
-  height: 100% of carousel
-  verticalalign: middle
-  horizontalalign: center
-- id: carousel_label
-  type: Label
-  text: Image Set
-  y: at carousel_left
-  x: before carousel_left
-  width: 10%
-  height: 10%
-  verticalalign: middle
-  horizontalalign: right

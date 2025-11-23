@@ -46,6 +46,8 @@ github.com/kettek/rebui v0.0.0-20251122175757-a89e7ffc1d10 h1:caA4yk5xDayLe9drz2
 github.com/kettek/rebui v0.0.0-20251122175757-a89e7ffc1d10/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
 github.com/kettek/rebui v0.0.0-20251122193207-0311c72f52af h1:klXwjhXn1BYGNUFwHLlei04MrSERrfiot39HNCmaOMg=
 github.com/kettek/rebui v0.0.0-20251122193207-0311c72f52af/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
+github.com/kettek/rebui v0.0.0-20251123174053-788d11489916 h1:tE57lCPvjoJ3jvRIhEW42ErEMo/DnoOsyRMMm8kR1f8=
+github.com/kettek/rebui v0.0.0-20251123174053-788d11489916/go.mod h1:aRRyv75rCarB7YG9IFU06YOYY0T05HGAexsv42IpkZY=
 github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909 h1:kE9WvSPdHJyJryIWZv9U7ftpZyaVZWx9bZB4Fk6t+6Q=
 github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909/go.mod h1:cEwpMMldTePLKhHa+of3nTzC+3ASIbLEyAlJfpW+y5E=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

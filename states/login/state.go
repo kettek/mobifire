@@ -67,9 +67,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.passNode = s.layout.GetByID("password")
 	s.passNode.Widget.(*widgets.TextInput).AssignText(s.settings.Password)
 
-	carouselLeft := s.layout.GetByID("carousel_left").Widget.(*widgets.Button)
-	carouselRight := s.layout.GetByID("carousel_right").Widget.(*widgets.Button)
-	carouselContent := s.layout.GetByID("carousel_content").Widget.(*widgets.Text)
+	carouselLeft := s.layout.GetByID("carousel__left").Widget.(*widgets.Button)
+	carouselRight := s.layout.GetByID("carousel__right").Widget.(*widgets.Button)
+	carouselContent := s.layout.GetByID("carousel__content").Widget.(*widgets.Text)
 	carouselContent.AssignText(s.settings.ImageSet)
 
 	// TODO: Create remember me and/or remember password checkboxes
@@ -111,7 +111,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 		carouselContent.AssignText(items[currentImageSet])
 	}
-	s.layout.GetByID("carousel_left").OnPointerPressed = func(epp rebui.EventPointerPressed) {
+	s.layout.GetByID("carousel__left").OnPointerPressed = func(epp rebui.EventPointerPressed) {
 		s.conn.Send(&messages.MessageSetup{
 			FaceSet: struct {
 				Use   bool
@@ -122,7 +122,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 			},
 		})
 	}
-	s.layout.GetByID("carousel_right").OnPointerPressed = func(epp rebui.EventPointerPressed) {
+	s.layout.GetByID("carousel__right").OnPointerPressed = func(epp rebui.EventPointerPressed) {
 		s.conn.Send(&messages.MessageSetup{
 			FaceSet: struct {
 				Use   bool

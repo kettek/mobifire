@@ -1,0 +1,23 @@
+- id: left
+  type: Button
+  text: "<"
+  width: 25%
+  height: 100%
+  verticalalign: middle
+  horizontalalign: center
+- id: content
+  type: Text
+  text: "uwu"
+  x: after left
+  width: 50%
+  height: 100%
+  verticalalign: middle
+  horizontalalign: center
+- id: right
+  type: Button
+  text: ">"
+  x: after content
+  width: 25%
+  height: 100%
+  verticalalign: middle
+  horizontalalign: center
