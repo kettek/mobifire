@@ -21,20 +21,22 @@ type serverSettings struct {
 	Username         string `yaml:"username,omitempty"`
 	Password         string `yaml:"password,omitempty"`
 	RememberPassword bool   `yaml:"rememberPassword,omitempty"`
+	ImageSet         string `yaml:"imageset,omitempty"`
 }
 
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
-	Hostname  string
-	conn      *net.Connection
-	faces     []messages.MessageFace2
-	layout    rebui.Layout
-	userNode  *rebui.Node
-	passNode  *rebui.Node
-	loginNode *rebui.Node
-	rulesNode *rebui.Node
-	settings  serverSettings
+	Hostname     string
+	conn         *net.Connection
+	faces        []messages.MessageFace2
+	layout       rebui.Layout
+	userNode     *rebui.Node
+	passNode     *rebui.Node
+	loginNode    *rebui.Node
+	rulesNode    *rebui.Node
+	imagesetNode *rebui.Node
+	settings     serverSettings
 }
 
 // NewState returns a State from the given connection.
@@ -65,6 +67,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.passNode = s.layout.GetByID("password")
 	s.passNode.Widget.(*widgets.TextInput).AssignText(s.settings.Password)
 
+	carouselLeft := s.layout.GetByID("carousel_left").Widget.(*widgets.Button)
+	carouselRight := s.layout.GetByID("carousel_right").Widget.(*widgets.Button)
+	carouselContent := s.layout.GetByID("carousel_content").Widget.(*widgets.Text)
+	carouselContent.AssignText(s.settings.ImageSet)
+
 	// TODO: Create remember me and/or remember password checkboxes
 
 	s.loginNode = s.layout.GetByID("login")
@@ -73,25 +80,59 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	var currentImageSet int
 	var imageSets []messages.MessageReplyInfoDataImageInfoSet
-	// TODO: Create image set combo box.
-	/*imageSetCombo = widget.NewSelect([]string{}, func(_ string) {
-		index := imageSetCombo.SelectedIndex()
-		if index == currentImageSet {
+
+	carouselItems := []string{}
+	refreshCarousel := func(items []string) {
+		carouselItems = items
+		if currentImageSet >= len(items) {
+			currentImageSet = len(items) - 1
+		}
+		if currentImageSet < 0 {
+			currentImageSet = 0
+		}
+		// Refresh arrows
+		if currentImageSet > 0 {
+			carouselLeft.AssignDisabled(false)
+			carouselLeft.AssignText("<")
+		} else {
+			carouselLeft.AssignDisabled(true)
+			carouselLeft.AssignText("")
+		}
+		if currentImageSet == len(items)-1 {
+			carouselRight.AssignDisabled(true)
+			carouselRight.AssignText("")
+		} else {
+			carouselRight.AssignDisabled(false)
+			carouselRight.AssignText(">")
+		}
+		if len(items) == 0 {
+			carouselContent.AssignText("")
 			return
 		}
-		if index < 0 || index >= len(imageSets) {
-			return
-		}
+		carouselContent.AssignText(items[currentImageSet])
+	}
+	s.layout.GetByID("carousel_left").OnPointerPressed = func(epp rebui.EventPointerPressed) {
 		s.conn.Send(&messages.MessageSetup{
 			FaceSet: struct {
 				Use   bool
 				Value uint8
 			}{
 				Use:   true,
-				Value: uint8(imageSets[index].Index),
+				Value: uint8(currentImageSet - 1),
 			},
 		})
-	})*/
+	}
+	s.layout.GetByID("carousel_right").OnPointerPressed = func(epp rebui.EventPointerPressed) {
+		s.conn.Send(&messages.MessageSetup{
+			FaceSet: struct {
+				Use   bool
+				Value uint8
+			}{
+				Use:   true,
+				Value: uint8(currentImageSet + 1),
+			},
+		})
+	}
 
 	s.On(&messages.MessageSetup{}, nil, func(m messages.Message, failure *messages.MessageFailure) {
 		if failure != nil {
@@ -101,7 +142,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		msg := m.(*messages.MessageSetup)
 		if msg.FaceSet.Use {
 			currentImageSet = int(msg.FaceSet.Value)
-			// TODO: Set combo box index.
+			refreshCarousel(carouselItems)
 		}
 	})
 
@@ -120,6 +161,8 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		}
 
 		// TODO: Save username/pass if requested, otherwise delete them.
+		// Might as well remember our image set.
+		s.settings.ImageSet = imageSets[currentImageSet].Name
 
 		// Create our image set to use.
 		imageSet := imageSets[currentImageSet]
@@ -138,11 +181,14 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				return a.Index - b.Index
 			})
 			imageSets = d.Sets
-			// Clear image set combo box.
-			/*for _, set := range imageSets {
-				imageSetCombo.Options = append(imageSetCombo.Options, set.Name)
+			// Populate our carousel with the image set names.
+			{
+				items := []string{}
+				for _, s := range imageSets {
+					items = append(items, s.Name)
+				}
+				refreshCarousel(items)
 			}
-			imageSetCombo.SetSelected(imageSets[0].Name)*/
 		case messages.MessageReplyInfoDataRules:
 			s.rulesNode.Widget.(*widgets.Text).AssignText(string(d))
 			// Update our rules element with the rules text.
@@ -163,7 +209,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 	// TODO: Create username, password, and remember me layout form(?)
 	// On submit, issue:
-	//s.conn.Send(&messages.MessageAccountLogin{Account: usernameEntry.Text, Password: passwordEntry.Text})
+	// s.conn.Send(&messages.MessageAccountLogin{Account: usernameEntry.Text, Password: passwordEntry.Text})
 
 	return nil
 }
