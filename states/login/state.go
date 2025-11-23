@@ -74,9 +74,9 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	carouselContent := s.layout.GetByID("carousel__content").Widget.(*widgets.Text)
 	carouselContent.AssignText(s.settings.ImageSet)
 
-	rememberUsername := s.layout.GetByID("remember_username").Widget.(*cwidget.Checkbox)
+	rememberUsername := s.layout.GetByID("remember_username__checkbox").Widget.(*cwidget.Checkbox)
 	rememberUsername.Set(s.settings.RememberUsername)
-	rememberPassword := s.layout.GetByID("remember_password").Widget.(*cwidget.Checkbox)
+	rememberPassword := s.layout.GetByID("remember_password__checkbox").Widget.(*cwidget.Checkbox)
 	rememberPassword.Set(s.settings.RememberPassword)
 
 	s.loginNode = s.layout.GetByID("login")

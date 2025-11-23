@@ -1,0 +1,14 @@
+- id: label
+  type: Label
+  text: Keep
+  width: 50%
+  height: 100%
+  verticalalign: middle
+  horizontalalign: center
+- id: checkbox
+  type: Checkbox
+  x: after label
+  width: 50%
+  height: 100%
+  verticalalign: middle
+  horizontalalign: center

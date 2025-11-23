@@ -36,7 +36,8 @@
   verticalalign: middle
   horizontalalign: right
 - id: remember_password
-  type: Checkbox
+  type: Template
+  source: keep_toggle
   x: after password
   y: at password
   width: 10%
@@ -44,7 +45,8 @@
   verticalalign: middle
   horizontalalign: center
 - id: remember_username
-  type: Checkbox
+  type: Template
+  source: keep_toggle
   x: after username
   y: at username
   width: 10%
