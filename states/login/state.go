@@ -33,12 +33,6 @@ type State struct {
 	conn         *net.Connection
 	faces        []messages.MessageFace2
 	layout       rebui.Layout
-	userNode     *rebui.Node
-	passNode     *rebui.Node
-	loginNode    *rebui.Node
-	rulesNode    *rebui.Node
-	imagesetNode *rebui.Node
-	statusText   *widgets.Label
 	settings     serverSettings
 }
 
@@ -64,43 +58,41 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		s.layout.AddNode(node)
 	}
 
-	s.statusText = s.layout.GetByID("status").Widget.(*widgets.Label)
-
-	s.userNode = s.layout.GetByID("username")
-	s.userNode.Widget.(*widgets.TextInput).AssignText(s.settings.Username)
-	s.userNode.Widget.(*widgets.TextInput).OnChange = func(str string) {
-		s.settings.Username = str
-	}
-
-	s.passNode = s.layout.GetByID("password")
-	s.passNode.Widget.(*widgets.TextInput).AssignText(s.settings.Password)
-	s.passNode.Widget.(*widgets.TextInput).OnChange = func(str string) {
-		s.settings.Password = str
-	}
-
+	statusWidget := s.layout.GetByID("status").Widget.(*widgets.Label)
+	passWidget := s.layout.GetByID("password").Widget.(*widgets.TextInput)
+	userWidget := s.layout.GetByID("username").Widget.(*widgets.TextInput)
 	carouselLeft := s.layout.GetByID("carousel__left").Widget.(*widgets.Button)
 	carouselRight := s.layout.GetByID("carousel__right").Widget.(*widgets.Button)
 	carouselContent := s.layout.GetByID("carousel__content").Widget.(*widgets.Text)
+	rememberUsername := s.layout.GetByID("remember_username__checkbox").Widget.(*cwidget.Checkbox)
+	rememberPassword := s.layout.GetByID("remember_password__checkbox").Widget.(*cwidget.Checkbox)
+	loginNode := s.layout.GetByID("login")
+	rulesNode := s.layout.GetByID("rules")
+
+	userWidget.AssignText(s.settings.Username)
+	userWidget.OnChange = func(str string) {
+		s.settings.Username = str
+	}
+
+	passWidget.AssignText(s.settings.Password)
+	passWidget.OnChange = func(str string) {
+		s.settings.Password = str
+	}
+
 	carouselContent.AssignText(s.settings.ImageSet)
 
-	rememberUsername := s.layout.GetByID("remember_username__checkbox").Widget.(*cwidget.Checkbox)
 	rememberUsername.Set(s.settings.RememberUsername)
 	rememberUsername.OnChange = func(b bool) {
 		s.settings.RememberUsername = b
 	}
-	rememberPassword := s.layout.GetByID("remember_password__checkbox").Widget.(*cwidget.Checkbox)
 	rememberPassword.Set(s.settings.RememberPassword)
 	rememberPassword.OnChange = func(b bool) {
 		s.settings.RememberPassword = b
 	}
 
-	s.loginNode = s.layout.GetByID("login")
-
-	s.loginNode.OnPointerPressed = func(epp rebui.EventPointerPressed) {
+	loginNode.OnPointerPressed = func(epp rebui.EventPointerPressed) {
 		s.conn.Send(&messages.MessageAccountLogin{Account: s.settings.Username, Password: s.settings.Password})
 	}
-
-	s.rulesNode = s.layout.GetByID("rules")
 
 	var currentImageSet int
 	var imageSets []messages.MessageReplyInfoDataImageInfoSet
@@ -173,7 +165,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.On(&messages.MessageAccountLogin{}, nil, func(m messages.Message, mf *messages.MessageFailure) {
 		if mf != nil {
 			fmt.Println("Failed to login: ", mf.Reason)
-			s.statusText.AssignText(mf.Reason)
+			statusWidget.AssignText(mf.Reason)
 			return
 		}
 	})
@@ -233,7 +225,7 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				refreshCarousel(items)
 			}
 		case messages.MessageReplyInfoDataRules:
-			s.rulesNode.Widget.(*widgets.Text).AssignText(string(d))
+			rulesNode.Widget.(*widgets.Text).AssignText(string(d))
 			// Update our rules element with the rules text.
 		}
 	})
