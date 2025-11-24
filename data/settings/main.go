@@ -27,7 +27,7 @@ func (msg *RawMessage) Unmarshal(v any) error {
 }
 
 func GetWithFallback[V comparable](key string, fallback V) V {
-	if v, ok := settings[key]; ok {
+	if v, ok := settings[key]; ok && v.raw.unmarshal != nil {
 		if v.read {
 			return v.value.(V)
 		}
