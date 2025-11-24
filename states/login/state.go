@@ -1,7 +1,6 @@
 package login
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 
@@ -221,6 +220,15 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 				items := []string{}
 				for _, s := range imageSets {
 					items = append(items, s.Name)
+				}
+				// See if we can restore our previous image set if we have one stored.
+				if s.settings.ImageSet != "" {
+					for i := 0; i < len(items); i++ {
+						if items[i] == s.settings.ImageSet {
+							currentImageSet = i
+							break
+						}
+					}
 				}
 				refreshCarousel(items)
 			}
