@@ -7,7 +7,8 @@ import (
 
 type Checkbox struct {
 	widgets.Label
-	checked bool
+	checked  bool
+	OnChange func(bool)
 }
 
 func (c *Checkbox) HandleGenerate() {
@@ -15,13 +16,19 @@ func (c *Checkbox) HandleGenerate() {
 }
 
 func (c *Checkbox) HandlePointerPressed(evt rebui.EventPointerPressed) {
-	c.checked = !c.checked
+	c.Set(!c.checked)
 	c.refresh()
 }
 
 func (c *Checkbox) Set(v bool) {
+	if v == c.checked {
+		return
+	}
 	c.checked = v
 	c.refresh()
+	if c.OnChange != nil {
+		c.OnChange(c.checked)
+	}
 }
 
 func (c *Checkbox) refresh() {
