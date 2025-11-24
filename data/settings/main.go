@@ -2,32 +2,71 @@ package settings
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 )
 
-var settings map[string]any
+type Setting struct {
+	read  bool
+	raw   RawMessage
+	value any
+}
+
+var settings map[string]Setting
+
+type RawMessage struct {
+	unmarshal func(any) error
+}
+
+func (msg *RawMessage) UnmarshalYAML(unmarshal func(any) error) error {
+	msg.unmarshal = unmarshal
+	return nil
+}
+
+func (msg *RawMessage) Unmarshal(v any) error {
+	return msg.unmarshal(v)
+}
 
 func GetWithFallback[V comparable](key string, fallback V) V {
 	if v, ok := settings[key]; ok {
-		if reflect.TypeOf(fallback) == reflect.TypeOf(v) {
-			return v.(V)
+		if v.read {
+			return v.value.(V)
 		}
+		r := *new(V)
+		v.raw.Unmarshal(&r)
+		v.value = r
+		v.read = true
+		return v.value.(V)
 	}
 	return fallback
 }
 
 func Get[V comparable](key string) (V, error) {
 	if v, ok := settings[key]; ok {
-		if reflect.TypeOf(*new(V)) == reflect.TypeOf(v) {
-			return v.(V), nil
+		if v.read {
+			return v.value.(V), nil
 		}
+		r := *new(V)
+		v.raw.Unmarshal(&r)
+		v.value = r
+		v.read = true
+		return v.value.(V), nil
+		/*if reflect.TypeOf(*new(V)) == reflect.TypeOf(v) {
+			return v.(V), nil
+		}*/
 	}
 	return *new(V), fmt.Errorf("missing key")
 }
 
 func Set(key string, value any) {
-	settings[key] = value
+	if v, ok := settings[key]; ok {
+		v.value = value
+		settings[key] = v
+	} else {
+		settings[key] = Setting{
+			read:  true,
+			value: value,
+		}
+	}
 	Save()
 }
 
@@ -54,7 +93,7 @@ func pendingSave() {
 }
 
 func init() {
-	settings = make(map[string]any)
+	settings = make(map[string]Setting)
 	if err := load(); err != nil {
 		panic(err)
 	}
