@@ -60,6 +60,7 @@ func Get[V comparable](key string) (V, error) {
 func Set(key string, value any) {
 	if v, ok := settings[key]; ok {
 		v.value = value
+		v.read = true
 		settings[key] = v
 	} else {
 		settings[key] = Setting{
