@@ -29,11 +29,11 @@ type serverSettings struct {
 // State provides username + account login management. If successful, sends to chars, otherwise will remain in the login state.
 type State struct {
 	messages.MessageHandler
-	Hostname     string
-	conn         *net.Connection
-	faces        []messages.MessageFace2
-	layout       rebui.Layout
-	settings     serverSettings
+	Hostname string
+	conn     *net.Connection
+	faces    []messages.MessageFace2
+	layout   rebui.Layout
+	settings serverSettings
 }
 
 // NewState returns a State from the given connection.
