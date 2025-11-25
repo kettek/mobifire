@@ -41,6 +41,11 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 		s.layout.AddNode(node)
 	}
 
+	s.layout.GetByID("disconnect").OnPointerPressed = func(evt rebui.EventPointerPressed) {
+		s.conn.Close() // TODO: Do we have to send a friendly goodbye?
+		next(nil) // Just bump back to metaserver.
+	}
+
 	// Request faces sent during login.
 	for _, face := range s.faces {
 		s.conn.Send(&messages.MessageAskFace{Face: int32(face.Num)})
