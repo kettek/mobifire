@@ -109,7 +109,6 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 
 // refreshMetaservers iterates thru metaservers and generates non-duplicate servers.
 func (s *State) refreshMetaservers() {
-
 	// Generate server entries from the metaservers.
 	var serverEntries messages.ServerEntries
 	for _, m := range metaservers {
@@ -134,10 +133,10 @@ func (s *State) refreshMetaservers() {
 
 	// Create the container with the server list.
 	for i, entry := range serverEntries {
-		id := fmt.Sprintf("server-%d", i)
+		id := fmt.Sprintf("server_%d", i)
 		y := "2%"
 		if i > 0 {
-			y = fmt.Sprintf("after %s", fmt.Sprintf("server-%d", i-1))
+			y = fmt.Sprintf("after %s", fmt.Sprintf("server_%d", i-1))
 		}
 
 		s.entryNode.ID = id
