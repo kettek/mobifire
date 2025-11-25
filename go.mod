@@ -8,7 +8,7 @@ require (
 	fyne.io/fyne/v2 v2.5.4
 	github.com/hajimehoshi/ebiten/v2 v2.8.7
 	github.com/kettek/gobl v0.4.0
-	github.com/kettek/rebui v0.0.0-20251123201808-d9b0ef8d9e73
+	github.com/kettek/rebui v0.0.0-20251125082449-0a2a33cb9d60
 	github.com/kettek/termfire v0.0.0-20250223203108-7dbd91af1909
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -24,6 +24,7 @@ require (
 	github.com/go-text/typesetting v0.2.1 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20241217141322-fcc2cadd6f08 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	github.com/kettek/tokenizer v0.0.0-20251125082402-ee2a4ae6a06f // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.5.1 // indirect
 	github.com/qdm12/reprint v0.0.0-20200326205758-722754a53494 // indirect
