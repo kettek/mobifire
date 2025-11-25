@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/mobifire/data"
 	"github.com/kettek/mobifire/net"
+	"github.com/kettek/rebui"
 
 	"github.com/kettek/mobifire/states"
 	"github.com/kettek/termfire/messages"
@@ -15,6 +16,7 @@ type State struct {
 	conn       *net.Connection
 	characters []messages.Character
 	faces      []messages.MessageFace2
+	layout     rebui.Layout
 }
 
 // NewState provides a new State from a connection, Character, and Face messages.
@@ -29,6 +31,15 @@ func NewState(conn *net.Connection, characters []messages.Character, faces []mes
 // Enter sets up the necessary state.
 func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.conn.SetMessageHandler(s.OnMessage)
+
+	// Set up that there uhh ui there
+	layout, err := data.GetLayout("chars")
+	if err != nil {
+		panic(err)
+	}
+	for _, node := range layout.Nodes {
+		s.layout.AddNode(node)
+	}
 
 	// Request faces sent during login.
 	for _, face := range s.faces {
@@ -51,15 +62,15 @@ func (s *State) Enter(next func(states.State)) (leave func()) {
 	s.refreshCharacters(s.characters, next)
 
 	// Creation
-	//creationContainer := s.setupCreation()
+	// creationContainer := s.setupCreation()
 
 	// Tabs
 	// TODO: Make tabs to switch between character creation and selection.
 	if len(s.characters) > 1 {
-		//tabs.SelectIndex(1)
+		// tabs.SelectIndex(1)
 	}
 
-	//s.container = container.New(layout.NewVBoxLayout(), characterList)
+	// s.container = container.New(layout.NewVBoxLayout(), characterList)
 
 	return nil
 }
@@ -73,11 +84,10 @@ func (s *State) refreshCharacters(characters []messages.Character, next func(sta
 			continue
 		}
 		// TODO: Add button to:
-		//next(play.NewState(s.conn, character.Name))
+		// next(play.NewState(s.conn, character.Name))
 		// TODO: Show selectable cards with  character.Name, fmt.Sprintf("%d %s %s", character.Level, character.Race, character.Class)
 		// TODO: Add the c ard to the character list.
 	}
-
 }
 
 func (s *State) setupCreation() {
@@ -116,7 +126,7 @@ func (s *State) setupCreation() {
 		case messages.MessageReplyInfoDataRaceInfo:
 			for i, r := range races {
 				if r.Arch == d.Arch {
-					//caser := cases.Title(language.English)
+					// caser := cases.Title(language.English)
 					// TODO: Make the race selection nicer with caser.String(d.Name)
 					// Eh... let's capitalize each starting letter in Name.
 					races[i] = d // Store the full race as well.
@@ -137,7 +147,7 @@ func (s *State) setupCreation() {
 		case messages.MessageReplyInfoDataClassInfo:
 			for i, c := range classes {
 				if c.Arch == d.Arch {
-					//caser := cases.Title(language.English)
+					// caser := cases.Title(language.English)
 					// Use caser as well.
 					classes[i] = d
 					break
@@ -156,9 +166,10 @@ func (s *State) setupCreation() {
 }
 
 func (s *State) Update() error {
+	s.layout.Update()
 	return nil
 }
 
 func (s *State) Draw(screen *ebiten.Image) {
-	// TODO
+	s.layout.Draw(screen)
 }

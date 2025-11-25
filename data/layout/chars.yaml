@@ -1,0 +1,28 @@
+- id: status
+  type: Label
+  text: select your player
+  x: 50%
+  y: 50%
+  originx: -50%
+  originy: -50%
+  width: 50%
+  height: 50%
+  verticalalign: middle
+  horizontalalign: center
+- id: bot
+  type: Area
+  width: 99%
+  height: 10%
+  originy: -100%
+  y: 99%
+  x: 1%
+- id: disconnect
+  text: Disconnect
+  type: Button
+  x: at bot
+  y: at bot
+  width: 25% of bot
+  height: 100% of bot
+  verticalalign: middle
+  horizontalalign: center
+  
